@@ -1,0 +1,1 @@
+# for configuring the flask app -> adding a secret and any other important environment variables
