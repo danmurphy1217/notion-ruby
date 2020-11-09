@@ -1,1 +1,0 @@
-# for frontend HTML templates
