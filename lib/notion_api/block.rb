@@ -1,5 +1,9 @@
 "/Users/danielmurphy/Desktop/notion-ruby/lib is the abs path."
 ["/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/executable-hooks-1.6.0/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/extensions/x86_64-darwin-19/2.7.0/executable-hooks-1.6.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/bundler-unload-1.0.2/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/rubygems-bundler-1.4.5/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0/x86_64-darwin19"]
+"/Users/danielmurphy/Desktop/notion-ruby/lib is the abs path."
+["/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/executable-hooks-1.6.0/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/extensions/x86_64-darwin-19/2.7.0/executable-hooks-1.6.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/bundler-unload-1.0.2/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/rubygems-bundler-1.4.5/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0/x86_64-darwin19"]
+"/Users/danielmurphy/Desktop/notion-ruby/lib is the abs path."
+["/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/executable-hooks-1.6.0/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/extensions/x86_64-darwin-19/2.7.0/executable-hooks-1.6.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/bundler-unload-1.0.2/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/gems/2.7.0/gems/rubygems-bundler-1.4.5/lib", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/site_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby/2.7.0/x86_64-darwin19", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/vendor_ruby", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0", "/Users/danielmurphy/.rvm/rubies/ruby-2.7.0/lib/ruby/2.7.0/x86_64-darwin19"]
 require_relative "types"
 require "httparty"
 
@@ -32,12 +36,31 @@ module Notion
 
     def extract_title(clean_id, jsonified_record_response)
       # extract title from core JSON response body.
-      messy_block_title = jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten
-      return messy_block_title[0]
+      return jsonified_record_response["block"][clean_id]["value"]["properties"].nil? ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten.join(" ")
     end
+
     def extract_type(clean_id, jsonified_record_response)
       block_type = jsonified_record_response["block"][clean_id]["value"]["type"]
       return block_type
+    end
+
+    def extract_children_ids(clean_id, jsonified_record_response)
+      return !jsonified_record_response.empty? ? jsonified_record_response["block"][clean_id]["value"]["content"] : {}
+    end
+
+    def extract_id(url_or_id)
+      begin
+        if (url_or_id.length == 36) or (url_or_id.split("-").length == 5)
+          return url_or_id
+        else
+          pattern = [8, 13, 18, 23]
+          id = url_or_id.split("-").last
+          pattern.each { |index| id.insert(index, "-") }
+          return id
+        end
+      rescue 
+        raise "Expected a full page URL or a page ID. Please consult the documentation for further information."
+      end
     end
 
     def get_block(url_or_id, options = {})
@@ -50,8 +73,6 @@ module Notion
         :limit => 100,
         :verticalColumns => false,
       }
-    #   p **options
-
       jsonified_record_response = get_all_block_info(clean_id, request_body, options)
       i = 0
       while jsonified_record_response.empty?
@@ -60,20 +81,27 @@ module Notion
         else
           jsonified_record_response = get_all_block_info(clean_id, request_body, options)
           i += 1
-          p i
         end
       end
       block_id = clean_id
+      #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
+      # p jsonified_record_response["block"][clean_id]
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
       return block_id, block_title, block_type
     end
 
-    def extract_id(url_or_id)
-      pattern = [8, 13, 18, 23]
-      id = url_or_id.split("-").last
-      pattern.each { |index| id.insert(index, "-") }
-      return id
+    def get_block_children_ids(url_or_id, options = {})
+      clean_id = extract_id(url_or_id)
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body, options)
+      children_ids = extract_children_ids(clean_id, jsonified_record_response)
+      return children_ids
     end
 
     def check_id_length(id)
