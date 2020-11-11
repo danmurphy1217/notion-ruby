@@ -9,10 +9,10 @@ module Notion
 end
 
 
-@client = Notion::Client.new("ec4db968e894dd7b5b20a36de10e80c7bb18a7717e49bae9089e694a3d693957b09d88c5cda10e22dfb44a349cacd2516cb8c5b6a55ae79da2a100084410fac249b08eb6d8d0c1db3e8840eeced4")
+@client = Notion::Client.new(ENV["token_v2"])
 # options for request
 options = {}
-options["cookies"] = {:token_v2 => "ec4db968e894dd7b5b20a36de10e80c7bb18a7717e49bae9089e694a3d693957b09d88c5cda10e22dfb44a349cacd2516cb8c5b6a55ae79da2a100084410fac249b08eb6d8d0c1db3e8840eeced4"}
+options["cookies"] = {:token_v2 => ENV["token_v2"]}
 options["headers"] = {'Content-Type' => 'application/json'}
 
 @block = @client.get_block(url_or_id="6a1cf4ee-773f-49c4-b11a-e9e643cb9087", options)
