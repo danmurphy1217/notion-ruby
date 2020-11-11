@@ -54,8 +54,8 @@ module Notion
 
       jsonified_record_response = get_all_block_info(clean_id, request_body, options)
       i = 0
-      while jsonified_record_response.nil?
-        if i >= 5
+      while jsonified_record_response.empty?
+        if i >= 20
           return {}
         else
           jsonified_record_response = get_all_block_info(clean_id, request_body, options)
