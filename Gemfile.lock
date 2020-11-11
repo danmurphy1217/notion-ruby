@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    notion_rb (1.0.0)
+    notion_api (1.0.0)
       httparty
+      json
 
 GEM
   remote: https://rubygems.org/
@@ -10,6 +11,7 @@ GEM
     httparty (0.18.1)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
+    json (2.3.1)
     mime-types (3.3.1)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2020.1104)
@@ -21,7 +23,7 @@ PLATFORMS
 
 DEPENDENCIES
   bundler
-  notion_rb!
+  notion_api!
   rake
 
 BUNDLED WITH

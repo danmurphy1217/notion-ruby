@@ -6,7 +6,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 #TODO: what does unshify do?
 
 Gem::Specification.new do |spec|
-    spec.name           = "notion_rb"
+    spec.name           = "notion_api"
     spec.version        = "1.0.0"
     spec.authors        = ["Dan Murphy"]
     spec.email          = ["danielmurph8@gmail.com"]
@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
 
 
     spec.add_dependency "httparty"
+    spec.add_dependency "json"
 
     spec.add_development_dependency "bundler"
     spec.add_development_dependency "rake"
