@@ -1,6 +1,10 @@
 require_relative "utils"
 require "httparty"
 require "date"
+require "logger"
+
+$LOGGER = Logger.new(STDOUT)
+$LOGGER.level = Logger::INFO
 
 module Notion
   class BlockTemplate
@@ -24,8 +28,12 @@ module Notion
 
     def title=(new_title)
       update_title(new_title)
-      p "Title changed from #{self.title} to #{new_title}."
+      $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
     end # title=
+
+    def self.notion_type
+      @@notion_type
+    end # self.notion_type
 
     def update_title(new_title)
       # options are propagated from the initial get_block call.
@@ -62,7 +70,7 @@ module Notion
                 :command => "set",
                 :args => timestamp,
               },
-              # UPDATE PARENT ID LAST EDITED TIME
+              # UPDATE PARENT IDs LAST EDITED TIME
               {
                 :table => "block",
                 :id => @parent_id,
@@ -85,8 +93,194 @@ module Notion
       )
       return response.body
     end # update_title
+
     def revert_most_recent_change
       #TODO: how can I store most recent change in a DS and revert a change if necessary?
-    end
+    end # revert_most_recent_change
   end # BlockTemplate
+
+  class DividerBlock < BlockTemplate
+    # divider block: ---------
+    @@notion_type = "divider"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class TodoBlock < BlockTemplate
+    # To-Do block: can be set to X or nil, and also have a text property
+    @@notion_type = "to_do"
+    @@content = "YOOO"
+
+    def self.notion_type
+      @@notion_type
+    end
+
+    def checked=(checked_value)
+      # request vars
+      cookies = !@options["cookies"].nil? ? @options["cookies"] : { :token_v2.to_s => token_v2 }
+      headers = !@options["headers"].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
+      timestamp = DateTime.now.strftime("%Q")
+      request_url = @@method_urls[:UPDATE_BLOCK]
+
+      accepted_yes_vals = ["1", "yes", "true"]
+      accepted_no_vals = ["0", "no", "false"]
+      all_accepted_values = (accepted_yes_vals << accepted_no_vals).flatten
+      $LOGGER.info(all_accepted_values)
+      downcased_value = checked_value.to_s.downcase
+      if all_accepted_values.include?(downcased_value)
+        if accepted_yes_vals.include?(downcased_value) then standardized_check_val="yes" else standardized_check_val="no" end
+        $LOGGER.info(standardized_check_val)
+
+        request_body = {
+          "requestId": "09568227-bf79-4563-af8b-a3825058d3d9",
+          "transactions": [
+            {
+              "id": "5cd68079-4b35-4545-b481-b72967b81c40",
+              "shardId": 955090,
+              "spaceId": "f687f7de-7f4c-4a86-b109-941a8dae92d2",
+              "operations": [
+                {
+                  "id": @id,
+                  "table": "block",
+                  "path": [
+                    "properties",
+                  ],
+                  "command": "update",
+                  "args": {
+                    "checked": [
+                      [
+                        standardized_check_val,
+                      ],
+                    ],
+                  },
+                },
+                {
+                  "table": "block",
+                  "id": @id,
+                  "path": [
+                    "last_edited_time",
+                  ],
+                  "command": "set",
+                  "args": timestamp,
+                },
+                {
+                  "table": "block",
+                  "id": @parent_id,
+                  "path": [
+                    "last_edited_time",
+                  ],
+                  "command": "set",
+                  "args": timestamp,
+                },
+              ],
+            },
+          ],
+        }
+        response = HTTParty.post(
+          request_url,
+          :body => request_body.to_json,
+          :cookies => cookies,
+          :headers => headers,
+        )
+        return response.body
+      else
+        p standardized_check_val
+        $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, use one of the following: 1, 'yes', of true. If you want to un-check a To-Do block, use one of the following: 0, 'no', false.")
+      end
+    end
+  end
+
+  class CodeBlocks < BlockTemplate
+    # Code block: coding language and the code to assign to the block
+    @@notion_type = "code"
+    # args => {language => [["JavaScript"]], ty[e => "code"]}
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class HeaderBlock < BlockTemplate
+    # Header block: H1
+    # header
+    @@notion_type = "header"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class SubHeaderBlock < BlockTemplate
+    # SubHeader Block: H2
+    # sub_header
+    @@notion_type = "sub_header"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class SubSubHeaderBlock < BlockTemplate
+    # Sub-Sub Header Block: H3
+    @@notion_type = "sub_sub_header"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class PageBlock < BlockTemplate
+    @@notion_type = "page"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class ToggleBlock < BlockTemplate
+    # Toggle block: Accepts text and a hash of children to create.
+    @@notion_type = "toggle"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class BulletedBlock < BlockTemplate
+    # Bullet list block: accepts the text to assign to the bullet point
+    @@notion_type = "divider"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class NumberedBlock < BlockTemplate
+    # Numbered list Block: accepts the content to assign to the numbered block
+    @@notion_type = "numbered_list"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class QuoteBlock < BlockTemplate
+    # accepts the content and the emoji to assign to the quote
+    @@notion_type = "quote"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class CalloutBlock < BlockTemplate
+    @@notion_type = "callout"
+    def self.notion_type
+      @@notion_type
+    end
+  end
+
+  class LatexBlock < BlockTemplate
+    @@notion_type = "equation"
+    def self.notion_type
+      @@notion_type
+    end
+  end
 end # Notion
+
+classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" }
+notion_types = []
+classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
+BLOCK_TYPES = notion_types.zip(classes).to_h

@@ -95,7 +95,8 @@ module Notion
       block_title = extract_title(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
-      return BlockTemplate.new(block_type, block_id, block_title, block_parent_id, options)
+      block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
+      return block_class.new(block_type, block_id, block_title, block_parent_id, options)
     end
 
     def get_block_children_ids(url_or_id, options = {})
