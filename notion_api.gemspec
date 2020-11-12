@@ -1,6 +1,6 @@
 lib = File.expand_path('../lib', __FILE__)
-p %Q[#{lib} is the abs path.]
-p $LOAD_PATH
+# p %Q[#{lib} is the abs path.]
+# p $LOAD_PATH
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 #TODO: what is $LOAD_PATH?
 #TODO: what does unshify do?
