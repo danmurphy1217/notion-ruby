@@ -85,8 +85,8 @@ module Notion
       )
       return response.body
     end # update_title
-
-    def build_update_title_payload
-    end # build_update_title_payload
+    def revert_most_recent_change
+      #TODO: how can I store most recent change in a DS and revert a change if necessary?
+    end
   end # BlockTemplate
 end # Notion
