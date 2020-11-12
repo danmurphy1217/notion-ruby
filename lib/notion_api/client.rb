@@ -15,15 +15,18 @@ options = {}
 options["cookies"] = {:token_v2 => ENV["token_v2"]}
 options["headers"] = {'Content-Type' => 'application/json'}
 
-@block = @client.get_block(url_or_id="6a1cf4ee-773f-49c4-b11a-e9e643cb9087", options)
-children_ids = @client.get_block_children_ids(url_or_id="https://www.notion.so/danmurphy/Generic-Linux-CLI-24bb8c43a6c44561a5f5919d4bd86013", options)
+@block = @client.get_block(url_or_id="7375d19c-f163-453e-bb87-2ad863934f8c", options)
+@block.title = "Econometrics"
 
-all_page_ids = []
-children_ids.each do |id|
-    block = @client.get_block(id, options=options)[0]
-    all_page_ids.push(@client.get_block_children_ids(block, options=options))
-end
 
-all_page_ids.flatten.each do |id|
-    p @client.get_block(id, options=options)
-end
+# children_ids = @client.get_block_children_ids(url_or_id="https://www.notion.so/danmurphy/Generic-Linux-CLI-24bb8c43a6c44561a5f5919d4bd86013", options)
+# p children_ids
+# all_page_ids = []
+# children_ids.each do |id|
+#     block = @client.get_block(id, options=options)[0]
+#     all_page_ids.push(@client.get_block_children_ids(block, options=options))
+# end
+
+# all_page_ids.flatten.each do |id|
+#     p @client.get_block(id, options=options)
+# end

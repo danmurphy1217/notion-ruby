@@ -1,15 +1,12 @@
 require_relative "types"
+require_relative "utils"
 require "httparty"
 
 module Notion
-  class Block < Types
-    include HTTParty
-    base_uri "https://www.notion.so/api/v3"
+  class Block
+    include Utils
 
-    @@method_urls = {
-      :GET_BLOCK => "https://www.notion.so/api/v3/loadPageChunk",
-      :UPDATE_BLOCK => "https://www.notion.so/api/v3/", # TODO
-    }
+    @@method_urls = URLS # defined in Utils
     attr_reader :token_v2, :clean_id, :cookies, :headers
 
     def get_all_block_info(clean_id, body, options = {})
@@ -27,21 +24,36 @@ module Notion
 
       return jsonified_record_response
     end
+    def filter_nil_blocks(jsonified_record_response)
+      return jsonified_record_response["block"].empty? ? nil : jsonified_record_response["block"]
+    end
 
     def extract_title(clean_id, jsonified_record_response)
       # extract title from core JSON response body.
-      return jsonified_record_response["block"][clean_id]["value"]["properties"].nil? ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten.join(" ")
+      filter_nil_blocks =  filter_nil_blocks(jsonified_record_response)
+      if filter_nil_blocks.nil?
+        return nil
+      else
+        filter_nil_titles = filter_nil_blocks[clean_id]["value"]["properties"].nil? ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten.join(" ")
+      end
     end
 
     def extract_type(clean_id, jsonified_record_response)
-      block_type = jsonified_record_response["block"][clean_id]["value"]["type"]
-      return block_type
+      filter_nil_blocks = filter_nil_blocks(jsonified_record_response)
+      if filter_nil_blocks.nil?
+        return nil
+      else
+        block_type = filter_nil_blocks[clean_id]["value"]["type"]
+        return block_type
+      end
     end
 
     def extract_children_ids(clean_id, jsonified_record_response)
       return !jsonified_record_response.empty? ? jsonified_record_response["block"][clean_id]["value"]["content"] : {}
     end
-
+    def extract_parent_id(clean_id, jsonified_record_response)
+      return !jsonified_record_response.empty? ? jsonified_record_response["block"][clean_id]["value"]["parent_id"] : {}
+    end
     def extract_id(url_or_id)
       begin
         if (url_or_id.length == 36) or (url_or_id.split("-").length == 5)
@@ -81,8 +93,9 @@ module Notion
       #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
       # p jsonified_record_response["block"][clean_id]
       block_title = extract_title(clean_id, jsonified_record_response)
+      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
-      return block_id, block_title, block_type
+      return BlockTemplate.new(block_type, block_id, block_title, block_parent_id, options)
     end
 
     def get_block_children_ids(url_or_id, options = {})
@@ -97,7 +110,6 @@ module Notion
       children_ids = extract_children_ids(clean_id, jsonified_record_response)
       return children_ids
     end
-
     def check_id_length(id)
       if id.length != 32
         return false
