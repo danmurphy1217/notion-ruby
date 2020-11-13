@@ -16,8 +16,9 @@ options["cookies"] = {:token_v2 => ENV["token_v2"]}
 options["headers"] = {'Content-Type' => 'application/json'}
 
 @block = @client.get_block(url_or_id="3d3356ce-e136-4cc9-b08b-5f9ea6a70026", options)
-@block.title = "<-"
-@block.checked=false
+@block.title = "_hi_"
+
+# @block.checked=true
 
 # children_ids = @client.get_block_children_ids(url_or_id="https://www.notion.so/danmurphy/Generic-Linux-CLI-24bb8c43a6c44561a5f5919d4bd86013", options)
 # p children_ids

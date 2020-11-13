@@ -34,7 +34,7 @@ module Notion
       if filter_nil_blocks.nil?
         return nil
       else
-        filter_nil_titles = filter_nil_blocks[clean_id]["value"]["properties"].nil? ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten.join(" ")
+        filter_nil_titles = filter_nil_blocks[clean_id]["value"]["properties"].nil? ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"]["title"].flatten[0]
       end
     end
 

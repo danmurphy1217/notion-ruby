@@ -2,12 +2,13 @@ require_relative "utils"
 require "httparty"
 require "date"
 require "logger"
+require_relative "templates"
 
 $LOGGER = Logger.new(STDOUT)
 $LOGGER.level = Logger::INFO
 
 module Notion
-  class BlockTemplate
+  class BlockTemplate < OperationTemplates
     include Utils
 
     @@method_urls = URLS
@@ -27,15 +28,17 @@ module Notion
     end # initialize
 
     def title=(new_title)
-      update_title(new_title)
+      styles = ["_", "b", "i"]
+      update_title(new_title, styles)
       $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
     end # title=
-
+    def convert=(block_type_to_convert_to) #TODO
+    end
     def self.notion_type
       @@notion_type
     end # self.notion_type
 
-    def update_title(new_title)
+    def update_title(new_title, styles=[])
       # options are propagated from the initial get_block call.
       cookies = !@options["cookies"].nil? ? @options["cookies"] : { :token_v2.to_s => token_v2 }
       headers = !@options["headers"].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
@@ -46,44 +49,38 @@ module Notion
       #! 1. If updating a title, notion will update the properties and title paths and set a new title
       #! 2. Then, Notion will update the last time that block was updated by accessing the last_edited_time path (this is done with the UNIX timestamp multiplied by 1000 [since they're using JS, and JS using the number of MS since epoch])
       #! 3. Then, Notion will update the last time the page that contains that block was updated (same UNIX timestamp x 1000).
-      request_body = {
-        :requestId => @id,
-        :transactions => [
-          {
-            :id => @id,
-            :operations => [
-              # UPDATE BLOCK TITLE
-              {
-                :id => @id,
-                :table => "block",
-                :path => ["properties", "title"],
-                :command => "set",
-                :args => [[new_title]],
-              },
-              # UPDATE BLOCK ID LAST EDITED TIME
-              {
-                :table => "block",
-                :id => @id,
-                :path => [
-                  "last_edited_time",
-                ],
-                :command => "set",
-                :args => timestamp,
-              },
-              # UPDATE PARENT IDs LAST EDITED TIME
-              {
-                :table => "block",
-                :id => @parent_id,
-                :path => [
-                  "last_edited_time",
-                ],
-                :command => "set",
-                :args => timestamp,
-              },
-            ],
-          },
-        ],
-      }
+      operations = [
+        # UPDATE BLOCK TITLE
+        {
+          :id => @id,
+          :table => "block",
+          :path => ["properties", "title"],
+          :command => "set",
+          :args => [[new_title, styles.each {|style| [style]}]],
+        },
+        # UPDATE BLOCK ID LAST EDITED TIME
+        {
+          :table => "block",
+          :id => @id,
+          :path => [
+            "last_edited_time",
+          ],
+          :command => "set",
+          :args => timestamp,
+        },
+        # UPDATE PARENT IDs LAST EDITED TIME
+        {
+          :table => "block",
+          :id => @parent_id,
+          :path => [
+            "last_edited_time",
+          ],
+          :command => "set",
+          :args => timestamp,
+        },
+      ]
+      
+      request_body = title_and_styles_payload(@id, operations)
 
       response = HTTParty.post(
         request_url,
@@ -110,7 +107,6 @@ module Notion
   class TodoBlock < BlockTemplate
     # To-Do block: can be set to X or nil, and also have a text property
     @@notion_type = "to_do"
-    @@content = "YOOO"
 
     def self.notion_type
       @@notion_type
@@ -132,51 +128,42 @@ module Notion
         if accepted_yes_vals.include?(downcased_value) then standardized_check_val="yes" else standardized_check_val="no" end
         $LOGGER.info(standardized_check_val)
 
-        request_body = {
-          "requestId": "09568227-bf79-4563-af8b-a3825058d3d9",
-          "transactions": [
-            {
-              "id": "5cd68079-4b35-4545-b481-b72967b81c40",
-              "shardId": 955090,
-              "spaceId": "f687f7de-7f4c-4a86-b109-941a8dae92d2",
-              "operations": [
-                {
-                  "id": @id,
-                  "table": "block",
-                  "path": [
-                    "properties",
-                  ],
-                  "command": "update",
-                  "args": {
-                    "checked": [
-                      [
-                        standardized_check_val,
-                      ],
-                    ],
-                  },
-                },
-                {
-                  "table": "block",
-                  "id": @id,
-                  "path": [
-                    "last_edited_time",
-                  ],
-                  "command": "set",
-                  "args": timestamp,
-                },
-                {
-                  "table": "block",
-                  "id": @parent_id,
-                  "path": [
-                    "last_edited_time",
-                  ],
-                  "command": "set",
-                  "args": timestamp,
-                },
+        operations = [
+          {
+            "id": @id,
+            "table": "block",
+            "path": [
+              "properties",
+            ],
+            "command": "update",
+            "args": {
+              "checked": [
+                [
+                  standardized_check_val,
+                ],
               ],
             },
-          ],
-        }
+          },
+          {
+            "table": "block",
+            "id": @id,
+            "path": [
+              "last_edited_time",
+            ],
+            "command": "set",
+            "args": timestamp,
+          },
+          {
+            "table": "block",
+            "id": @parent_id,
+            "path": [
+              "last_edited_time",
+            ],
+            "command": "set",
+            "args": timestamp,
+          },
+        ]
+        request_body = update_block_payload(operations)
         response = HTTParty.post(
           request_url,
           :body => request_body.to_json,
