@@ -1,4 +1,5 @@
 require_relative "block"
+require_relative "types"
 module Notion
     attr_reader :token_v2
     class Client < Block
@@ -15,9 +16,19 @@ options = {}
 options["cookies"] = {:token_v2 => ENV["token_v2"]}
 options["headers"] = {'Content-Type' => 'application/json'}
 
-@block = @client.get_block(url_or_id="3d3356ce-e136-4cc9-b08b-5f9ea6a70026", options)
-@block.title = "_hi_"
+@block = @client.get_block(url_or_id="a5816e1d-b6e8-4b7d-bbb6-fdc779f889e8", options)
+# @block.title = "hi!"
 
+styles = {
+    #! you can only set text color of background color. They are mutually exclusive.
+    #! one way around this is to change the default block color, and then mess with the background.
+    :block_color => "gray",
+    :text_color => "black", # the text color
+    :text_styles => ["b", "i", "_"]
+}
+p @block
+@block = @block.convert(Notion::QuoteBlock, styles)
+p @block
 # @block.checked=true
 
 # children_ids = @client.get_block_children_ids(url_or_id="https://www.notion.so/danmurphy/Generic-Linux-CLI-24bb8c43a6c44561a5f5919d4bd86013", options)

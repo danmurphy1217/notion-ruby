@@ -2,7 +2,7 @@ require_relative "utils"
 require "httparty"
 require "date"
 require "logger"
-require_relative "templates"
+require_relative "payloads"
 
 $LOGGER = Logger.new(STDOUT)
 $LOGGER.level = Logger::INFO
@@ -28,23 +28,22 @@ module Notion
     end # initialize
 
     def title=(new_title)
-      styles = ["_", "b", "i"]
-      update_title(new_title, styles)
+      # TODO: add styling functionality that follows markdown guide...
+      update_title(new_title)
       $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
+      @title = new_title
     end # title=
-    def convert=(block_type_to_convert_to) #TODO
-    end
     def self.notion_type
       @@notion_type
     end # self.notion_type
-
+    
     def update_title(new_title, styles=[])
       # options are propagated from the initial get_block call.
       cookies = !@options["cookies"].nil? ? @options["cookies"] : { :token_v2.to_s => token_v2 }
       headers = !@options["headers"].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
       request_url = @@method_urls[:UPDATE_BLOCK]
       timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
-
+      
       #! when updating a block, notion does three things:
       #! 1. If updating a title, notion will update the properties and title paths and set a new title
       #! 2. Then, Notion will update the last time that block was updated by accessing the last_edited_time path (this is done with the UNIX timestamp multiplied by 1000 [since they're using JS, and JS using the number of MS since epoch])
@@ -81,7 +80,7 @@ module Notion
       ]
       
       request_body = title_and_styles_payload(@id, operations)
-
+      
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
@@ -90,7 +89,53 @@ module Notion
       )
       return response.body
     end # update_title
+    def convert(block_class_to_convert_to, styles)
+      #TODO: different blocks can take different params at the time of conversion, so there may be a better way to handle this.
+      cookies = !@options["cookies"].nil? ? @options["cookies"] : { :token_v2.to_s => token_v2 } #TODO: fix this, this variable is undefined if they do not pass options
+      headers = !@options["headers"].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
+      operations = [
+        {
+            "id": @id,
+            "table": "block",
+            "path": [],
+            "command": "update",
+            "args": {
+                "type" => block_class_to_convert_to.notion_type,
+                # "block_color" => styles[:block_color] || "white"
+            }
+        },
+        {
+            "table": "block",
+            "id": @id,
+            "path": [
+                "last_edited_time"
+            ],
+            "command": "set",
+            "args": timestamp
+        },
+        {
+            "table": "block",
+            "id": @parent_id,
+            "path": [
+                "last_edited_time"
+            ],
+            "command": "set",
+            "args": timestamp
+        }
+    ]
 
+    request_body = convert_block_payload(operations)
+    response = HTTParty.post(
+      request_url,
+      :body => request_body.to_json,
+      :cookies => cookies,
+      :headers => headers,
+    )
+
+    return block_class_to_convert_to.new(block_class_to_convert_to.notion_type, @id, @title, @parent_id, options={:cookies=>cookies, :headers=> headers})
+    end
     def revert_most_recent_change
       #TODO: how can I store most recent change in a DS and revert a change if necessary?
     end # revert_most_recent_change
@@ -172,7 +217,6 @@ module Notion
         )
         return response.body
       else
-        p standardized_check_val
         $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, use one of the following: 1, 'yes', of true. If you want to un-check a To-Do block, use one of the following: 0, 'no', false.")
       end
     end
@@ -230,7 +274,7 @@ module Notion
 
   class BulletedBlock < BlockTemplate
     # Bullet list block: accepts the text to assign to the bullet point
-    @@notion_type = "divider"
+    @@notion_type = "bulleted_list"
     def self.notion_type
       @@notion_type
     end
