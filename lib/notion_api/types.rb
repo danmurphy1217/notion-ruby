@@ -159,8 +159,9 @@ module Notion
 
     def checked=(checked_value)
       # request vars
-      cookies = !@options["cookies"].nil? ? @options["cookies"] : { :token_v2.to_s => token_v2 }
-      headers = !@options["headers"].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
+      p @options
+      cookies = !@options[:cookies.to_s].nil? ? @options["cookies"] : { :token_v2.to_s => "ec4db968e894dd7b5b20a36de10e80c7bb18a7717e49bae9089e694a3d693957b09d88c5cda10e22dfb44a349cacd2516cb8c5b6a55ae79da2a100084410fac249b08eb6d8d0c1db3e8840eeced4" }
+      headers = !@options[:headers.to_s].nil? ? @options["headers"] : { "Content-Type" => "application/json" }
       timestamp = DateTime.now.strftime("%Q")
       request_url = @@method_urls[:UPDATE_BLOCK]
 
