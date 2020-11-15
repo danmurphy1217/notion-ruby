@@ -4,12 +4,12 @@ module Utils
     :UPDATE_BLOCK => "https://www.notion.so/api/v3/saveTransactions",
   }
 
-  def title_payload(id, operations)
+  def title_payload(new_block_id, operations)
     $Title_and_styles = {
-      :requestId => id, #TODO: thiis should be dynamically created
+      :requestId => new_block_id, #TODO: thiis should be dynamically created
       :transactions => [
         {
-              :id => id, #TODO: this should be dynamically created
+              :id => new_block_id, #TODO: this should be dynamically created
               :operations => operations,
             },
       ],
@@ -19,7 +19,7 @@ module Utils
 
   def update_block_payload(operations)
     $Update_block = {
-      :requestId => "09568227-bf79-4563-af8b-a3825058d3d9",
+      :requestId => "09568227-bf79-4563-af8b-a3825058d3d9", #TODO: this should be unique
       :transactions => [
         
               :id => "5cd68079-4b35-4545-b481-b72967b81c40",
@@ -45,14 +45,17 @@ module Utils
     }
     return $Convert_block
   end
-  def create_block_payload(operations)
+  def create_block_payload(operations, request_ids)
+    request_id = request_ids[:request_id]
+    transaction_id = request_ids[:transaction_id]
+    space_id = request_ids[:space_id]
     $Create_block = {
-        :requestId => "216198e7-3203-4c25-8a00-e03802e396d7",
+        :requestId => request_id,
         :transactions => [
             {
-                :id => "065e0ab1-4022-449a-8b99-e505de4bfe29",
+                :id => transaction_id,
                 :shardId => 955090,
-                :spaceId => "f687f7de-7f4c-4a86-b109-941a8dae92d2",
+                :spaceId => space_id,
                 :operations => operations
             }
         ]

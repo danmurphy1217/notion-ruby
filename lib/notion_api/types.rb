@@ -27,8 +27,9 @@ module Notion
     end # initialize
 
     def title=(new_title)
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
       # TODO: add styling functionality that follows markdown guide...
-      update_title(new_title)
+      update_title(new_title, new_block_id)
       $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
       @title = new_title
     end # title=
@@ -37,7 +38,7 @@ module Notion
       @@notion_type
     end # self.notion_type
 
-    def update_title(new_title, styles = [])
+    def update_title(new_title, new_block_id, styles = [])
       # options are propagated from the initial get_block call.
       cookies = @@options["cookies"]
       headers = @@options["headers"]
@@ -79,7 +80,7 @@ module Notion
         },
       ]
 
-      request_body = title_payload(@id, operations)
+      request_body = title_payload(new_block_id, operations)
 
       response = HTTParty.post(
         request_url,
@@ -142,17 +143,22 @@ module Notion
       end
     end
 
-    def build_style_args(styles)
-      formatted_styles = []
-      styles[:text_styles].each { |style| formatted_styles.push(Array(style)) }
+    def build_style_args(styles, type)
+      if type == "table_of_contents"
+        final_args_payload = styles[:background] == false ? { :block_color => styles[:color] } : { :block_color => "#{styles[:color]}_background" }
+      else
+        formatted_styles = []
+        styles[:text_styles].each { |style| formatted_styles.push(Array(style)) }
 
-      # https://stackoverflow.com/questions/6085518/what-is-the-easiest-way-to-push-an-element-to-the-beginning-of-the-array
-      final_args_payload = []
-      args_payload = [@title]
-      color_subset = styles[:background] == false ? ["h", styles[:text_color]] : ["h", "#{styles[:text_color]}_background"]
-      p color_subset
-      args_payload.push(formatted_styles.unshift(color_subset))
-      final_args_payload.push(args_payload)
+        # https://stackoverflow.com/questions/6085518/what-is-the-easiest-way-to-push-an-element-to-the-beginning-of-the-array
+        final_args_payload = []
+        args_payload = [@title]
+        color_subset = styles[:background] == false ? ["h", styles[:color]] : ["h", "#{styles[:color]}_background"]
+
+        args_payload.push(formatted_styles.unshift(color_subset))
+        final_args_payload.push(args_payload)
+      end
+      p final_args_payload
       return final_args_payload
     end
 
@@ -162,7 +168,7 @@ module Notion
       request_url = @@method_urls[:UPDATE_BLOCK]
       timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
 
-      style_args = build_style_args(styles)
+      style_args = build_style_args(styles, @type)
 
       operations = [
         {
@@ -208,6 +214,154 @@ module Notion
     def revert_most_recent_change
       #TODO: how can I store most recent change in a DS and revert a change if necessary?
     end # revert_most_recent_change
+
+    def create(block_title, block_type, styles = {})
+      $Basic_styles = [
+        "to-do", "header", "sub-header", "sub-sub-header",
+        "toggle", "bulleted_list", "numbered_list", "quote",
+        "text", "table_of_contents",
+      ]
+
+      $Emoji_styles = [
+        "page", "callout",
+      ]
+
+      $Extras = [
+        "Divider",
+        "Image",
+        "Code",
+        "Equation",
+      ]
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      timestamp = DateTime.now.strftime("%Q")
+
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      page_last_id = get_last_page_block_id(@parent_id)
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      request_body = {
+        :pageId => @id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+
+      user_notion_id = get_notion_id(request_body)
+
+      operations = [
+        {
+          "id": new_block_id, #TODO: NEW ID
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "id": new_block_id, #TODO: NEW ID
+            "type": block_type,
+            "properties": {},
+            "created_time": timestamp,
+            "last_edited_time": timestamp,
+          },
+        },
+        {
+          "id": new_block_id, #TODO: NEW ID
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "parent_id": @parent_id, #TODO: PARENT ID
+            "parent_table": "block",
+            "alive": true,
+          },
+        },
+        {
+          "table": "block",
+          "id": @parent_id, #TODO: PARENT ID
+          "path": [
+            "content",
+          ],
+          "command": "listAfter",
+          "args": {
+            "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+            "id": new_block_id, #TODO: NEW ID
+          },
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "created_by_id",
+          ],
+          "command": "set",
+          "args": user_notion_id, #TODO: USER ID, stored in cooks
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "created_by_table",
+          ],
+          "command": "set",
+          "args": "notion_user",
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_by_id",
+          ],
+          "command": "set",
+          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_by_table",
+          ],
+          "command": "set",
+          "args": "notion_user",
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "properties", "title",
+          ],
+          "command": "set",
+          "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
+        },
+      ]
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = create_block_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
+      styles.empty? ? nil : new_block.update(styles)
+      return new_block
+    end # create
   end # BlockTemplate
 
   class DividerBlock < BlockTemplate
@@ -291,9 +445,55 @@ module Notion
     end
   end
 
-  class CodeBlocks < BlockTemplate
+  class CodeBlock < BlockTemplate
     # Code block: coding language and the code to assign to the block
     @@notion_type = "code"
+
+    def update(styles)
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
+      style_args = build_style_args(styles, @type)
+
+      coding_language = !styles[:coding_language].nil? ? styles[:coding_language] : "javascript"
+      code = !styles[:code].nil? ? styles[:code] : "// Created with the Ruby Notion API❤️"
+      operations = [
+        {
+          "id": @id,
+          "table": "block",
+          "path": [
+            "properties",
+          ],
+          "command": "update",
+          "args": {
+            "language": [[coding_language]],
+          },
+        },
+      ]
+
+      title_update = {
+        "table": "block",
+        "id": @id,
+        "path": [
+          "properties", "title",
+        ],
+        "command": "set",
+        "args": [[styles[:code]]],
+      }
+      
+      styles[:code] ? operations.push(title_update) : nil
+
+      request_body = update_block_payload(operations)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      return {}
+    end
+
     # args => {language => [["JavaScript"]], ty[e => "code"]}
     def self.notion_type
       @@notion_type
@@ -332,10 +532,24 @@ module Notion
       @@notion_type
     end
 
-    def create_page(title, page_icon)
+    def create_page(block_title, block_type, styles={})
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       timestamp = DateTime.now.strftime("%Q")
+
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      page_last_id = get_last_page_block_id(@parent_id)
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      #! ASSUMPTION: Notion is using hex formatting for IDs -> ID can contain a-f and 0-9
       request_url = @@method_urls[:UPDATE_BLOCK]
 
       request_body = {
@@ -346,16 +560,15 @@ module Notion
       }
 
       user_notion_id = get_notion_id(request_body)
-      page_last_id = get_last_page_block_id(@parent_id)
 
       operations = [
         {
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "table": "block",
           "path": [],
           "command": "update",
           "args": {
-            "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+            "id": new_block_id, #TODO: NEW ID
             "type": "page",
             "properties": {},
             "created_time": timestamp,
@@ -363,7 +576,7 @@ module Notion
           },
         },
         {
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "table": "block",
           "path": [],
           "command": "update",
@@ -382,12 +595,12 @@ module Notion
           "command": "listAfter",
           "args": {
             "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-            "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+            "id": new_block_id, #TODO: NEW ID
           },
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "created_by_id",
           ],
@@ -396,7 +609,7 @@ module Notion
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "created_by_table",
           ],
@@ -405,7 +618,7 @@ module Notion
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "last_edited_time",
           ],
@@ -414,7 +627,7 @@ module Notion
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "last_edited_by_id",
           ],
@@ -423,7 +636,7 @@ module Notion
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "last_edited_by_table",
           ],
@@ -432,33 +645,33 @@ module Notion
         },
         {
           "table": "block",
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a", #TODO: NEW ID
+          "id": new_block_id, #TODO: NEW ID
           "path": [
             "properties", "title",
           ],
           "command": "set",
-          "args": [[title]],
+          "args": [[block_title]],
         },
         {
-          "id": "05d0db2c-cd8a-40bb-852d-d53373fc7b0a",
+          "id": new_block_id,
           "table": "block",
           "path": [
             "format",
             "page_icon",
           ],
           "command": "set",
-          "args": page_icon,
+          "args": styles[:emoji],
         },
       ]
 
-      request_body = create_block_payload(operations)
+      request_body = create_block_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
         :cookies => cookies,
         :headers => headers,
       )
-      return response.body
+      new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
     end
   end
 
@@ -526,6 +739,62 @@ module Notion
     @@notion_type = "table_of_contents"
     def self.notion_type
       @@notion_type
+    end
+
+    def update(styles)
+      style_args = build_style_args(styles, @type)
+      timestamp = DateTime.now.strftime("%Q")
+
+      operations = [
+        {
+          "id": @id,
+          "table": "block",
+          "path": [
+            "format",
+          ],
+          "command": "update",
+          "args": style_args,
+        },
+        {
+          "table": "block",
+          "id": @id,
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
+        {
+          "table": "block",
+          "id": @parent_id,
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
+      ]
+
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+      request_body = create_block_payload(operations, request_ids)
+      p request_body
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      return response.body
     end
   end
 end # Notion

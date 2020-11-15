@@ -42,7 +42,6 @@ module Notion
         :headers => headers,
       )
       jsonified_record_response = JSON.parse(response.body)["recordMap"]
-
       return jsonified_record_response
     end
 
@@ -121,18 +120,27 @@ module Notion
       end
       block_id = clean_id
       #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
-      # p jsonified_record_response["block"][clean_id]
+      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
+        p clean_id
+        block_parent_id = clean_id
+      else
+        p "parent table is not space..."
+        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+      end
       block_title = extract_title(clean_id, jsonified_record_response)
-      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
 
-      if block_type != "page"
+      if block_type.nil?
+        return {}
+      else 
         block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
         return block_class.new(block_type, block_id, block_title, block_parent_id, self.token_v2)
-      else
-        $LOGGER.warn("Root block of page should be treated as parent ID.")
-        Notion::PageBlock.new(block_type, block_id, block_title, block_id, self.token_v2)
       end
+      # else
+        # TODO: gotta fix this to find a way to check if the "page" is the top-level block.
+        # $LOGGER.warn("Root block of page should be treated as parent ID.")
+        # Notion::PageBlock.new(block_type, block_id, block_title, block_id, self.token_v2)
+      # end
     end
 
     def get_block_children_ids(url_or_id)
@@ -144,8 +152,15 @@ module Notion
         :verticalColumns => false,
       }
       jsonified_record_response = get_all_block_info(clean_id, request_body)
-      children_ids = extract_children_ids(clean_id, jsonified_record_response)
-      return children_ids
+      if !jsonified_record_response.empty?
+        if jsonified_record_response["block"].empty?
+          return {}
+        else
+          return jsonified_record_response["block"][clean_id]["value"]["content"]
+        end
+      else
+        return {}
+      end
     end
 
     def check_id_length(id)
