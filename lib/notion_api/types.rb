@@ -211,157 +211,13 @@ module Notion
       return {}
     end
 
-    def revert_most_recent_change
+    def revert
       #TODO: how can I store most recent change in a DS and revert a change if necessary?
-    end # revert_most_recent_change
+    end # revert
 
-    def create(block_title, block_type, styles = {})
-      $Basic_styles = [
-        "to-do", "header", "sub-header", "sub-sub-header",
-        "toggle", "bulleted_list", "numbered_list", "quote",
-        "text", "table_of_contents",
-      ]
-
-      $Emoji_styles = [
-        "page", "callout",
-      ]
-
-      $Extras = [
-        "Divider",
-        "Image",
-        "Code",
-        "Equation",
-      ]
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
-
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-      page_last_id = get_last_page_block_id(@parent_id)
-
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
-      }
-
-      request_body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-
-      user_notion_id = get_notion_id(request_body)
-
-      operations = [
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "id": new_block_id, #TODO: NEW ID
-            "type": block_type,
-            "properties": {},
-            "created_time": timestamp,
-            "last_edited_time": timestamp,
-          },
-        },
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "parent_id": @parent_id, #TODO: PARENT ID
-            "parent_table": "block",
-            "alive": true,
-          },
-        },
-        {
-          "table": "block",
-          "id": @parent_id, #TODO: PARENT ID
-          "path": [
-            "content",
-          ],
-          "command": "listAfter",
-          "args": {
-            "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-            "id": new_block_id, #TODO: NEW ID
-          },
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID, stored in cooks
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "properties", "title",
-          ],
-          "command": "set",
-          "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
-        },
-      ]
-
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      request_body = create_block_payload(operations, request_ids)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
-      styles.empty? ? nil : new_block.update(styles)
-      return new_block
-    end # create
+    def duplicate
+      #TODO: add this.
+    end
   end # BlockTemplate
 
   class DividerBlock < BlockTemplate
@@ -481,7 +337,7 @@ module Notion
         "command": "set",
         "args": [[styles[:code]]],
       }
-      
+
       styles[:code] ? operations.push(title_update) : nil
 
       request_body = update_block_payload(operations)
@@ -532,7 +388,159 @@ module Notion
       @@notion_type
     end
 
-    def create_page(block_title, block_type, styles={})
+    def create(block_title, block_type, styles = {})
+      $Basic_styles = [
+        "to-do", "header", "sub-header", "sub-sub-header",
+        "toggle", "bulleted_list", "numbered_list", "quote",
+        "text", "table_of_contents",
+      ]
+
+      $Emoji_styles = [
+        "page", "callout",
+      ]
+
+      $Extras = [
+        "Divider",
+        "Image",
+        "Code",
+        "Equation",
+      ]
+      if (block_type == Notion::PageBlock) || (block_type == Notion::CalloutBlock)
+        return create_page(block_title, block_type, styles)
+      end
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      timestamp = DateTime.now.strftime("%Q")
+
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      page_last_id = get_last_page_block_id(@id)
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      request_body = {
+        :pageId => @id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+
+      user_notion_id = get_notion_id(request_body)
+
+      operations = [
+        {
+          "id": new_block_id, #TODO: NEW ID
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "id": new_block_id, #TODO: NEW ID
+            "type": block_type.notion_type,
+            "properties": {},
+            "created_time": timestamp,
+            "last_edited_time": timestamp,
+          },
+        },
+        {
+          "id": new_block_id, #TODO: NEW ID
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "parent_id": @id, #TODO: PARENT ID
+            "parent_table": "block",
+            "alive": true,
+          },
+        },
+        {
+          "table": "block",
+          "id": @id, #TODO: PARENT ID
+          "path": [
+            "content",
+          ],
+          "command": "listAfter",
+          "args": {
+            "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+            "id": new_block_id, #TODO: NEW ID
+          },
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "created_by_id",
+          ],
+          "command": "set",
+          "args": user_notion_id, #TODO: USER ID, stored in cooks
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "created_by_table",
+          ],
+          "command": "set",
+          "args": "notion_user",
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_by_id",
+          ],
+          "command": "set",
+          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "last_edited_by_table",
+          ],
+          "command": "set",
+          "args": "notion_user",
+        },
+        {
+          "table": "block",
+          "id": new_block_id, #TODO: NEW ID
+          "path": [
+            "properties", "title",
+          ],
+          "command": "set",
+          "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
+        },
+      ]
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = create_block_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
+      # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
+      styles.empty? ? nil : new_block.update(styles)
+      return new_block
+    end # create
+
+    def create_page(block_title, block_type, styles = {})
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       timestamp = DateTime.now.strftime("%Q")
@@ -671,9 +679,17 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
+      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
+      return new_block
     end
   end
+
+  # class RootPageBlock < BlockTemplate
+  #   @@notion_type = "root_page"
+  #   def self.notion_type
+  #     @@notion_type
+  #   end
+  # end
 
   class ToggleBlock < BlockTemplate
     # Toggle block: Accepts text and a hash of children to create.
@@ -797,10 +813,19 @@ module Notion
       return response.body
     end
   end
+
+  class ColumnListBlock < BlockTemplate
+    @@notion_type = "column_list"
+    def self.notion_type
+      @@notion_type
+    end
+  end
 end # Notion
 
 classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
+p classes
 notion_types = []
 classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
+p notion_types
 BLOCK_TYPES = notion_types.zip(classes).to_h
 p BLOCK_TYPES

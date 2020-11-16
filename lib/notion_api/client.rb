@@ -13,14 +13,15 @@ module Notion
 end
 
 
-dog = Emoji.find_by_alias("heart").raw
+dog = Emoji.find_by_alias("eyes").raw
 
 @client = Notion::Client.new(ENV["token_v2"])
 #! get a page (referred to as a root-level block)
+# @block = @client.get_block("https://www.notion.so/danmurphy/Econometrics-7375d19cf163453ebb872ad863934f8c")
 @block = @client.get_block("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66")
 #! create a subpage with stles
-
-p @block.get_block_children_ids("56c76629-eda2-6ecf-a168-6a5d20a0ec51")
+# p @block.get_block_children_ids(@block.id)
+# p @block.get_block_children_ids(@block.parent_id)
 
 styles = {
   #! you can only set text color of background color. They are mutually exclusive.
@@ -28,16 +29,16 @@ styles = {
   :color => "red", # the text color
   :text_styles => ["b", "i", "_", "c"],
   :background => true,
-  :coding_language => "python",
+  :coding_language => "ruby",
   :emoji => dog,
-  # :code => "print('hello world')"
+  :code => "p 'hello world'"
 }
 
-
+@block.create("I should work", Notion::PageBlock, styles)
 
 # p @block.create_page("heuyyy", "page", styles= styles)
 # @block.update(styles)
-# p @block.create("heuyyy", "page", styles= styles)
+# p @block.create("heuyyy", Notion::CodeBlock, styles= styles)
 
 
 =begin

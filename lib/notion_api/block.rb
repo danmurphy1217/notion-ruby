@@ -26,7 +26,7 @@ module Notion
     end
 
     def get_last_page_block_id(url_or_id)
-      return get_block_children_ids(url_or_id)[-1]
+      return get_block_children_ids(url_or_id).empty? ? [] : get_block_children_ids(url_or_id)[-1]
     end
 
     def get_all_block_info(clean_id, body)
@@ -85,7 +85,7 @@ module Notion
 
     def extract_id(url_or_id)
       begin
-        if (url_or_id.length == 36) or (url_or_id.split("-").length == 5)
+        if (url_or_id.length == 36) or (url_or_id.split("-").length == 5 and !url_or_id.match(/^(http|https)/))
           return url_or_id
         else
           pattern = [8, 13, 18, 23]
@@ -110,7 +110,7 @@ module Notion
       }
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
-      while jsonified_record_response.empty?
+      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
         if i >= 20
           return {}
         else
@@ -119,20 +119,22 @@ module Notion
         end
       end
       block_id = clean_id
-      #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
-      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
-        p clean_id
-        block_parent_id = clean_id
-      else
-        p "parent table is not space..."
-        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
-      end
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
+      #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
+      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
+        # unique case for top-level page... top-level pages have the same ID and parent ID.
+        block_parent_id = clean_id
+        block_type = "page"
+      else
+        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+      end
 
       if block_type.nil?
         return {}
       else 
+        p block_type
+        p BLOCK_TYPES[block_type]
         block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
         return block_class.new(block_type, block_id, block_title, block_parent_id, self.token_v2)
       end
@@ -152,14 +154,19 @@ module Notion
         :verticalColumns => false,
       }
       jsonified_record_response = get_all_block_info(clean_id, request_body)
-      if !jsonified_record_response.empty?
-        if jsonified_record_response["block"].empty?
+      i = 0
+      while jsonified_record_response.empty?
+        if i >= 20
           return {}
         else
-          return jsonified_record_response["block"][clean_id]["value"]["content"]
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
         end
+      end
+      if jsonified_record_response["block"][clean_id]["value"]["content"]
+        return jsonified_record_response["block"][clean_id]["value"]["content"]
       else
-        return {}
+        return []
       end
     end
 
