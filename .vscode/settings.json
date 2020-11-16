@@ -16,5 +16,7 @@
         "titleBar.inactiveBackground": "#f9e64f99",
         "titleBar.inactiveForeground": "#15202b99"
     },
-    "peacock.color": "#f9e64f"
+    "peacock.color": "#f9e64f",
+    "rufo.exe": "rufo",  // can be an absolute path
+    "rufo.useBundler": false, 
 }

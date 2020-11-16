@@ -2,12 +2,14 @@ PATH
   remote: .
   specs:
     notion_api (1.0.0)
+      gemoji
       httparty
       json
 
 GEM
   remote: https://rubygems.org/
   specs:
+    gemoji (3.0.1)
     httparty (0.18.1)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)

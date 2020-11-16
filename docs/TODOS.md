@@ -1,3 +1,8 @@
+# Use Cases:
+- sending daily system checks to notion
+- check responses for emails, zendesk tickets, etc.
+- test cases to cover all use cases [minimal functionality of something in production]
+
 I think it might make sense to break the available methods up into Page-oriented methods (adding new blocks and performing page-structured actions) and then block-oriented methods that include styling the blocks and updating them or performing specific actions on them.
 
 ### right now, it is set up so that only a page block instance can access the create_page method, but I would rather it be so that any type of block can CREATE any type of other block, and then each separate block instance that inherits from the core template have additional neat methods (such as checked?= for the to-do block).

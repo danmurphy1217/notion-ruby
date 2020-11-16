@@ -13,35 +13,40 @@ module Notion
 end
 
 
-dog = Emoji.find_by_alias("eyes").raw
+heart = Emoji.find_by_alias("heart").raw
 
 @client = Notion::Client.new(ENV["token_v2"])
+
 #! get a page (referred to as a root-level block)
-# @block = @client.get_block("https://www.notion.so/danmurphy/Econometrics-7375d19cf163453ebb872ad863934f8c")
-@block = @client.get_block("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66")
-#! create a subpage with stles
-# p @block.get_block_children_ids(@block.id)
-# p @block.get_block_children_ids(@block.parent_id)
-p @block
+@block = @client.get_block("https://www.notion.so/danmurphy/Tutorial-6c516b1009904d4da875c7e7af8329ba")
+
+
 styles = {
   #! you can only set text color of background color. They are mutually exclusive.
   #! one way around this is to change the default block color, and then mess with the background.
-  :color => "red", # the text color
+  :color => "teal", # the text color
   :text_styles => ["b", "i", "_", "c"],
   :background => true,
   :coding_language => "ruby",
-  :emoji => dog,
-  :code => "p 'hello world'"
+  :emoji => heart,
+  :code => "p 'hello world!'"
 }
 
-# @block.create("I should work", Notion::PageBlock, styles)
+# p CLASSES.each { |cls| @block.create("heeyyy", Notion.const_get(cls.to_s), styles) }
 
-# p @block.create_page("heuyyy", "page", styles= styles)
-# @block.update(styles)
-# p @block.create("heuyyy", Notion::CodeBlock, styles= styles)
+@block = @client.get_block("106050d8-7fcc-5fe5-a816-8158718c54f6")
+
+@block.duplicate("652b350e-4561-df87-c919-25a0f76fca0e")
+
+
+
+
+# @block.create("Hello", Notion::TodoBlock, styles=styles)
+#! create a subpage with stles
 
 
 =begin
+POSSIBLE STYLES: ["_", "b", "s", "i", "c"]
 Takeaways:
 1. The following block types act in a very similar way AND should accept similar styles:
   - to-do, header, sub-header, sub-sub-header, toggle, bulleted_list, numbered_list, quote, text, table of contents [styling should be applied differently though]
@@ -54,16 +59,3 @@ Takeaways:
   - equation: exact same as text but the args are a bit diff: ["⁍", [["e", "x = x^2"]]]
   - 
 =end
-
-# @block = @block.convert(Notion::CalloutBlock)
-# POSSIBLE STYLES: ["_", "b", "s", "i", "c"]
-# styles = {
-#   #! you can only set text color of background color. They are mutually exclusive.
-#   #! one way around this is to change the default block color, and then mess with the background.
-#   :text_color => "teal", # the text color
-#   :text_styles => ["b", "i", "_"],
-#   :background => true,
-# }
-# p @block.update(styles = styles)
-
-# USE CASE: create subpage, dump meta-data from API requests.

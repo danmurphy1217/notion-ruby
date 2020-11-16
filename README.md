@@ -64,19 +64,29 @@ Each of these classes has access to the following methods:
 >>> @block.convert(Notion::CalloutBlock)
 >>> @block.type
 "callout"
+>>> @block # new class instance returned...
+#<Notion::CalloutBlock:0x00007ffb75b19ea0 **omitted meta-data**>
 ```
 4. `duplicate`→ duplicate the current block.
 [TODO]
 5. `revert`→ reverts the most recent change.
 [TODO]
 ## Creating New Blocks
-In Notion, the parent ID for a block is the page that it is assigned to (pretty confident in this, just need to double-check for nested blocks). Because of this, it made intuitive sense to build the wrapper with a similar structure: The `create` method is only available to the `PageBlock` class, and the `PageBlock` class acts as an entry-point for creating new blocks. This means that you can create new blocks on a page by:
-1. using the `get_block` method to retrieve the page you want to create new blocks on.
-2. use the `create` method on the class returned from the `get_block` call to create new blocks. For example:
+In Notion, the parent ID for a block that is **not** nested is the page that the block appears on. For nested blocks, the parent ID is the block that the nested block appears within. For example, the parent ID for a block contained within a toggle block **is** the toggle block. But, the toggle block's parent ID, as long as it is not nested within another block, is the page that the toggle block appears on. Given this tree-like structure, it made intuitive sense to build the wrapper with similar functionality:
+- when the `create` method is called on a `PageBlock` instance, a non-nested block is created on that page, and its parent ID is the ID of the `PageBlock`
+- when the `create` method is called on a non-`PageBlock` instance, a nested block is created that belongs to the instance the `create` method is invoked upon.
+
+In any situation, a developer is only two lines of code away from creating a new block:
+1. use the `get_block` method to retrieve the page or block in which you want to create a new block.
+2. use the `create` method on the class returned from the `get_block` call to create the new non-nested or nested block. For example:
 ```ruby
 >>> client = Notion::Client.new("<insert_v2_token_here>")
->>> @block = @client.get_block("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66")
+>>> @block = @client.get_block("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66") # grab a page block...
 >>> @my_new_block = @block.create("Enter title here...", Notion::CalloutBlock) # lets create a callout block...
 >>> @my_new_block
 #<Notion::CalloutBlock:0x00008g9345d4ea09 **omitted meta-data**>
+>>> @block = @client.get_block("4ee54585-6fbb-4f2f-b482-373c38370c61") # grab a toggle block...
+>>> @my_new_block = @block.create("Enter title here...", Notion::CalloutBlock) # lets create a nested callout block...
+>>> @my_new_block
+#<Notion::CalloutBlock:0x00008g3324r4ea18 **omitted meta-data**>
 ```

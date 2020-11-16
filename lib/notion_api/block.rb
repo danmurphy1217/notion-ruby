@@ -145,7 +145,7 @@ module Notion
       # end
     end
 
-    def get_block_children_ids(url_or_id)
+    def get_block_children_ids(url_or_id = @id)
       clean_id = extract_id(url_or_id)
       request_body = {
         :pageId => clean_id,
