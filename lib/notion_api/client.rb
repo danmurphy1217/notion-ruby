@@ -22,7 +22,7 @@ dog = Emoji.find_by_alias("eyes").raw
 #! create a subpage with stles
 # p @block.get_block_children_ids(@block.id)
 # p @block.get_block_children_ids(@block.parent_id)
-
+p @block
 styles = {
   #! you can only set text color of background color. They are mutually exclusive.
   #! one way around this is to change the default block color, and then mess with the background.
@@ -34,7 +34,7 @@ styles = {
   :code => "p 'hello world'"
 }
 
-@block.create("I should work", Notion::PageBlock, styles)
+# @block.create("I should work", Notion::PageBlock, styles)
 
 # p @block.create_page("heuyyy", "page", styles= styles)
 # @block.update(styles)

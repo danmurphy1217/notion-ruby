@@ -577,7 +577,7 @@ module Notion
           "command": "update",
           "args": {
             "id": new_block_id, #TODO: NEW ID
-            "type": "page",
+            "type": block_type.notion_type,
             "properties": {},
             "created_time": timestamp,
             "last_edited_time": timestamp,

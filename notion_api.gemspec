@@ -13,10 +13,16 @@ Gem::Specification.new do |spec|
     spec.summary        = %q[Easily connect to Notion data with Ruby]
     spec.description    = %q[Easily connect to and core features of Notion with Ruby]
     spec.license        = "MIT"
+    spec.homepage = "https://github.com/danmurphy1217/notion-ruby"
 
+    spec.files = Dir[
+        "README.md",
+        "lib/**/*.rb",
+      ]
 
     spec.add_dependency "httparty"
     spec.add_dependency "json"
+    spec.add_dependency "gemoji"
 
     spec.add_development_dependency "bundler"
     spec.add_development_dependency "rake"
