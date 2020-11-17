@@ -214,7 +214,7 @@ module Notion
       #TODO: how can I store most recent change in a DS and revert a change if necessary?
     end # revert
 
-    def duplicate(location=nil)
+    def duplicate(location = nil)
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
@@ -243,91 +243,91 @@ module Notion
       # p block.title, block.type, block.id, block.parent_id
 
       operations = [
-                  {
+        {
+                    "id": new_block_id,
+                    "table": "block",
+                    "path": [],
+                    "command": "update",
+                    "args": {
                       "id": new_block_id,
-                      "table": "block",
-                      "path": [],
-                      "command": "update",
-                      "args": {
-                          "id": new_block_id,
-                          "version": 10,
-                          "type": block.type,
-                          "properties": {
-                              "title": [
-                                  [
+                      "version": 10,
+                      "type": block.type,
+                      "properties": {
+                        "title": [
+                          [
                                     @title,
-                                      [
-                                          [
-                                              "h",
-                                              "red_background"
+                                    [
+                                        [
+                                            "h",
+                                            "red_background",
                                           ],
-                                          [
-                                              "b"
+                                        [
+                                            "b",
                                           ],
-                                          [
-                                              "i"
+                                        [
+                                            "i",
                                           ],
-                                          [
-                                              "_"
+                                        [
+                                            "_",
                                           ],
-                                          [
-                                              "c"
-                                          ]
-                                      ]
-                                  ]
-                              ]
-                          },
-                          "created_time": timestamp,
-                          "last_edited_time": timestamp,
-                          "created_by_table": "notion_user",
-                          "created_by_id": user_notion_id,
-                          "last_edited_by_table": "notion_user",
-                          "last_edited_by_id": user_notion_id,
-                          "copied_from": block.id
-                      }
+                                        [
+                                            "c",
+                                          ],
+                                      ],
+                                  ],
+                        ],
+                      },
+                      "created_time": timestamp,
+                      "last_edited_time": timestamp,
+                      "created_by_table": "notion_user",
+                      "created_by_id": user_notion_id,
+                      "last_edited_by_table": "notion_user",
+                      "last_edited_by_id": user_notion_id,
+                      "copied_from": block.id,
+                    },
                   },
-                  {
+        {
+                    "id": new_block_id,
+                    "table": "block",
+                    "path": [],
+                    "command": "update",
+                    "args": {
+                      "parent_id": block.parent_id,
+                      "parent_table": "block",
+                      "alive": true,
+                    },
+                  },
+        {
+                    "table": "block",
+                    "id": block.parent_id,
+                    "path": [
+                      "content",
+                    ],
+                    "command": "listAfter",
+                    "args": {
+                      "after": location.nil? ? block.id : location,
                       "id": new_block_id,
-                      "table": "block",
-                      "path": [],
-                      "command": "update",
-                      "args": {
-                          "parent_id": block.parent_id,
-                          "parent_table": "block",
-                          "alive": true
-                      }
+                    },
                   },
-                  {
-                      "table": "block",
-                      "id": block.parent_id,
-                      "path": [
-                          "content"
-                      ],
-                      "command": "listAfter",
-                      "args": {
-                          "after": location.nil? ? block.id : location,
-                          "id": new_block_id
-                      }
+        {
+                    "table": "block",
+                    "id": new_block_id,
+                    "path": [
+                      "last_edited_time",
+                    ],
+                    "command": "set",
+                    "args": 1605556440000,
                   },
-                  {
-                      "table": "block",
-                      "id": new_block_id,
-                      "path": [
-                          "last_edited_time"
-                      ],
-                      "command": "set",
-                      "args": 1605556440000
+        {
+                    "table": "block",
+                    "id": block.parent_id,
+                    "path": [
+                      "last_edited_time",
+                    ],
+                    "command": "set",
+                    "args": 1605556440000,
                   },
-                  {
-                      "table": "block",
-                      "id": block.parent_id,
-                      "path": [
-                          "last_edited_time"
-                      ],
-                      "command": "set",
-                      "args": 1605556440000
-                  }
-        ]
+      ]
 
       request_body = create_block_payload(operations, request_ids)
       response = HTTParty.post(
@@ -338,6 +338,7 @@ module Notion
       )
       return {}
     end
+
     def create(block_title, block_type, styles = {})
       $Basic_styles = [
         "to-do", "header", "sub-header", "sub-sub-header",
@@ -489,6 +490,7 @@ module Notion
       styles.empty? ? nil : new_block.update(styles)
       return new_block
     end # create
+
     def create_page(block_title, block_type, styles = {})
       cookies = @@options["cookies"]
       headers = @@options["headers"]
@@ -1091,6 +1093,7 @@ module Notion
       @@notion_type
     end
   end
+
   class ColumnBlock < BlockTemplate
     @@notion_type = "column"
     def self.notion_type
@@ -1099,7 +1102,7 @@ module Notion
   end
 end # Notion
 
-CLASSES = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
+classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
 notion_types = []
-CLASSES.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
-BLOCK_TYPES = notion_types.zip(CLASSES).to_h
+classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
+BLOCK_TYPES = notion_types.zip(classes).to_h

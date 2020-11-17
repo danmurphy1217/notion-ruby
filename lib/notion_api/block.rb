@@ -31,8 +31,17 @@ module Notion
 
     def get_all_block_info(clean_id, body)
       @@options["cookies"][:token_v2] = self.token_v2
-      cookies = !@@options["cookies"].nil? ? @@options["cookies"] : { :token_v2.to_s => token_v2 }
-      headers = !@@options["headers"].nil? ? @@options["headers"] : { "Content-Type" => "application/json" }
+      cookies = @@options["cookies"] ? @@options["cookies"] : { :token_v2.to_s => token_v2 }
+      headers = @@options["headers"] ? @@options["headers"] : { "Content-Type" => "application/json" }
+      
+      # PATHSTREAM
+      # headers["x-notion-active-user-header"] = "1dd05d38-b8ba-4b29-bde0-c4775b1eac77"
+      # PERSONAL
+      # headers["x-notion-active-user-header"] = "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26"
+      # STACAUTO
+      # headers["x-notion-active-user-header"] = "b22f2670-a643-49e1-bc49-05e8763f92e4"
+
+
       request_url = @@method_urls[:GET_BLOCK]
 
       response = HTTParty.post(
@@ -41,6 +50,18 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
+
+      p response.headers["x-notion-user-id"], "YOOO"
+
+      headers["x-notion-active-user-header"] = "b22f2670-a643-49e1-bc49-05e8763f92e4"
+
+      res_two = HTTParty.post(
+      "https://www.notion.so/api/v3/loadUserContent",
+        :body => {:platform => "web"}.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      p res_two.headers["x-notion-user-id"], "YERRR"
       jsonified_record_response = JSON.parse(response.body)["recordMap"]
       return jsonified_record_response
     end
@@ -133,8 +154,6 @@ module Notion
       if block_type.nil?
         return {}
       else 
-        p block_type
-        p BLOCK_TYPES[block_type]
         block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
         return block_class.new(block_type, block_id, block_title, block_parent_id, self.token_v2)
       end
@@ -143,6 +162,33 @@ module Notion
         # $LOGGER.warn("Root block of page should be treated as parent ID.")
         # Notion::PageBlock.new(block_type, block_id, block_title, block_id, self.token_v2)
       # end
+    end
+    def get_block_children(url_or_id = @id)
+      clean_id = extract_id(url_or_id)
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty?
+        if i >= 20
+          return {}
+        else
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
+        end
+      end
+      if jsonified_record_response["block"][clean_id]["value"]["content"]
+        children_ids = jsonified_record_response["block"][clean_id]["value"]["content"]
+        children_class_instances = []
+        children_ids.each {|child| children_class_instances.push(get_block(child))}
+        return children_class_instances
+      else
+        return []
+      end
     end
 
     def get_block_children_ids(url_or_id = @id)
