@@ -2,14 +2,12 @@ PATH
   remote: .
   specs:
     notion_api (1.0.0)
-      gemoji
       httparty
       json
 
 GEM
   remote: https://rubygems.org/
   specs:
-    gemoji (3.0.1)
     httparty (0.18.1)
       mime-types (~> 3.0)
       multi_xml (>= 0.5.2)
@@ -19,6 +17,7 @@ GEM
     mime-types-data (3.2020.1104)
     multi_xml (0.6.0)
     rake (13.0.1)
+    rufo (0.12.0)
 
 PLATFORMS
   ruby
@@ -27,6 +26,7 @@ DEPENDENCIES
   bundler
   notion_api!
   rake
+  rufo
 
 BUNDLED WITH
    2.1.4

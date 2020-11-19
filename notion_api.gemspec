@@ -22,8 +22,8 @@ Gem::Specification.new do |spec|
 
     spec.add_dependency "httparty"
     spec.add_dependency "json"
-    spec.add_dependency "gemoji"
 
     spec.add_development_dependency "bundler"
+    spec.add_development_dependency "rufo"
     spec.add_development_dependency "rake"
 end

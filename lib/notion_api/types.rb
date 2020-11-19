@@ -9,15 +9,12 @@ $LOGGER.level = Logger::INFO
 
 module Notion
   class BlockTemplate < Block
+    #! Base Template for all blocks. Inherits core methods from the Block class defined in block.rb
     include Utils
 
     attr_reader :type, :id, :title, :parent_id
-    #! Base Template for all blocks. When a request is sent for a block,
-    #! a specific block class instance is returned. The type of
-    #! block class instance that is returned defines the methods
-    #! and available functionality for the developer. Given this,
-    #! many core methods surrounding updating data and accessing
-    #! block attributes are defined here.
+    $Components = Utils::Components.new
+
     def initialize(type, id, title, parent_id, token_v2)
       @type = type
       @id = id
@@ -26,29 +23,39 @@ module Notion
       @token_v2 = token_v2
     end # initialize
 
-    def title=(new_title)
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      # TODO: add styling functionality that follows markdown guide...
-      update_title(new_title, new_block_id)
-      $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
-      @title = new_title
-    end # title=
-
     def self.notion_type
+      #! assign the block type
       @@notion_type
     end # self.notion_type
 
-    def update_title(new_title, new_block_id, styles = [])
-      # options are propagated from the initial get_block call.
+    def title=(new_title)
+      #! Change the title of a block. 
+      #! new_title -> new title for the block : ``str``
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      update_title(new_title.to_s, request_id, transaction_id)
+      $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
+      @title = new_title
+      return true
+    end # title=
+
+    def update_title(new_title, request_id, transaction_id, space_id)
+      #! Helper method for sending POST request to change title of block.
+      #! new_title -> new title for the block : ``str``
+      #! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
+      #! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
+      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.now.to_i
 
-      #! when updating a block, notion does three things:
-      #! 1. If updating a title, notion will update the properties and title paths and set a new title
-      #! 2. Then, Notion will update the last time that block was updated by accessing the last_edited_time path (this is done with the UNIX timestamp multiplied by 1000 [since they're using JS, and JS using the number of MS since epoch])
-      #! 3. Then, Notion will update the last time the page that contains that block was updated (same UNIX timestamp x 1000).
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      #TODO: this can be extrapolated to helper functions...
       operations = [
         # UPDATE BLOCK TITLE
         {
@@ -56,7 +63,7 @@ module Notion
           :table => "block",
           :path => ["properties", "title"],
           :command => "set",
-          :args => [[new_title, styles.each { |style| [style] }]],
+          :args => [[new_title]],
         },
         # UPDATE BLOCK ID LAST EDITED TIME
         {
@@ -80,7 +87,7 @@ module Notion
         },
       ]
 
-      request_body = title_payload(new_block_id, operations)
+      request_body = build_payload(operations, request_ids) # defined in utils.rb
 
       response = HTTParty.post(
         request_url,
@@ -92,46 +99,40 @@ module Notion
     end # update_title
 
     def convert(block_class_to_convert_to)
+      #! convert a block from its current type to another.
+      #! block_class_to_convert_to -> the type of block to convert to : ``cls``
       if self.type == block_class_to_convert_to.notion_type
-        # if converting to same type, return self
+        # if converting to same type, skip and return self
         return self
       else
-        #TODO: different blocks can take different params at the time of conversion, so there may be a better way to handle this.
+        # setup cookies, headers, and grab/create static vars for request
         cookies = @@options["cookies"]
         headers = @@options["headers"]
         request_url = @@method_urls[:UPDATE_BLOCK]
         timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
+        
+        # set random IDs for request
+        request_id = extract_id(SecureRandom.hex(n = 16))
+        transaction_id = extract_id(SecureRandom.hex(n = 16))
+        space_id = extract_id(SecureRandom.hex(n = 16))
+        request_ids = {
+          :request_id => request_id,
+          :transaction_id => transaction_id,
+          :space_id => space_id,
+        }
+        
+        # build hash's that contain the operations to send to Notions backend
+        convert_type_hash = $Components.convert_type(@id, block_class_to_convert_to)
+        last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+        last_edited_time_child_hash = $Components.last_edited_time(@id)
+        
         operations = [
-          {
-            "id": @id,
-            "table": "block",
-            "path": [],
-            "command": "update",
-            "args": {
-              "type" => block_class_to_convert_to.notion_type,
-            },
-          },
-          {
-            "table": "block",
-            "id": @id,
-            "path": [
-              "last_edited_time",
-            ],
-            "command": "set",
-            "args": timestamp,
-          },
-          {
-            "table": "block",
-            "id": @parent_id,
-            "path": [
-              "last_edited_time",
-            ],
-            "command": "set",
-            "args": timestamp,
-          },
+          convert_type_hash,
+          last_edited_time_parent_hash,
+          last_edited_time_child_hash
         ]
 
-        request_body = convert_block_payload(operations)
+        request_body = build_payload(operations, request_ids)
         response = HTTParty.post(
           request_url,
           :body => request_body.to_json,
@@ -143,78 +144,9 @@ module Notion
       end
     end
 
-    def build_style_args(styles, type)
-      if type == "table_of_contents"
-        final_args_payload = styles[:background] == false ? { :block_color => styles[:color] } : { :block_color => "#{styles[:color]}_background" }
-      else
-        formatted_styles = []
-        styles[:text_styles].each { |style| formatted_styles.push(Array(style)) }
-
-        # https://stackoverflow.com/questions/6085518/what-is-the-easiest-way-to-push-an-element-to-the-beginning-of-the-array
-        final_args_payload = []
-        args_payload = [@title]
-        color_subset = styles[:background] == false ? ["h", styles[:color]] : ["h", "#{styles[:color]}_background"]
-
-        args_payload.push(formatted_styles.unshift(color_subset))
-        final_args_payload.push(args_payload)
-      end
-      return final_args_payload
-    end
-
-    def update(styles)
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
-
-      style_args = build_style_args(styles, @type)
-
-      operations = [
-        {
-          "id": @id,
-          "table": "block",
-          "path": [
-            "properties",
-            "title",
-          ],
-          "command": "set",
-          "args": style_args,
-        },
-        {
-          "table": "block",
-          "id": @id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": @parent_id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-      ]
-
-      request_body = update_block_payload(operations)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      return self
-    end
-
-    def revert
-      #TODO: how can I store most recent change in a DS and revert a change if necessary?
-    end # revert
-
     def duplicate(location = nil)
+      #! duplicate the block that this method is invoked upon.
+      #! location -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
@@ -239,97 +171,74 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
-      block = location.nil? ? self : get_block(location)
-      # p block.title, block.type, block.id, block.parent_id
+      block = location ? get_block(location) : self # allows dev to place block anywhere!
 
       operations = [
         {
-                    "id": new_block_id,
-                    "table": "block",
-                    "path": [],
-                    "command": "update",
-                    "args": {
-                      "id": new_block_id,
-                      "version": 10,
-                      "type": block.type,
-                      "properties": {
-                        "title": [
-                          [
-                                    @title,
-                                    [
-                                        [
-                                            "h",
-                                            "red_background",
-                                          ],
-                                        [
-                                            "b",
-                                          ],
-                                        [
-                                            "i",
-                                          ],
-                                        [
-                                            "_",
-                                          ],
-                                        [
-                                            "c",
-                                          ],
-                                      ],
-                                  ],
-                        ],
-                      },
-                      "created_time": timestamp,
-                      "last_edited_time": timestamp,
-                      "created_by_table": "notion_user",
-                      "created_by_id": user_notion_id,
-                      "last_edited_by_table": "notion_user",
-                      "last_edited_by_id": user_notion_id,
-                      "copied_from": block.id,
-                    },
-                  },
+          "id": new_block_id,
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "id": new_block_id,
+            "version": 10,
+            "type": block.type,
+            "properties": {
+              "title": [[@title]], # this should be copied from the block the method is invoked on!
+            },
+            "created_time": timestamp,
+            "last_edited_time": timestamp,
+            "created_by_table": "notion_user",
+            "created_by_id": user_notion_id,
+            "last_edited_by_table": "notion_user",
+            "last_edited_by_id": user_notion_id,
+            "copied_from": block.id,
+          },
+        },
         {
-                    "id": new_block_id,
-                    "table": "block",
-                    "path": [],
-                    "command": "update",
-                    "args": {
-                      "parent_id": block.parent_id,
-                      "parent_table": "block",
-                      "alive": true,
-                    },
-                  },
+          "id": new_block_id,
+          "table": "block",
+          "path": [],
+          "command": "update",
+          "args": {
+            "parent_id": block.parent_id,
+            "parent_table": "block",
+            "alive": true,
+          },
+        },
         {
-                    "table": "block",
-                    "id": block.parent_id,
-                    "path": [
-                      "content",
-                    ],
-                    "command": "listAfter",
-                    "args": {
-                      "after": location.nil? ? block.id : location,
-                      "id": new_block_id,
-                    },
-                  },
+          "table": "block",
+          "id": block.parent_id,
+          "path": [
+            "content",
+          ],
+          "command": "listAfter",
+          "args": {
+            "after": location ? location : block.id, # if location is specified this takes precedence, otherwise place it after the current ID
+            "id": new_block_id,
+          },
+        },
         {
-                    "table": "block",
-                    "id": new_block_id,
-                    "path": [
-                      "last_edited_time",
-                    ],
-                    "command": "set",
-                    "args": 1605556440000,
-                  },
+          "table": "block",
+          "id": new_block_id,
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
         {
-                    "table": "block",
-                    "id": block.parent_id,
-                    "path": [
-                      "last_edited_time",
-                    ],
-                    "command": "set",
-                    "args": 1605556440000,
-                  },
+          "table": "block",
+          "id": block.parent_id,
+          "path": [
+            "last_edited_time",
+          ],
+          "command": "set",
+          "args": timestamp,
+        },
       ]
 
-      request_body = create_block_payload(operations, request_ids)
+      request_body = build_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
@@ -339,25 +248,13 @@ module Notion
       return {}
     end
 
-    def create(block_title, block_type, styles = {})
-      $Basic_styles = [
-        "to-do", "header", "sub-header", "sub-sub-header",
-        "toggle", "bulleted_list", "numbered_list", "quote",
-        "text", "table_of_contents",
-      ]
-
-      $Emoji_styles = [
-        "page", "callout",
-      ]
-
-      $Extras = [
-        "Divider",
-        "Image",
-        "Code",
-        "Equation",
-      ]
+    def create(block_type, block_title, loc = nil)
+      #! create a new block
+      #! block_type -> the type of block to create : ``cls``
+      #! block_title -> the title of the new block : ``str``
+      #! loc -> the block_id that the new block should be placed after. ``str``
       if (block_type == Notion::PageBlock) || (block_type == Notion::CalloutBlock)
-        return create_page(block_title, block_type, styles)
+        return create_page(block_title, block_type, loc)
       end
       cookies = @@options["cookies"]
       headers = @@options["headers"]
@@ -417,7 +314,7 @@ module Notion
           ],
           "command": "listAfter",
           "args": {
-            "after": @parent_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+            "after": loc, #TODO: SPECIFIED ID OR LAST ID ON PAGE
             "id": new_block_id, #TODO: NEW ID
           },
         },
@@ -478,7 +375,7 @@ module Notion
       ]
 
       request_url = @@method_urls[:UPDATE_BLOCK]
-      request_body = create_block_payload(operations, request_ids)
+      request_body = build_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
@@ -487,11 +384,15 @@ module Notion
       )
       new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
       # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
-      styles.empty? ? nil : new_block.update(styles)
+      # styles.empty? ? nil : new_block.update(styles)
       return new_block
     end # create
 
-    def create_page(block_title, block_type, styles = {})
+    def create_page(block_title, block_type, loc=nil)
+      #! helper function for creating a page or a callout block since the request is slightly different. Likely to be deleted later.
+      #! block_type -> the type of block to create : ``cls``
+      #! block_title -> the title of the new block : ``str``
+      #! loc -> the block_id that the new block should be placed after. ``str``
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       timestamp = DateTime.now.strftime("%Q")
@@ -502,7 +403,6 @@ module Notion
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
       space_id = extract_id(SecureRandom.hex(n = 16))
-      page_last_id = get_last_page_block_id(@id)
 
       request_ids = {
         :request_id => request_id,
@@ -510,7 +410,6 @@ module Notion
         :space_id => space_id,
       }
 
-      #! ASSUMPTION: Notion is using hex formatting for IDs -> ID can contain a-f and 0-9
       request_url = @@method_urls[:UPDATE_BLOCK]
 
       request_body = {
@@ -555,7 +454,7 @@ module Notion
           ],
           "command": "listAfter",
           "args": {
-            "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+            "after": loc, #TODO: SPECIFIED ID OR LAST ID ON PAGE
             "id": new_block_id, #TODO: NEW ID
           },
         },
@@ -613,19 +512,19 @@ module Notion
           "command": "set",
           "args": [[block_title]],
         },
-        {
-          "id": new_block_id,
-          "table": "block",
-          "path": [
-            "format",
-            "page_icon",
-          ],
-          "command": "set",
-          "args": styles[:emoji],
-        },
+      # {
+      #   "id": new_block_id,
+      #   "table": "block",
+      #   "path": [
+      #     "format",
+      #     "page_icon",
+      #   ],
+      #   "command": "set",
+      #   "args": styles[:emoji],
+      # },
       ]
 
-      request_body = create_block_payload(operations, request_ids)
+      request_body = build_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
@@ -646,7 +545,7 @@ module Notion
   end
 
   class TodoBlock < BlockTemplate
-    # To-Do block: can be set to X or nil, and also have a text property
+    # To-Do block: best for checklists and tracking to-dos.
     @@notion_type = "to_do"
 
     def self.notion_type
@@ -654,21 +553,25 @@ module Notion
     end
 
     def checked=(checked_value)
-      # request vars
+      #! change the checked property of the Todo Block.
+      #! checked_value -> boolean value used to determine whether the block should be checked [yes, 1, true] or not [no, 0, false] : ``bool | str``
+      # set static variables for request
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       timestamp = DateTime.now.strftime("%Q")
       request_url = @@method_urls[:UPDATE_BLOCK]
 
-      accepted_yes_vals = ["1", "yes", "true"]
-      accepted_no_vals = ["0", "no", "false"]
-      all_accepted_values = (accepted_yes_vals << accepted_no_vals).flatten
-      $LOGGER.info(all_accepted_values)
-      downcased_value = checked_value.to_s.downcase
-      if all_accepted_values.include?(downcased_value)
-        if accepted_yes_vals.include?(downcased_value) then standardized_check_val = "yes" else standardized_check_val = "no" end
-        $LOGGER.info(standardized_check_val)
+      # set unique values for request
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
 
+      if ["yes", "no"].include?(checked_value)
         operations = [
           {
             "id": @id,
@@ -678,11 +581,7 @@ module Notion
             ],
             "command": "update",
             "args": {
-              "checked": [
-                [
-                  standardized_check_val,
-                ],
-              ],
+              "checked": [[checked_value]],
             },
           },
           {
@@ -704,70 +603,25 @@ module Notion
             "args": timestamp,
           },
         ]
-        request_body = update_block_payload(operations)
+        request_body = build_payload(operations, request_ids)
         response = HTTParty.post(
           request_url,
           :body => request_body.to_json,
           :cookies => cookies,
           :headers => headers,
         )
-        return response.body
+        return true
       else
+        return false
         $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, use one of the following: 1, 'yes', of true. If you want to un-check a To-Do block, use one of the following: 0, 'no', false.")
       end
     end
   end
 
   class CodeBlock < BlockTemplate
-    # Code block: coding language and the code to assign to the block
+    # Code block: used to store code, should be assigned a coding language.
     @@notion_type = "code"
 
-    def update(styles)
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
-      style_args = build_style_args(styles, @type)
-
-      coding_language = !styles[:coding_language].nil? ? styles[:coding_language] : "javascript"
-      code = !styles[:code].nil? ? styles[:code] : "// Created with the Ruby Notion API❤️"
-      operations = [
-        {
-          "id": @id,
-          "table": "block",
-          "path": [
-            "properties",
-          ],
-          "command": "update",
-          "args": {
-            "language": [[coding_language]],
-          },
-        },
-      ]
-
-      title_update = {
-        "table": "block",
-        "id": @id,
-        "path": [
-          "properties", "title",
-        ],
-        "command": "set",
-        "args": [[styles[:code]]],
-      }
-
-      styles[:code] ? operations.push(title_update) : nil
-
-      request_body = update_block_payload(operations)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      return {}
-    end
-
-    # args => {language => [["JavaScript"]], ty[e => "code"]}
     def self.notion_type
       @@notion_type
     end
@@ -775,7 +629,6 @@ module Notion
 
   class HeaderBlock < BlockTemplate
     # Header block: H1
-    # header
     @@notion_type = "header"
     def self.notion_type
       @@notion_type
@@ -784,7 +637,6 @@ module Notion
 
   class SubHeaderBlock < BlockTemplate
     # SubHeader Block: H2
-    # sub_header
     @@notion_type = "sub_header"
     def self.notion_type
       @@notion_type
@@ -805,25 +657,13 @@ module Notion
       @@notion_type
     end
 
-    def create(block_title, block_type, styles = {}) #TODO: allow them to specify where to place the block?
-      $Basic_styles = [
-        "to-do", "header", "sub-header", "sub-sub-header",
-        "toggle", "bulleted_list", "numbered_list", "quote",
-        "text", "table_of_contents",
-      ]
-
-      $Emoji_styles = [
-        "page", "callout",
-      ]
-
-      $Extras = [
-        "Divider",
-        "Image",
-        "Code",
-        "Equation",
-      ]
+    def create(block_type, block_title, loc = nil)
+      #! separate create method for when the method is invoked on a PageBlock [creates a new block on the page].
+      #! block_type -> type of block to create : ``cls``
+      #! block_title -> title of the block : ``str``
+      #! loc -> block ID that the new block should be placed after : ``str``
       if (block_type == Notion::PageBlock) || (block_type == Notion::CalloutBlock)
-        return create_page(block_title, block_type, styles)
+        return create_page(block_title, block_type, loc)
       end
       cookies = @@options["cookies"]
       headers = @@options["headers"]
@@ -833,7 +673,6 @@ module Notion
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
       space_id = extract_id(SecureRandom.hex(n = 16))
-      page_last_id = get_last_page_block_id(@id)
 
       request_ids = {
         :request_id => request_id,
@@ -883,7 +722,7 @@ module Notion
           ],
           "command": "listAfter",
           "args": {
-            "after": page_last_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+            "after": loc ? loc : nil, #TODO: SPECIFIED ID OR LAST ID ON PAGE
             "id": new_block_id, #TODO: NEW ID
           },
         },
@@ -953,20 +792,12 @@ module Notion
       )
       new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
       # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
-      styles.empty? ? nil : new_block.update(styles)
       return new_block
     end # create
   end
 
-  # class RootPageBlock < BlockTemplate
-  #   @@notion_type = "root_page"
-  #   def self.notion_type
-  #     @@notion_type
-  #   end
-  # end
-
   class ToggleBlock < BlockTemplate
-    # Toggle block: Accepts text and a hash of children to create.
+    # Toggle block: best for storing children blocks
     @@notion_type = "toggle"
     def self.notion_type
       @@notion_type
@@ -974,7 +805,7 @@ module Notion
   end
 
   class BulletedBlock < BlockTemplate
-    # Bullet list block: accepts the text to assign to the bullet point
+    # Bullet list block: best for an unordered list
     @@notion_type = "bulleted_list"
     def self.notion_type
       @@notion_type
@@ -982,7 +813,7 @@ module Notion
   end
 
   class NumberedBlock < BlockTemplate
-    # Numbered list Block: accepts the content to assign to the numbered block
+    # Numbered list Block: best for an ordered list
     @@notion_type = "numbered_list"
     def self.notion_type
       @@notion_type
@@ -990,7 +821,7 @@ module Notion
   end
 
   class QuoteBlock < BlockTemplate
-    # accepts the content and the emoji to assign to the quote
+    # best for memorable information
     @@notion_type = "quote"
     def self.notion_type
       @@notion_type
@@ -998,6 +829,7 @@ module Notion
   end
 
   class CalloutBlock < BlockTemplate
+    # same as quote... works similarly to page block
     @@notion_type = "callout"
     def self.notion_type
       @@notion_type
@@ -1005,6 +837,7 @@ module Notion
   end
 
   class LatexBlock < BlockTemplate
+    # simiilar to code block but for mathematical functions.
     @@notion_type = "equation"
     def self.notion_type
       @@notion_type
@@ -1012,6 +845,7 @@ module Notion
   end
 
   class TextBlock < BlockTemplate
+    # good for just about anything (-:
     @@notion_type = "text"
     def self.notion_type
       @@notion_type
@@ -1019,6 +853,7 @@ module Notion
   end
 
   class ImageBlock < BlockTemplate
+    # good for visual information
     @@notion_type = "image"
     def self.notion_type
       @@notion_type
@@ -1026,68 +861,15 @@ module Notion
   end
 
   class TableOfContentsBlock < BlockTemplate
+    # maps out the headers - sub-headers - sub-sub-headers on the page
     @@notion_type = "table_of_contents"
     def self.notion_type
       @@notion_type
     end
-
-    def update(styles)
-      style_args = build_style_args(styles, @type)
-      timestamp = DateTime.now.strftime("%Q")
-
-      operations = [
-        {
-          "id": @id,
-          "table": "block",
-          "path": [
-            "format",
-          ],
-          "command": "update",
-          "args": style_args,
-        },
-        {
-          "table": "block",
-          "id": @id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": @parent_id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-      ]
-
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
-      }
-      request_body = create_block_payload(operations, request_ids)
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      return response.body
-    end
   end
 
   class ColumnListBlock < BlockTemplate
+    #TODO: no use case for this yet.
     @@notion_type = "column_list"
     def self.notion_type
       @@notion_type
@@ -1095,6 +877,7 @@ module Notion
   end
 
   class ColumnBlock < BlockTemplate
+    #TODO: no use case for this yet.
     @@notion_type = "column"
     def self.notion_type
       @@notion_type
@@ -1102,7 +885,8 @@ module Notion
   end
 end # Notion
 
-classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
+# gather a list of all the classes defined here...
+Classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
 notion_types = []
-classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
-BLOCK_TYPES = notion_types.zip(classes).to_h
+Classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
+BLOCK_TYPES = notion_types.zip(Classes).to_h
