@@ -125,9 +125,9 @@ module Notion
       end
     end
 
-    def duplicate(location = nil)
+    def duplicate(after = nil)
       #! duplicate the block that this method is invoked upon.
-      #! location -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
+      #! after -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
@@ -137,6 +137,10 @@ module Notion
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
       space_id = extract_id(SecureRandom.hex(n = 16))
+
+      root_children = children_ids(@id)
+      sub_children = []
+      root_children.each { |root_id| sub_children.push(children_ids(root_id)) }
 
       request_ids = {
         :request_id => request_id,
@@ -152,15 +156,14 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
-      block = location ? get_block(location) : self # allows dev to place block anywhere!
+      block = after ? get_block(after) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(block.type, block.title, block.id, new_block_id, user_notion_id)
+      duplicate_hash = $Components.duplicate(block.type, title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
-      block_location_hash = $Components.block_location(block.parent_id, block.id, new_block_id, location)
+      block_location_hash = $Components.block_location(block.parent_id, block.id, new_block_id, after)
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
       last_edited_time_child_hash = $Components.last_edited_time(block.id)
 
-      # TODO: have to recursively copy all contents from one block if there are children.
       operations = [
         duplicate_hash,
         set_parent_alive_hash,
@@ -179,14 +182,11 @@ module Notion
       return {}
     end
 
-    def create(block_type, block_title, loc = nil)
+    def create(block_type, block_title, after = nil)
       #! create a new block
       #! block_type -> the type of block to create : ``cls``
       #! block_title -> the title of the new block : ``str``
       #! loc -> the block_id that the new block should be placed after. ``str``
-      if (block_type == Notion::PageBlock) || (block_type == Notion::CalloutBlock)
-        return create_page(block_title, block_type, loc)
-      end
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       timestamp = DateTime.now.strftime("%Q")
@@ -195,7 +195,6 @@ module Notion
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
       space_id = extract_id(SecureRandom.hex(n = 16))
-      page_last_id = get_last_page_block_id(@id)
 
       request_ids = {
         :request_id => request_id,
@@ -212,100 +211,22 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
+      p @id
 
-      #TODO: Start Here
+      create_hash = $Components.create(new_block_id, block_type.notion_type)
+      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
+      block_location_hash = $Components.block_location(@id, @id, new_block_id, after)
+      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+      last_edited_time_child_hash = $Components.last_edited_time(@id)
+      title_hash = $Components.title(new_block_id, block_title)
 
       operations = [
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "id": new_block_id, #TODO: NEW ID
-            "type": block_type.notion_type,
-            "properties": {},
-            "created_time": timestamp,
-            "last_edited_time": timestamp,
-          },
-        },
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "parent_id": @id, #TODO: PARENT ID
-            "parent_table": "block",
-            "alive": true,
-          },
-        },
-        {
-          "table": "block",
-          "id": @id, #TODO: PARENT ID
-          "path": [
-            "content",
-          ],
-          "command": "listAfter",
-          "args": {
-            "after": loc, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-            "id": new_block_id, #TODO: NEW ID
-          },
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID, stored in cooks
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "properties", "title",
-          ],
-          "command": "set",
-          "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
-        },
+        create_hash,
+        set_parent_alive_hash,
+        block_location_hash,
+        last_edited_time_parent_hash,
+        last_edited_time_child_hash,
+        title_hash,
       ]
 
       request_url = @@method_urls[:UPDATE_BLOCK]
@@ -316,158 +237,11 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
+      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @id, @token_v2)
       # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
       # styles.empty? ? nil : new_block.update(styles)
       return new_block
     end # create
-
-    def create_page(block_title, block_type, loc = nil)
-      #! helper function for creating a page or a callout block since the request is slightly different. Likely to be deleted later.
-      #! block_type -> the type of block to create : ``cls``
-      #! block_title -> the title of the new block : ``str``
-      #! loc -> the block_id that the new block should be placed after. ``str``
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
-
-      # p @parent_id, @id, get_last_page_block_id(@id)
-
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
-      }
-
-      request_url = @@method_urls[:UPDATE_BLOCK]
-
-      request_body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-
-      user_notion_id = get_notion_id(request_body)
-
-      operations = [
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "id": new_block_id, #TODO: NEW ID
-            "type": block_type.notion_type,
-            "properties": {},
-            "created_time": timestamp,
-            "last_edited_time": timestamp,
-          },
-        },
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "parent_id": @id, #TODO: PARENT ID
-            "parent_table": "block",
-            "alive": true,
-          },
-        },
-        {
-          "table": "block",
-          "id": @id, #TODO: PARENT ID
-          "path": [
-            "content",
-          ],
-          "command": "listAfter",
-          "args": {
-            "after": loc, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-            "id": new_block_id, #TODO: NEW ID
-          },
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID, stored in cooks
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "properties", "title",
-          ],
-          "command": "set",
-          "args": [[block_title]],
-        },
-      # {
-      #   "id": new_block_id,
-      #   "table": "block",
-      #   "path": [
-      #     "format",
-      #     "page_icon",
-      #   ],
-      #   "command": "set",
-      #   "args": styles[:emoji],
-      # },
-      ]
-
-      request_body = build_payload(operations, request_ids)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
-      return new_block
-    end
   end # BlockTemplate
 
   class DividerBlock < BlockTemplate
@@ -590,144 +364,6 @@ module Notion
     def self.notion_type
       @@notion_type
     end
-
-    def create(block_type, block_title, loc = nil)
-      #! separate create method for when the method is invoked on a PageBlock [creates a new block on the page].
-      #! block_type -> type of block to create : ``cls``
-      #! block_title -> title of the block : ``str``
-      #! loc -> block ID that the new block should be placed after : ``str``
-      if (block_type == Notion::PageBlock) || (block_type == Notion::CalloutBlock)
-        return create_page(block_title, block_type, loc)
-      end
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
-
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
-      }
-
-      request_body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-
-      user_notion_id = get_notion_id(request_body)
-
-      operations = [
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "id": new_block_id, #TODO: NEW ID
-            "type": block_type.notion_type,
-            "properties": {},
-            "created_time": timestamp,
-            "last_edited_time": timestamp,
-          },
-        },
-        {
-          "id": new_block_id, #TODO: NEW ID
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "parent_id": @id, #TODO: PARENT ID
-            "parent_table": "block",
-            "alive": true,
-          },
-        },
-        {
-          "table": "block",
-          "id": @id, #TODO: PARENT ID
-          "path": [
-            "content",
-          ],
-          "command": "listAfter",
-          "args": {
-            "after": loc ? loc : nil, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-            "id": new_block_id, #TODO: NEW ID
-          },
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID, stored in cooks
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "created_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_id",
-          ],
-          "command": "set",
-          "args": user_notion_id, #TODO: USER ID STORED IN COOKS
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "last_edited_by_table",
-          ],
-          "command": "set",
-          "args": "notion_user",
-        },
-        {
-          "table": "block",
-          "id": new_block_id, #TODO: NEW ID
-          "path": [
-            "properties", "title",
-          ],
-          "command": "set",
-          "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
-        },
-      ]
-
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      request_body = create_block_payload(operations, request_ids)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @parent_id, @token_v2)
-      # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
-      return new_block
-    end # create
   end
 
   class ToggleBlock < BlockTemplate

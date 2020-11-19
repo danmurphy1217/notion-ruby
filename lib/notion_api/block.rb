@@ -168,7 +168,6 @@ module Notion
       if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
         # unique case for top-level page... top-level pages have the same ID and parent ID.
         block_parent_id = clean_id
-        block_type = "page"
       else
         block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       end

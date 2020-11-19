@@ -68,7 +68,11 @@ Each of these classes has access to the following methods:
 #<Notion::CalloutBlock:0x00007ffb75b19ea0 **omitted meta-data**>
 ```
 4. `duplicate`→ duplicate the current block.
-[TODO]
+```ruby
+>>> @block = @client.get_block("d2ce338f-19e8-47f5-86bd-17679f490e66")
+>>> @block.duplicate # block is duplicated and placed directly after the current block
+>>> @block.duplicate("https://www.notion.so/danmurphy/TEST-PAGE-TWO-c2cf338f19a857t586bd17679f490e66") # block is duplicated and placed after the specified block ID. If the block ID is a page, it is placed at the bottom of the page
+```
 5. `revert`→ reverts the most recent change.
 [TODO]
 ## Creating New Blocks
