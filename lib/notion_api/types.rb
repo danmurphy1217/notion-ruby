@@ -15,18 +15,11 @@ module Notion
     attr_reader :type, :id, :title, :parent_id
     $Components = Utils::Components.new
 
-    def initialize(type, id, title, parent_id, token_v2)
-      @type = type
+    def initialize(id, title, parent_id)
       @id = id
       @title = title
       @parent_id = parent_id
-      @token_v2 = token_v2
     end # initialize
-
-    def self.notion_type
-      #! assign the block type
-      @@notion_type
-    end # self.notion_type
 
     def title=(new_title)
       #! Change the title of a block.
@@ -121,7 +114,7 @@ module Notion
           :headers => headers,
         )
 
-        return block_class_to_convert_to.new(block_class_to_convert_to.notion_type, @id, @title, @parent_id, self.token_v2)
+        return block_class_to_convert_to.new(@id, @title, @parent_id)
       end
     end
 
@@ -158,7 +151,7 @@ module Notion
 
       block = after ? get_block(after) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(block.type, title, block.id, new_block_id, user_notion_id, root_children)
+      duplicate_hash = $Components.duplicate(title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
       block_location_hash = $Components.block_location(block.parent_id, block.id, new_block_id, after)
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
@@ -211,8 +204,6 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
-      p @id
-
       create_hash = $Components.create(new_block_id, block_type.notion_type)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
       block_location_hash = $Components.block_location(@id, @id, new_block_id, after)
@@ -237,7 +228,7 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      new_block = block_type.new(block_type.notion_type, new_block_id, block_title, @id, @token_v2)
+      new_block = block_type.new(new_block_id, block_title, @id)
       # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
       # styles.empty? ? nil : new_block.update(styles)
       return new_block
@@ -260,6 +251,10 @@ module Notion
       @@notion_type
     end
 
+    def notion_type
+      @@notion_type
+    end
+
     def checked=(checked_value)
       #! change the checked property of the Todo Block.
       #! checked_value -> boolean value used to determine whether the block should be checked [yes, 1, true] or not [no, 0, false] : ``bool | str``
@@ -279,37 +274,16 @@ module Notion
         :space_id => space_id,
       }
 
-      if ["yes", "no"].include?(checked_value)
+      if ["yes", "no"].include?(checked_value.downcase)
+        checked_hash = $Components.checked_todo(@id, checked_value.downcase)
+        last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+        last_edited_time_child_hash = $Components.last_edited_time(@id)
+        p self.notion_type, @@notion_type
+
         operations = [
-          {
-            "id": @id,
-            "table": "block",
-            "path": [
-              "properties",
-            ],
-            "command": "update",
-            "args": {
-              "checked": [[checked_value]],
-            },
-          },
-          {
-            "table": "block",
-            "id": @id,
-            "path": [
-              "last_edited_time",
-            ],
-            "command": "set",
-            "args": timestamp,
-          },
-          {
-            "table": "block",
-            "id": @parent_id,
-            "path": [
-              "last_edited_time",
-            ],
-            "command": "set",
-            "args": timestamp,
-          },
+          checked_hash,
+          last_edited_time_parent_hash,
+          last_edited_time_child_hash,
         ]
         request_body = build_payload(operations, request_ids)
         response = HTTParty.post(
@@ -361,7 +335,12 @@ module Notion
 
   class PageBlock < BlockTemplate
     @@notion_type = "page"
+
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end

@@ -158,42 +158,42 @@ module Utils
                },
              }
     end
-  end
 
-  def checked(block_id, standardized_check_val)
-    #! payload for setting a "checked" value for TodoBlock.
-    #!
-    table = "block"
-    path = ["properties"]
-    command = "update"
-    return {
-             :id => block_id,
-             :table => table,
-             :path => path,
-             :command => command,
-             :args => {
-               :checked => [[standardized_check_val]],
-             },
-           }
-  end
+    def checked_todo(block_id, standardized_check_val)
+      #! payload for setting a "checked" value for TodoBlock.
+      #!
+      table = "block"
+      path = ["properties"]
+      command = "update"
+      return {
+               :id => block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :checked => [[standardized_check_val]],
+               },
+             }
+    end
 
-  def update_codeblock_language(block_id, coding_language)
-    #! update the language for a codeblock
-    #! block_id -> id of the code block
-    #! new_language -> language to change the block to.
-    table = "block"
-    path = ["properties"]
-    command = "update"
+    def update_codeblock_language(block_id, coding_language)
+      #! update the language for a codeblock
+      #! block_id -> id of the code block
+      #! new_language -> language to change the block to.
+      table = "block"
+      path = ["properties"]
+      command = "update"
 
-    {
-      :id => block_id,
-      :table => table,
-      :path => path,
-      :command => command,
-      :args => {
-        :language => [[coding_language]],
-      },
-    }
+      {
+        :id => block_id,
+        :table => table,
+        :path => path,
+        :command => command,
+        :args => {
+          :language => [[coding_language]],
+        },
+      }
+    end
   end
 
   def build_payload(operations, request_ids)

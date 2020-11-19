@@ -8,14 +8,24 @@ module Notion
     @@method_urls = URLS # defined in Utils
     @@options = { "cookies" => { :token_v2 => nil }, "headers" => { "Content-Type" => "application/json" } }
     @@type_whitelist = ("divider")
-    attr_reader :token_v2, :clean_id, :cookies, :headers
+
+    attr_reader :token_v2, :active_user_header, :clean_id, :cookies, :headers
+
+    def self.token_v2=(token_v2)
+      @@token_v2 = token_v2
+    end
+
+    def self.active_user_header=(active_user_header)
+      @@active_user_header = active_user_header
+    end
 
     def get_notion_id(body)
       #! retrieves a users ID from the headers of a Notion response object.
       #! body -> the body to send in the request : ``Hash``
-      @@options["cookies"][:token_v2] = self.token_v2
-      cookies = !@@options["cookies"].nil? ? @@options["cookies"] : { :token_v2.to_s => token_v2 }
-      headers = !@@options["headers"].nil? ? @@options["headers"] : { "Content-Type" => "application/json" }
+      @@options["cookies"][:token_v2] = @@token_v2
+      @@options["headers"]["x-active-user-header"] = @@active_user_header
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
       request_url = @@method_urls[:GET_BLOCK]
 
       response = HTTParty.post(
@@ -36,16 +46,10 @@ module Notion
     def get_all_block_info(clean_id, body)
       #! retrieves all info pertaining to a block Id.
       #! clean_id -> the block ID or URL cleaned : ``str``
-      @@options["cookies"][:token_v2] = self.token_v2
-      cookies = @@options["cookies"] ? @@options["cookies"] : { :token_v2.to_s => token_v2 }
-      headers = @@options["headers"] ? @@options["headers"] : { "Content-Type" => "application/json" }
-
-      # PATHSTREAM
-      # headers["x-notion-active-user-header"] = "1dd05d38-b8ba-4b29-bde0-c4775b1eac77"
-      # PERSONAL
-      # headers["x-notion-active-user-header"] = "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26"
-      # STACAUTO
-      # headers["x-notion-active-user-header"] = "b22f2670-a643-49e1-bc49-05e8763f92e4"
+      @@options["cookies"][:token_v2] = @@token_v2
+      @@options["headers"]["x-notion-active-user-header"] = @@active_user_header
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
 
       request_url = @@method_urls[:GET_BLOCK]
 
@@ -56,15 +60,13 @@ module Notion
         :headers => headers,
       )
 
-      # headers["x-notion-active-user-header"] = "b22f2670-a643-49e1-bc49-05e8763f92e4"
-
       res_two = HTTParty.post(
         "https://www.notion.so/api/v3/loadUserContent",
         :body => { :platform => "web" }.to_json,
         :cookies => cookies,
         :headers => headers,
       )
-      # p res_two.headers["x-notion-user-id"], "YERRR"
+
       jsonified_record_response = JSON.parse(response.body)["recordMap"]
       return jsonified_record_response
     end
@@ -110,14 +112,14 @@ module Notion
       #! extract children IDs from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return !jsonified_record_response.empty? ? jsonified_record_response["block"][clean_id]["value"]["content"] : {}
+      return jsonified_record_response.empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["content"]
     end
 
     def extract_parent_id(clean_id, jsonified_record_response)
       #! extract parent ID from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return !jsonified_record_response["block"].empty? ? jsonified_record_response["block"][clean_id]["value"]["parent_id"] : {}
+      return jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["parent_id"]
     end
 
     def extract_id(url_or_id)
@@ -129,7 +131,7 @@ module Notion
         return url_or_id
       elsif (http_or_https and url_or_id.split("-").last.length == 32) or (!http_or_https and url_or_id.length == 32)
         # passes if either:
-        # 1. a URL is passed as url_or_id and the ID at the end is 32 characters long or 
+        # 1. a URL is passed as url_or_id and the ID at the end is 32 characters long or
         # 2. a URL is not passed and the ID length is 32 [aka unformatted]
         pattern = [8, 13, 18, 23]
         id = url_or_id.split("-").last
@@ -164,7 +166,6 @@ module Notion
       block_id = clean_id
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
-      #TODO: figure out how to best translate notions markdown formatting into plaintext for content delivery.
       if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
         # unique case for top-level page... top-level pages have the same ID and parent ID.
         block_parent_id = clean_id
@@ -176,7 +177,7 @@ module Notion
         return {}
       else
         block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
-        return block_class.new(block_type, block_id, block_title, block_parent_id, self.token_v2)
+        return block_class.new(block_id, block_title, block_parent_id)
       end
     end
 
@@ -191,12 +192,12 @@ module Notion
         :verticalColumns => false,
       }
       children_ids = children_ids(url_or_id)
-      if !children_ids.empty?
+      if children_ids.empty?
+        return []
+      else
         children_class_instances = []
         children_ids.each { |child| children_class_instances.push(get_block(child)) }
         return children_class_instances
-      else
-        return []
       end
     end
 
