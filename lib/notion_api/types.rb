@@ -29,11 +29,12 @@ module Notion
     end # self.notion_type
 
     def title=(new_title)
-      #! Change the title of a block. 
+      #! Change the title of a block.
       #! new_title -> new title for the block : ``str``
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
-      update_title(new_title.to_s, request_id, transaction_id)
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      update_title(new_title.to_s, request_id, transaction_id, space_id)
       $LOGGER.info("Title changed from '#{self.title}' to '#{new_title}'")
       @title = new_title
       return true
@@ -44,47 +45,27 @@ module Notion
       #! new_title -> new title for the block : ``str``
       #! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
       #! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
+      # setup cookies, headers, and grab/create static vars for request
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
       timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.now.to_i
 
+      # set unique IDs for request
       request_ids = {
         :request_id => request_id,
         :transaction_id => transaction_id,
         :space_id => space_id,
       }
 
-      #TODO: this can be extrapolated to helper functions...
+      # build and set operations to send to Notion
+      title_hash = $Components.title(@id, new_title)
+      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+      last_edited_time_child_hash = $Components.last_edited_time(@id)
       operations = [
-        # UPDATE BLOCK TITLE
-        {
-          :id => @id,
-          :table => "block",
-          :path => ["properties", "title"],
-          :command => "set",
-          :args => [[new_title]],
-        },
-        # UPDATE BLOCK ID LAST EDITED TIME
-        {
-          :table => "block",
-          :id => @id,
-          :path => [
-            "last_edited_time",
-          ],
-          :command => "set",
-          :args => timestamp,
-        },
-        # UPDATE PARENT IDs LAST EDITED TIME
-        {
-          :table => "block",
-          :id => @parent_id,
-          :path => [
-            "last_edited_time",
-          ],
-          :command => "set",
-          :args => timestamp,
-        },
+        title_hash,
+        last_edited_time_parent_hash,
+        last_edited_time_child_hash,
       ]
 
       request_body = build_payload(operations, request_ids) # defined in utils.rb
@@ -110,7 +91,7 @@ module Notion
         headers = @@options["headers"]
         request_url = @@method_urls[:UPDATE_BLOCK]
         timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
-        
+
         # set random IDs for request
         request_id = extract_id(SecureRandom.hex(n = 16))
         transaction_id = extract_id(SecureRandom.hex(n = 16))
@@ -120,16 +101,16 @@ module Notion
           :transaction_id => transaction_id,
           :space_id => space_id,
         }
-        
+
         # build hash's that contain the operations to send to Notions backend
         convert_type_hash = $Components.convert_type(@id, block_class_to_convert_to)
         last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
         last_edited_time_child_hash = $Components.last_edited_time(@id)
-        
+
         operations = [
           convert_type_hash,
           last_edited_time_parent_hash,
-          last_edited_time_child_hash
+          last_edited_time_child_hash,
         ]
 
         request_body = build_payload(operations, request_ids)
@@ -173,69 +154,19 @@ module Notion
 
       block = location ? get_block(location) : self # allows dev to place block anywhere!
 
+      duplicate_hash = $Components.duplicate(block.type, block.title, block.id, new_block_id, user_notion_id)
+      set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
+      block_location_hash = $Components.block_location(block.parent_id, block.id, new_block_id, location)
+      last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
+      last_edited_time_child_hash = $Components.last_edited_time(block.id)
+
+      # TODO: have to recursively copy all contents from one block if there are children.
       operations = [
-        {
-          "id": new_block_id,
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "id": new_block_id,
-            "version": 10,
-            "type": block.type,
-            "properties": {
-              "title": [[@title]], # this should be copied from the block the method is invoked on!
-            },
-            "created_time": timestamp,
-            "last_edited_time": timestamp,
-            "created_by_table": "notion_user",
-            "created_by_id": user_notion_id,
-            "last_edited_by_table": "notion_user",
-            "last_edited_by_id": user_notion_id,
-            "copied_from": block.id,
-          },
-        },
-        {
-          "id": new_block_id,
-          "table": "block",
-          "path": [],
-          "command": "update",
-          "args": {
-            "parent_id": block.parent_id,
-            "parent_table": "block",
-            "alive": true,
-          },
-        },
-        {
-          "table": "block",
-          "id": block.parent_id,
-          "path": [
-            "content",
-          ],
-          "command": "listAfter",
-          "args": {
-            "after": location ? location : block.id, # if location is specified this takes precedence, otherwise place it after the current ID
-            "id": new_block_id,
-          },
-        },
-        {
-          "table": "block",
-          "id": new_block_id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
-        {
-          "table": "block",
-          "id": block.parent_id,
-          "path": [
-            "last_edited_time",
-          ],
-          "command": "set",
-          "args": timestamp,
-        },
+        duplicate_hash,
+        set_parent_alive_hash,
+        block_location_hash,
+        last_edited_time_parent_hash,
+        last_edited_time_child_hash,
       ]
 
       request_body = build_payload(operations, request_ids)
@@ -280,6 +211,9 @@ module Notion
       }
 
       user_notion_id = get_notion_id(body)
+
+
+      #TODO: Start Here
 
       operations = [
         {
@@ -388,7 +322,7 @@ module Notion
       return new_block
     end # create
 
-    def create_page(block_title, block_type, loc=nil)
+    def create_page(block_title, block_type, loc = nil)
       #! helper function for creating a page or a callout block since the request is slightly different. Likely to be deleted later.
       #! block_type -> the type of block to create : ``cls``
       #! block_title -> the title of the new block : ``str``

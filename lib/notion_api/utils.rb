@@ -6,7 +6,6 @@ module Utils
   }
 
   class Components
-
     def create(block_id, block_type)
       #! payload for creating a block.
       #! block_id -> id of the new block : ``str``
@@ -16,19 +15,20 @@ module Utils
       command = "update"
       timestamp = DateTime.now.strftime("%Q")
       return {
-        :id => block_id,
-        :table => table,
-        :path => path,
-        :command => command,
-        :args => {
-            :id => block_id,
-            :type => block_type,
-            :properties => {},
-            :created_time => timestamp,
-            :last_edited_time => timestamp
-        }
-    }
-  end
+               :id => block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :id => block_id,
+                 :type => block_type,
+                 :properties => {},
+                 :created_time => timestamp,
+                 :last_edited_time => timestamp,
+               },
+             }
+    end
+
     def title(id, title)
       #! payload for updating the title of a block
       #! id -> the ID to update the title of : ``str``
@@ -80,6 +80,25 @@ module Utils
              }
     end
 
+    def set_parent_to_alive(block_parent_id, new_block_id)
+      table = "block"
+      path = []
+      command = "update"
+      parent_table = "block"
+      alive = true
+      return {
+               "id": new_block_id,
+               "table": table,
+               "path": path,
+               "command": command,
+               "args": {
+                 "parent_id": block_parent_id,
+                 "parent_table": parent_table,
+                 "alive": alive,
+               }
+             }
+    end
+
     def duplicate(block_type, block_title, block_id, new_block_id, user_notion_id)
       #! payload for duplicating a block. Most properties should be
       #! inherited from the block class the method is invoked on.
@@ -104,6 +123,9 @@ module Utils
                  :properties => {
                    :title => [[block_title]],
                  },
+                 :content => [
+                  "9fb5828f-ce00-476b-a344-92e919488315"
+                 ],
                  :created_time => timestamp,
                  :last_edited_time => timestamp,
                  :created_by_table => "notion_user",
@@ -115,7 +137,7 @@ module Utils
              }
     end
 
-    def block_location(block_parent_id, block_id, location = nil)
+    def block_location(block_parent_id, block_id, new_block_id, location)
       #! payload for duplicating a block. Most properties should be
       #! inherited from the block class the method is invoked on.
       #! block_parent_id -> id of parent block : ``str``
@@ -130,8 +152,8 @@ module Utils
                :path => path,
                :command => command,
                :args => {
-                 :after => location ? location : block.id,
-                 :id => block_id,
+                 :after => location ? location : block_id,
+                 :id => new_block_id,
                },
              }
     end
@@ -139,38 +161,39 @@ module Utils
 
   def checked(block_id, standardized_check_val)
     #! payload for setting a "checked" value for TodoBlock.
-    #! 
+    #!
     table = "block"
     path = ["properties"]
     command = "update"
     return {
-        :id => block_id,
-       :table => table,
-       :path => path,
-       :command => command,
-       :args => {
-         :checked => [[standardized_check_val]],
-        },
-      }
-    end
-    def update_codeblock_language(block_id, coding_language)
-      #! update the language for a codeblock
-      #! block_id -> id of the code block
-      #! new_language -> language to change the block to.
-      table = "block"
-      path = ["properties"]
-      command = "update"
+             :id => block_id,
+             :table => table,
+             :path => path,
+             :command => command,
+             :args => {
+               :checked => [[standardized_check_val]],
+             },
+           }
+  end
 
-      {
-       :id => block_id,
-       :table => table,
-       :path => path,
-       :command => command,
-       :args => {
-         :language => [[coding_language]],
-        },
-      }
-    end
+  def update_codeblock_language(block_id, coding_language)
+    #! update the language for a codeblock
+    #! block_id -> id of the code block
+    #! new_language -> language to change the block to.
+    table = "block"
+    path = ["properties"]
+    command = "update"
+
+    {
+      :id => block_id,
+      :table => table,
+      :path => path,
+      :command => command,
+      :args => {
+        :language => [[coding_language]],
+      },
+    }
+  end
 
   def build_operations(title, styles)
     timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
@@ -271,97 +294,97 @@ module Utils
     # },
     ]
     create_block_payload = [
-    #   {
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "table": "block",
-    #     "path": [],
-    #     "command": "update",
-    #     "args": {
-    #       "id": new_block_id, #TODO: NEW ID
-    #       "type": block_type.notion_type,
-    #       "properties": {},
-    #       "created_time": timestamp,
-    #       "last_edited_time": timestamp,
-    #     },
-    #   },
-    #   {
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "table": "block",
-    #     "path": [],
-    #     "command": "update",
-    #     "args": {
-    #       "parent_id": @id, #TODO: PARENT ID
-    #       "parent_table": "block",
-    #       "alive": true,
-    #     },
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": @id, #TODO: PARENT ID
-    #     "path": [
-    #       "content",
-    #     ],
-    #     "command": "listAfter",
-    #     "args": {
-    #       "after": @parent_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
-    #       "id": new_block_id, #TODO: NEW ID
-    #     },
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "created_by_id",
-    #     ],
-    #     "command": "set",
-    #     "args": user_notion_id, #TODO: USER ID, stored in cooks
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "created_by_table",
-    #     ],
-    #     "command": "set",
-    #     "args": "notion_user",
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "last_edited_time",
-    #     ],
-    #     "command": "set",
-    #     "args": timestamp,
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "last_edited_by_id",
-    #     ],
-    #     "command": "set",
-    #     "args": user_notion_id, #TODO: USER ID STORED IN COOKS
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "last_edited_by_table",
-    #     ],
-    #     "command": "set",
-    #     "args": "notion_user",
-    #   },
-    #   {
-    #     "table": "block",
-    #     "id": new_block_id, #TODO: NEW ID
-    #     "path": [
-    #       "properties", "title",
-    #     ],
-    #     "command": "set",
-    #     "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
-    #   },
-    ]
+ #   {
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "table": "block",
+           #     "path": [],
+           #     "command": "update",
+           #     "args": {
+           #       "id": new_block_id, #TODO: NEW ID
+           #       "type": block_type.notion_type,
+           #       "properties": {},
+           #       "created_time": timestamp,
+           #       "last_edited_time": timestamp,
+           #     },
+           #   },
+           #   {
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "table": "block",
+           #     "path": [],
+           #     "command": "update",
+           #     "args": {
+           #       "parent_id": @id, #TODO: PARENT ID
+           #       "parent_table": "block",
+           #       "alive": true,
+           #     },
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": @id, #TODO: PARENT ID
+           #     "path": [
+           #       "content",
+           #     ],
+           #     "command": "listAfter",
+           #     "args": {
+           #       "after": @parent_id, #TODO: SPECIFIED ID OR LAST ID ON PAGE
+           #       "id": new_block_id, #TODO: NEW ID
+           #     },
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "created_by_id",
+           #     ],
+           #     "command": "set",
+           #     "args": user_notion_id, #TODO: USER ID, stored in cooks
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "created_by_table",
+           #     ],
+           #     "command": "set",
+           #     "args": "notion_user",
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "last_edited_time",
+           #     ],
+           #     "command": "set",
+           #     "args": timestamp,
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "last_edited_by_id",
+           #     ],
+           #     "command": "set",
+           #     "args": user_notion_id, #TODO: USER ID STORED IN COOKS
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "last_edited_by_table",
+           #     ],
+           #     "command": "set",
+           #     "args": "notion_user",
+           #   },
+           #   {
+           #     "table": "block",
+           #     "id": new_block_id, #TODO: NEW ID
+           #     "path": [
+           #       "properties", "title",
+           #     ],
+           #     "command": "set",
+           #     "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
+           #   },
+      ]
 
     create_page_payload_nonpage = [
       {
@@ -503,24 +526,24 @@ module Utils
           "id": new_block_id, #TODO: NEW ID
         },
       },
-      # {
-      #   "table": "block",
-      #   "id": new_block_id, #TODO: NEW ID
-      #   "path": [
-      #     "last_edited_time",
-      #   ],
-      #   "command": "set",
-      #   "args": timestamp,
-      # },
-      # {
-      #   "table": "block",
-      #   "id": new_block_id, #TODO: NEW ID
-      #   "path": [
-      #     "properties", "title",
-      #   ],
-      #   "command": "set",
-      #   "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
-      # },
+    # {
+    #   "table": "block",
+    #   "id": new_block_id, #TODO: NEW ID
+    #   "path": [
+    #     "last_edited_time",
+    #   ],
+    #   "command": "set",
+    #   "args": timestamp,
+    # },
+    # {
+    #   "table": "block",
+    #   "id": new_block_id, #TODO: NEW ID
+    #   "path": [
+    #     "properties", "title",
+    #   ],
+    #   "command": "set",
+    #   "args": [[block_title]], # ["b", "_", ["h", "teal_background"]]
+    # },
     ]
 
     cross_off_todo_payload = [
@@ -560,57 +583,57 @@ module Utils
       ]
 
     update_codeblock_payload = [
-      # {
-      #   "id": @id,
-      #   "table": "block",
-      #   "path": [
-      #     "properties",
-      #   ],
-      #   "command": "update",
-      #   "args": {
-      #     "language": [[coding_language]],
-      #   },
-      # },
-      # {
-      #   "table": "block",
-      #   "id": @id,
-      #   "path": [
-      #     "properties", "title",
-      #   ],
-      #   "command": "set",
-      #   "args": [[styles[:code]]],
-      # },
-    ]
+ # {
+           #   "id": @id,
+           #   "table": "block",
+           #   "path": [
+           #     "properties",
+           #   ],
+           #   "command": "update",
+           #   "args": {
+           #     "language": [[coding_language]],
+           #   },
+           # },
+           # {
+           #   "table": "block",
+           #   "id": @id,
+           #   "path": [
+           #     "properties", "title",
+           #   ],
+           #   "command": "set",
+           #   "args": [[styles[:code]]],
+           # },
+      ]
 
     table_of_contents_update = [
-      # {
-      #   "id": @id,
-      #   "table": "block",
-      #   "path": [
-      #     "format",
-      #   ],
-      #   "command": "update",
-      #   "args": style_args,
-      # },
-      # {
-      #   "table": "block",
-      #   "id": @id,
-      #   "path": [
-      #     "last_edited_time",
-      #   ],
-      #   "command": "set",
-      #   "args": timestamp,
-      # },
-      # {
-      #   "table": "block",
-      #   "id": @parent_id,
-      #   "path": [
-      #     "last_edited_time",
-      #   ],
-      #   "command": "set",
-      #   "args": timestamp,
-      # },
-    ]
+ # {
+           #   "id": @id,
+           #   "table": "block",
+           #   "path": [
+           #     "format",
+           #   ],
+           #   "command": "update",
+           #   "args": style_args,
+           # },
+           # {
+           #   "table": "block",
+           #   "id": @id,
+           #   "path": [
+           #     "last_edited_time",
+           #   ],
+           #   "command": "set",
+           #   "args": timestamp,
+           # },
+           # {
+           #   "table": "block",
+           #   "id": @parent_id,
+           #   "path": [
+           #     "last_edited_time",
+           #   ],
+           #   "command": "set",
+           #   "args": timestamp,
+           # },
+      ]
   end
 
   def build_payload(operations, request_ids)
