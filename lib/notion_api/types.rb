@@ -206,8 +206,13 @@ module Notion
 
       create_hash = $Components.create(new_block_id, block_type.notion_type)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
+<<<<<<< Updated upstream
       block_location_hash = $Components.block_location(@id, @id, new_block_id, after)
       last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+=======
+      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, command="listAfter")
+      last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
+>>>>>>> Stashed changes
       last_edited_time_child_hash = $Components.last_edited_time(@id)
       title_hash = $Components.title(new_block_id, block_title)
 
@@ -251,7 +256,8 @@ module Notion
       @@notion_type
     end
 
-    def notion_type
+    def self.name
+      #! change the class.name attribute
       @@notion_type
     end
 

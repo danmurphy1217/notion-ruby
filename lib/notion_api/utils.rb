@@ -138,7 +138,31 @@ module Utils
              }
     end
 
+<<<<<<< Updated upstream
     def block_location(block_parent_id, block_id, new_block_id, after)
+=======
+    def parent_location_add(block_parent_id, block_id)
+      table = "block"
+      path = []
+      command = "update"
+      parent_table = "block"
+      alive = true
+
+      return {
+               :id => block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :parent_id => block_parent_id,
+                 :parent_table => parent_table,
+                 :alive => alive,
+               },
+             }
+    end
+
+    def block_location_add(block_parent_id, block_id, new_block_id = nil, targetted_block = nil, command)
+>>>>>>> Stashed changes
       #! payload for duplicating a block. Most properties should be
       #! inherited from the block class the method is invoked on.
       #! block_parent_id -> id of parent block : ``str``
