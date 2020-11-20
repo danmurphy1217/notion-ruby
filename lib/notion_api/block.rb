@@ -156,7 +156,7 @@ module Notion
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
       while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        if i >= 20
+        if i >= 10
           return {}
         else
           jsonified_record_response = get_all_block_info(clean_id, request_body)
@@ -168,9 +168,11 @@ module Notion
       block_type = extract_type(clean_id, jsonified_record_response)
       if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
         # unique case for top-level page... top-level pages have the same ID and parent ID.
-        block_parent_id = clean_id
-      else
         block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+        @@root = true
+      else
+      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+      @@root = false
       end
 
       if block_type.nil?

@@ -118,9 +118,9 @@ module Notion
       end
     end
 
-    def duplicate(after = nil)
+    def duplicate(target_block = nil)
       #! duplicate the block that this method is invoked upon.
-      #! after -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
+      #! target_block -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
@@ -149,11 +149,11 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
-      block = after ? get_block(after) : self # allows dev to place block anywhere!
+      block = target_block ? get_block(target_block) : self # allows dev to place block anywhere!
 
       duplicate_hash = $Components.duplicate(title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
-      block_location_hash = $Components.block_location(block.parent_id, block.id, new_block_id, after)
+      block_location_hash = $Components.block_location_add(block_parent_id=block.parent_id, block_id=block.id, new_block_id=new_block_id, targetted_block=target_block, command="listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
       last_edited_time_child_hash = $Components.last_edited_time(block.id)
 
@@ -173,6 +173,84 @@ module Notion
         :headers => headers,
       )
       return {}
+    end
+
+    def move(target_block, position="after")
+      positions_hash = {
+        "after" => "listAfter",
+        "child-after" => "listAfter",
+        "before" => "listBefore",
+        "child-before" => "listBefore"
+      }
+      if !positions_hash.keys.include?(position)
+        return "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"
+      else
+        position_command = positions_hash[position]
+        #! move the block to a new location.
+        #! target_block -> the targetted block to move to. : ``str``
+        #! position -> where the block should be listed, in positions relative to the target_block [before, after, top-child, last-child]
+        cookies = @@options["cookies"]
+        headers = @@options["headers"]
+        request_url = @@method_urls[:UPDATE_BLOCK]
+
+        request_id = extract_id(SecureRandom.hex(n = 16))
+        transaction_id = extract_id(SecureRandom.hex(n = 16))
+        space_id = extract_id(SecureRandom.hex(n = 16))
+
+        request_ids = {
+          :request_id => request_id,
+          :transaction_id => transaction_id,
+          :space_id => space_id,
+        }
+        body = {
+          :pageId => @id,
+          :chunkNumber => 0,
+          :limit => 100,
+          :verticalColumns => false,
+        }
+        check_parents = (@parent_id == target_block.parent_id)
+        set_block_dead_hash = $Components.set_block_to_dead(@id) # kill the block this method is invoked on...
+        block_location_remove_hash = $Components.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
+        parent_location_hash = $Components.parent_location_add( check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
+        block_location_add_hash = $Components.block_location_add(block_parent_id=check_parents ? @parent_id : target_block.parent_id, block_id=@id, targetted_block=target_block.id, command=position_command)
+        
+        if check_parents
+          last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+          last_edited_time_child_hash = $Components.last_edited_time(@id)
+          operations = [
+            set_block_dead_hash,
+            block_location_remove_hash,
+            parent_location_hash,
+            block_location_add_hash,
+            last_edited_time_parent_hash,
+            last_edited_time_child_hash
+          ]
+        else
+          last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+          last_edited_time_new_parent_hash = $Components.last_edited_time(target_block.parent_id)
+          last_edited_time_child_hash = $Components.last_edited_time(@id)
+          operations = [
+            set_block_dead_hash,
+            block_location_remove_hash,
+            parent_location_hash,
+            block_location_add_hash,
+            last_edited_time_parent_hash,
+            last_edited_time_new_parent_hash,
+            last_edited_time_child_hash
+          ]
+        end
+        if !check_parents
+          @parent_id = target_block.parent_id
+        end
+        request_body = build_payload(operations, request_ids)
+        response = HTTParty.post(
+          request_url,
+          :body => request_body.to_json,
+          :cookies => cookies,
+          :headers => headers,
+        )
+        return self
+      end
     end
 
     def create(block_type, block_title, after = nil)
@@ -206,8 +284,8 @@ module Notion
 
       create_hash = $Components.create(new_block_id, block_type.notion_type)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      block_location_hash = $Components.block_location(@id, @id, new_block_id, after)
-      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block=target_block, command="listAfter")
+      last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
       last_edited_time_child_hash = $Components.last_edited_time(@id)
       title_hash = $Components.title(new_block_id, block_title)
 
@@ -229,8 +307,6 @@ module Notion
         :headers => headers,
       )
       new_block = block_type.new(new_block_id, block_title, @id)
-      # new_block = Notion.const_get(BLOCK_TYPES[block_type]).new(block_type, new_block_id, block_title, @parent_id, @token_v2)
-      # styles.empty? ? nil : new_block.update(styles)
       return new_block
     end # create
   end # BlockTemplate
@@ -278,7 +354,6 @@ module Notion
         checked_hash = $Components.checked_todo(@id, checked_value.downcase)
         last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
         last_edited_time_child_hash = $Components.last_edited_time(@id)
-        p self.notion_type, @@notion_type
 
         operations = [
           checked_hash,
