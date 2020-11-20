@@ -89,14 +89,31 @@ module Utils
       parent_table = "block"
       alive = true
       return {
-               "id": new_block_id,
-               "table": table,
-               "path": path,
-               "command": command,
-               "args": {
-                 "parent_id": block_parent_id,
-                 "parent_table": parent_table,
-                 "alive": alive,
+               :id => new_block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :parent_id => block_parent_id,
+                 :parent_table => parent_table,
+                 :alive => alive,
+               },
+             }
+    end
+
+    def set_block_to_dead(block_id)
+      table = "block"
+      path = []
+      command = "update"
+      parent_table = "block"
+      alive = false
+      return {
+               :id => block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :alive => false,
                },
              }
     end
@@ -138,9 +155,6 @@ module Utils
              }
     end
 
-<<<<<<< Updated upstream
-    def block_location(block_parent_id, block_id, new_block_id, after)
-=======
     def parent_location_add(block_parent_id, block_id)
       table = "block"
       path = []
@@ -161,8 +175,7 @@ module Utils
              }
     end
 
-    def block_location_add(block_parent_id, block_id, new_block_id = nil, targetted_block = nil, command)
->>>>>>> Stashed changes
+    def block_location_add(block_parent_id, block_id, new_block_id = nil, targetted_block, command)
       #! payload for duplicating a block. Most properties should be
       #! inherited from the block class the method is invoked on.
       #! block_parent_id -> id of parent block : ``str``
@@ -170,15 +183,33 @@ module Utils
       #! after -> location of ID to place the new block after : ``str``
       table = "block"
       path = ["content"]
-      command = "listAfter"
+
       return {
                :table => table,
-               :id => block_parent_id,
+               :id => block_parent_id, # ID of the parent for the new block. It should be the block that the method is invoked on.
                :path => path,
                :command => command,
                :args => {
-                 :after => after ? after : block_id,
-                 :id => new_block_id,
+                 :after => targetted_block ? targetted_block : block_id,
+                 :id => new_block_id ? new_block_id : block_id,
+               },
+             }
+    end
+
+    def block_location_remove(block_parent_id, block_id)
+      #! removes a notion block
+      #! block_parent_id -> the parent ID of the block to remove : ``str``
+      #! block_id -> the ID of the block to remove : ``str``
+      table = "block"
+      path = ["content"]
+      command = "listRemove"
+      return {
+               :table => table,
+               :id => block_parent_id, # ID of the parent for the new block. It should be the block that the method is invoked on.
+               :path => path,
+               :command => command,
+               :args => {
+                 :id => block_id,
                },
              }
     end

@@ -73,6 +73,7 @@ Each of these classes has access to the following methods:
 >>> @block.duplicate # block is duplicated and placed directly after the current block
 >>> @block.duplicate("https://www.notion.so/danmurphy/TEST-PAGE-TWO-c2cf338f19a857t586bd17679f490e66") # block is duplicated and placed after the specified block ID. If the block ID is a page, it is placed at the bottom of the page
 ```
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 5. `revert`→ reverts the most recent change.
 =======
@@ -84,7 +85,8 @@ Each of these classes has access to the following methods:
 >>> @block.move(@target_block, "before") # move block before the target
 ```
 6. `revert`→ reverts the most recent change.
->>>>>>> Stashed changes
+5. `move` → move a block to another location.
+6. `revert`→ reverts the most recent change.
 [TODO]
 ## Creating New Blocks
 In Notion, the parent ID for a block that is **not** nested is the page that the block appears on. For nested blocks, the parent ID is the block that the nested block appears within. For example, the parent ID for a block contained within a toggle block **is** the toggle block. But, the toggle block's parent ID, as long as it is not nested within another block, is the page that the toggle block appears on. Given this tree-like structure, it made intuitive sense to build the wrapper with similar functionality:
