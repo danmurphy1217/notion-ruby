@@ -343,21 +343,25 @@ module Notion
       }
 
       create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
-      set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
+      # set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
       set_child_one_alive = $CollectionViewComponents.set_collection_blocks_alive(child_one, collection_id)
       set_child_two_alive = $CollectionViewComponents.set_collection_blocks_alive(child_two, collection_id)
       set_child_three_alive = $CollectionViewComponents.set_collection_blocks_alive(child_three, collection_id)
       set_child_four_alive = $CollectionViewComponents.set_collection_blocks_alive(child_four, collection_id)
-      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id)
+      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id, children_ids = [child_one, child_two, child_three, child_four])
       configure_columns = $CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
       add_block_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
       new_block_edited_time = $Components.last_edited_time(new_block_id)
       collection_title = $CollectionViewComponents.set_collection_title(collection_title, collection_id)
+      insert_child_one_data = $CollectionViewComponents.insert_data(child_one, data[0]["emoji"])
+      insert_child_two_data = $CollectionViewComponents.insert_data(child_two, data[1]["emoji"])
+      insert_child_three_data = $CollectionViewComponents.insert_data(child_three, data[2]["emoji"])
+      insert_child_four_data = $CollectionViewComponents.insert_data(child_four, data[3]["emoji"])
 
       operations = [
         create_collection_view,
-        set_parent_block_alive,
+        # set_parent_block_alive,
         set_child_one_alive,
         set_child_two_alive,
         set_child_three_alive,
@@ -368,9 +372,11 @@ module Notion
         add_block_hash,
         new_block_edited_time,
         collection_title,
+        insert_child_one_data,
+        insert_child_two_data,
+        insert_child_three_data,
+        insert_child_four_data
       ]
-
-      p operations
 
       request_url = @@method_urls[:UPDATE_BLOCK]
       request_body = build_payload(operations, request_ids)
@@ -588,7 +594,6 @@ module Notion
   class CollectionView < Block #! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
     #! by inheriting BlockTemplate, it inherits a bunch of methods that don't really apply.
     # collection views such as tables and timelines.
-    
     attr_reader :type, :id, :title, :parent_id
     @@notion_type = "collection_view"
 

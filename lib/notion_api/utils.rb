@@ -307,7 +307,7 @@ module Utils
              }
     end
 
-    def self.set_view_config(new_block_id, view_id)
+    def self.set_view_config(new_block_id, view_id, children_ids)
 
       table = "collection_view"
       path = []
@@ -328,6 +328,7 @@ module Utils
                 :version => version,
                 :type => type,
                 :name => name,
+                :page_sort => children_ids,
                 :parent_id => new_block_id,
                 :parent_table => parent_table,
                 :alive => alive,
@@ -376,8 +377,7 @@ module Utils
             }
     end
 
-    def self.insert_data(block_id)
-      "9dc430be-72bf-b413-6843-f506784aac41"
+    def self.insert_data(block_id, data)
       table = "block"
       path = [
         "properties",
@@ -390,7 +390,7 @@ module Utils
        :table => table,
        :path => path,
        :command => command,
-       :args => [["sadfasdfsgdf"]]
+       :args => [[data]]
     }
   end
   end
