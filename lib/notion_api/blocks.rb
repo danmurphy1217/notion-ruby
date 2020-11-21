@@ -1,5 +1,5 @@
 require_relative "utils"
-require_relative "block"
+require_relative "core"
 require "httparty"
 require "date"
 require "logger"
@@ -13,7 +13,8 @@ module Notion
     include Utils
 
     attr_reader :type, :id, :title, :parent_id
-    $Components = Utils::Components.new
+    $Components = Utils::BlockComponents
+    $CollectionViewComponents = Utils::CollectionViewComponents
 
     def initialize(id, title, parent_id)
       @id = id
@@ -153,7 +154,7 @@ module Notion
 
       duplicate_hash = $Components.duplicate(title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
-      block_location_hash = $Components.block_location_add(block_parent_id=block.parent_id, block_id=block.id, new_block_id=new_block_id, targetted_block=target_block, command="listAfter")
+      block_location_hash = $Components.block_location_add(block_parent_id = block.parent_id, block_id = block.id, new_block_id = new_block_id, targetted_block = target_block, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
       last_edited_time_child_hash = $Components.last_edited_time(block.id)
 
@@ -175,15 +176,15 @@ module Notion
       return {}
     end
 
-    def move(target_block, position="after")
+    def move(target_block, position = "after")
       positions_hash = {
         "after" => "listAfter",
         "child-after" => "listAfter",
         "before" => "listBefore",
-        "child-before" => "listBefore"
+        "child-before" => "listBefore",
       }
       if !positions_hash.keys.include?(position)
-        return "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"
+        return "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}"
       else
         position_command = positions_hash[position]
         #! move the block to a new location.
@@ -211,9 +212,9 @@ module Notion
         check_parents = (@parent_id == target_block.parent_id)
         set_block_dead_hash = $Components.set_block_to_dead(@id) # kill the block this method is invoked on...
         block_location_remove_hash = $Components.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
-        parent_location_hash = $Components.parent_location_add( check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
-        block_location_add_hash = $Components.block_location_add(block_parent_id=check_parents ? @parent_id : target_block.parent_id, block_id=@id, targetted_block=target_block.id, command=position_command)
-        
+        parent_location_hash = $Components.parent_location_add(check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
+        block_location_add_hash = $Components.block_location_add(block_parent_id = check_parents ? @parent_id : target_block.parent_id, block_id = @id, targetted_block = target_block.id, command = position_command)
+
         if check_parents
           last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
           last_edited_time_child_hash = $Components.last_edited_time(@id)
@@ -223,7 +224,7 @@ module Notion
             parent_location_hash,
             block_location_add_hash,
             last_edited_time_parent_hash,
-            last_edited_time_child_hash
+            last_edited_time_child_hash,
           ]
         else
           last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
@@ -236,7 +237,7 @@ module Notion
             block_location_add_hash,
             last_edited_time_parent_hash,
             last_edited_time_new_parent_hash,
-            last_edited_time_child_hash
+            last_edited_time_child_hash,
           ]
         end
         if !check_parents
@@ -280,13 +281,11 @@ module Notion
         :verticalColumns => false,
       }
 
-      user_notion_id = get_notion_id(body)
-
       create_hash = $Components.create(new_block_id, block_type.notion_type)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, command="listAfter")
+      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
-      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block= nil, command="listAfter")
+      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
       last_edited_time_child_hash = $Components.last_edited_time(@id)
       title_hash = $Components.title(new_block_id, block_title)
@@ -311,6 +310,79 @@ module Notion
       new_block = block_type.new(new_block_id, block_title, @id)
       return new_block
     end # create
+
+    def create_collection(collection_type, collection_title, data = {})
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      timestamp = DateTime.now.strftime("%Q")
+
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      parent_id = extract_id(SecureRandom.hex(n = 16))
+      child_one = extract_id(SecureRandom.hex(n = 16))
+      child_two = extract_id(SecureRandom.hex(n = 16))
+      child_three = extract_id(SecureRandom.hex(n = 16))
+      child_four = extract_id(SecureRandom.hex(n = 16))
+      collection_id = extract_id(SecureRandom.hex(n = 16))
+      view_id = extract_id(SecureRandom.hex(n = 16))
+
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      body = {
+        :pageId => @id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+
+      create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
+      set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
+      set_child_one_alive = $CollectionViewComponents.set_collection_blocks_alive(child_one, collection_id)
+      set_child_two_alive = $CollectionViewComponents.set_collection_blocks_alive(child_two, collection_id)
+      set_child_three_alive = $CollectionViewComponents.set_collection_blocks_alive(child_three, collection_id)
+      set_child_four_alive = $CollectionViewComponents.set_collection_blocks_alive(child_four, collection_id)
+      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id)
+      configure_columns = $CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
+      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
+      add_block_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
+      new_block_edited_time = $Components.last_edited_time(new_block_id)
+      collection_title = $CollectionViewComponents.set_collection_title(collection_title, collection_id)
+
+      operations = [
+        create_collection_view,
+        set_parent_block_alive,
+        set_child_one_alive,
+        set_child_two_alive,
+        set_child_three_alive,
+        set_child_four_alive,
+        configure_view,
+        configure_columns,
+        set_parent_alive_hash,
+        add_block_hash,
+        new_block_edited_time,
+        collection_title,
+      ]
+
+      p operations
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = build_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      new_block = CollectionView.new(new_block_id, collection_title, parent_id)
+      return new_block
+    end # create_collection
   end # BlockTemplate
 
   class DividerBlock < BlockTemplate
@@ -511,6 +583,30 @@ module Notion
     end
   end
 end # Notion
+
+module Notion
+  class CollectionView < Block #! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
+    #! by inheriting BlockTemplate, it inherits a bunch of methods that don't really apply.
+    # collection views such as tables and timelines.
+    
+    attr_reader :type, :id, :title, :parent_id
+    @@notion_type = "collection_view"
+
+    def initialize(id, title, parent_id)
+      @id = id
+      @title = title
+      @parent_id = parent_id
+    end # initialize
+
+    def self.notion_type
+      @@notion_type
+    end
+
+    def type
+      @@notion_type
+    end
+  end
+end
 
 # gather a list of all the classes defined here...
 Classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }

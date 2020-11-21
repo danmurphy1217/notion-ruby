@@ -1,4 +1,4 @@
-require_relative "types"
+require_relative "blocks"
 require_relative "utils"
 require "httparty"
 

@@ -18,10 +18,10 @@ The `Client` class extends the `Block` class, which includes a majority of the u
 ```
 All three of these will return the same block instance:
 ```ruby
-#<Notion::PageBlock:0x00007f9342d7ea10 **omitted meta-data**>
+#<Notion::PageBlock **omitted meta-data**>
 ```
 Attributes that can be read from this class instance are:
-1. `id`: the clean ID associated with the block.
+1. `id`: the ID associated with the block.
 2. `title`: the title associated with the block.
 3. `parent_id`: the parent ID of the block.
 4. `type`: the type of the block.
@@ -47,7 +47,7 @@ As mentioned above, an instantiated block class is returned from the `get_block`
 17. Sub-Sub-Header
 
 Each of these classes has access to the following methods:
-1. `title=` → change the title (content) of a block.
+1. `title=` → change the title of a block.
 ```ruby
 >>> @block = @client.get_block("d2ce338f-19e8-47f5-86bd-17679f490e66")
 >>> @block.title # get the current title...
@@ -56,9 +56,7 @@ Each of these classes has access to the following methods:
 >>> @block.title
 "New Title Here"
 ```
-2. `update` → Change the styling of a block.
-[TODO]
-3. `convert` → convert a block to a different type.
+2. `convert` → convert a block to a different type.
 ```ruby
 >>> @block = @client.get_block("d2ce338f-19e8-47f5-86bd-17679f490e66")
 >>> @block.convert(Notion::CalloutBlock)
@@ -67,33 +65,27 @@ Each of these classes has access to the following methods:
 >>> @block # new class instance returned...
 #<Notion::CalloutBlock:0x00007ffb75b19ea0 **omitted meta-data**>
 ```
-4. `duplicate`→ duplicate the current block.
+3. `duplicate`→ duplicate the current block.
 ```ruby
 >>> @block = @client.get_block("d2ce338f-19e8-47f5-86bd-17679f490e66")
 >>> @block.duplicate # block is duplicated and placed directly after the current block
 >>> @block.duplicate("https://www.notion.so/danmurphy/TEST-PAGE-TWO-c2cf338f19a857t586bd17679f490e66") # block is duplicated and placed after the specified block ID. If the block ID is a page, it is placed at the bottom of the page
 ```
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-5. `revert`→ reverts the most recent change.
-=======
-5. `move` → move a block to another location.
+4. `move` → move a block to another location.
 ```ruby
 >>> @block = @client.get_block("d2ce338f-19e8-47f5-86bd-17679f490e66")
->>> @target_block = @client..get_block("c3ce468f-11e3-48g5-87be-27679g491e66")
+>>> @target_block = @client.get_block("c3ce468f-11e3-48g5-87be-27679g491e66")
 >>> @block.move(@target_block) # default position is "after"
 >>> @block.move(@target_block, "before") # move block before the target
 ```
-6. `revert`→ reverts the most recent change.
-5. `move` → move a block to another location.
-6. `revert`→ reverts the most recent change.
+5. `revert`→ reverts the most recent change.
 [TODO]
 ## Creating New Blocks
 In Notion, the parent ID for a block that is **not** nested is the page that the block appears on. For nested blocks, the parent ID is the block that the nested block appears within. For example, the parent ID for a block contained within a toggle block **is** the toggle block. But, the toggle block's parent ID, as long as it is not nested within another block, is the page that the toggle block appears on. Given this tree-like structure, it made intuitive sense to build the wrapper with similar functionality:
 - when the `create` method is called on a `PageBlock` instance, a non-nested block is created on that page, and its parent ID is the ID of the `PageBlock`
 - when the `create` method is called on a non-`PageBlock` instance, a nested block is created that belongs to the instance the `create` method is invoked upon.
 
-In any situation, a developer is only two lines of code away from creating a new block:
+In any situation, you are only two lines of code away from creating a new block:
 1. use the `get_block` method to retrieve the page or block in which you want to create a new block.
 2. use the `create` method on the class returned from the `get_block` call to create the new non-nested or nested block. For example:
 ```ruby
