@@ -228,7 +228,7 @@ module Notion
         pattern.each { |index| id.insert(index, "-") }
         return id
       else
-        raise "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
+        raise ArgumentError.new("Expected a Notion page URL or a page ID. Please consult the documentation for further information.")
       end
     end
   end
