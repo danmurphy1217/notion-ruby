@@ -1,4 +1,3 @@
-require_relative "blocks"
 require_relative "utils"
 require "httparty"
 
@@ -54,13 +53,7 @@ module Notion
     def children(url_or_id = @id)
       #! retrieve the children of a block. If the block has no children, return []. If it does, return the instantiated class objects associated with each child.
       #! url_or_id -> the block ID or URL : ``str``
-      clean_id = extract_id(url_or_id)
-      request_body = {
-        :pageId => clean_id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
+
       children_ids = children_ids(url_or_id)
       if children_ids.empty?
         return []
@@ -235,7 +228,7 @@ module Notion
         pattern.each { |index| id.insert(index, "-") }
         return id
       else
-        raise "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
+        raise ArgumentError.new("Expected a Notion page URL or a page ID. Please consult the documentation for further information.")
       end
     end
   end
