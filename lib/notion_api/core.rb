@@ -3,13 +3,102 @@ require_relative "utils"
 require "httparty"
 
 module Notion
-  class Block
+  class Core
     include Utils
     @@method_urls = URLS # defined in Utils
     @@options = { "cookies" => { :token_v2 => nil }, "headers" => { "Content-Type" => "application/json" } }
     @@type_whitelist = ("divider")
 
     attr_reader :token_v2, :active_user_header, :clean_id, :cookies, :headers
+
+    def get_page(url_or_id)
+      #! retrieve a Notion Page Block and return its instantiated class object.
+      #! url_or_id -> the block ID or URL : ``str``
+      clean_id = extract_id(url_or_id)
+
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
+        if i >= 10
+          return {}
+        else
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
+        end
+      end
+      block_id = clean_id
+      block_title = extract_title(clean_id, jsonified_record_response)
+      block_type = extract_type(clean_id, jsonified_record_response)
+      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
+        # unique case for top-level page... top-level pages have the same ID and parent ID.
+        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+        @@root = true
+      else
+        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+        @@root = false
+      end
+
+      if block_type != "page"
+        raise "the URL or ID passed to the get_page method must be that of a Page block."
+      else
+        return PageBlock.new(block_id, block_title, block_parent_id)
+      end
+    end
+
+    def children(url_or_id = @id)
+      #! retrieve the children of a block. If the block has no children, return []. If it does, return the instantiated class objects associated with each child.
+      #! url_or_id -> the block ID or URL : ``str``
+      clean_id = extract_id(url_or_id)
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      children_ids = children_ids(url_or_id)
+      if children_ids.empty?
+        return []
+      else
+        children_class_instances = []
+        children_ids.each { |child| children_class_instances.push(get(child)) }
+        return children_class_instances
+      end
+    end
+
+    def children_ids(url_or_id = @id)
+      #! retrieve the children IDs of a block.
+      #! url_or_id -> the block ID or URL : ``str``
+      clean_id = extract_id(url_or_id)
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty?
+        if i >= 10
+          return {}
+        else
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
+        end
+      end
+      if jsonified_record_response["block"][clean_id]["value"]["content"]
+        return jsonified_record_response["block"][clean_id]["value"]["content"]
+      else
+        return []
+      end
+    end
+
+    private
 
     def self.token_v2=(token_v2)
       @@token_v2 = token_v2
@@ -95,6 +184,13 @@ module Notion
       end
     end
 
+    def extract_collection_title(clean_id, collection_id, jsonified_record_response)
+      #! extract title from core JSON Notion response object.
+      #! clean_id -> the cleaned block ID: ``str``
+      #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
+      return jsonified_record_response["collection"][collection_id]["value"]["name"].flatten.join
+    end
+
     def extract_type(clean_id, jsonified_record_response)
       #! extract type from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
@@ -122,6 +218,10 @@ module Notion
       return jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["parent_id"]
     end
 
+    def extract_collection_id(clean_id, jsonified_record_response)
+      return jsonified_record_response["block"][clean_id]["value"]["collection_id"]
+    end
+
     def extract_id(url_or_id)
       #! parse and clean the URL or ID object provided.
       #! url_or_id -> the block ID or URL : ``str``
@@ -139,94 +239,6 @@ module Notion
         return id
       else
         raise "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
-      end
-    end
-
-    def get_block(url_or_id)
-      #! retrieve a Notion Block and return its instantiated class object.
-      #! url_or_id -> the block ID or URL : ``str``
-      clean_id = extract_id(url_or_id)
-
-      request_body = {
-        :pageId => clean_id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        if i >= 10
-          return {}
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
-      end
-      block_id = clean_id
-      block_title = extract_title(clean_id, jsonified_record_response)
-      block_type = extract_type(clean_id, jsonified_record_response)
-      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
-        # unique case for top-level page... top-level pages have the same ID and parent ID.
-        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
-        @@root = true
-      else
-      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
-      @@root = false
-      end
-
-      if block_type.nil?
-        return {}
-      else
-        block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
-        return block_class.new(block_id, block_title, block_parent_id)
-      end
-    end
-
-    def children(url_or_id = @id)
-      #! retrieve the children of a block. If the block has no children, return []. If it does, return the instantiated class objects associated with each child.
-      #! url_or_id -> the block ID or URL : ``str``
-      clean_id = extract_id(url_or_id)
-      request_body = {
-        :pageId => clean_id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-      children_ids = children_ids(url_or_id)
-      if children_ids.empty?
-        return []
-      else
-        children_class_instances = []
-        children_ids.each { |child| children_class_instances.push(get_block(child)) }
-        return children_class_instances
-      end
-    end
-
-    def children_ids(url_or_id = @id)
-      #! retrieve the children IDs of a block.
-      #! url_or_id -> the block ID or URL : ``str``
-      clean_id = extract_id(url_or_id)
-      request_body = {
-        :pageId => clean_id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty?
-        if i >= 10
-          return {}
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
-      end
-      if jsonified_record_response["block"][clean_id]["value"]["content"]
-        return jsonified_record_response["block"][clean_id]["value"]["content"]
-      else
-        return []
       end
     end
   end

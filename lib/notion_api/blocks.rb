@@ -1,5 +1,6 @@
 require_relative "utils"
 require_relative "core"
+
 require "httparty"
 require "date"
 require "logger"
@@ -8,7 +9,7 @@ $LOGGER = Logger.new(STDOUT)
 $LOGGER.level = Logger::INFO
 
 module Notion
-  class BlockTemplate < Block
+  class BlockTemplate < Core
     #! Base Template for all blocks. Inherits core methods from the Block class defined in block.rb
     include Utils
 
@@ -33,45 +34,6 @@ module Notion
       @title = new_title
       return true
     end # title=
-
-    def update_title(new_title, request_id, transaction_id, space_id)
-      #! Helper method for sending POST request to change title of block.
-      #! new_title -> new title for the block : ``str``
-      #! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
-      #! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
-      # setup cookies, headers, and grab/create static vars for request
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.now.to_i
-
-      # set unique IDs for request
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
-      }
-
-      # build and set operations to send to Notion
-      title_hash = $Components.title(@id, new_title)
-      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-      last_edited_time_child_hash = $Components.last_edited_time(@id)
-      operations = [
-        title_hash,
-        last_edited_time_parent_hash,
-        last_edited_time_child_hash,
-      ]
-
-      request_body = build_payload(operations, request_ids) # defined in utils.rb
-
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      return response.body
-    end # update_title
 
     def convert(block_class_to_convert_to)
       #! convert a block from its current type to another.
@@ -152,7 +114,7 @@ module Notion
 
       block = target_block ? get_block(target_block) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(title, block.id, new_block_id, user_notion_id, root_children)
+      duplicate_hash = $Components.duplicate(block.type, title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
       block_location_hash = $Components.block_location_add(block_parent_id = block.parent_id, block_id = block.id, new_block_id = new_block_id, targetted_block = target_block, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
@@ -283,10 +245,9 @@ module Notion
 
       create_hash = $Components.create(new_block_id, block_type.notion_type)
       set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, command = "listAfter")
-      last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
-      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
-      last_edited_time_parent_hash = $Components.last_edited_time(self.type == "page" ? @id : @parent_id) # if PageBlock, the parent IS the the page the method is invoked on.
+      last_edited_time_parent_hash = $Components.last_edited_time(@id)
+      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = after, command = "listAfter")
+      last_edited_time_parent_hash = $Components.last_edited_time(@id)
       last_edited_time_child_hash = $Components.last_edited_time(@id)
       title_hash = $Components.title(new_block_id, block_title)
 
@@ -311,90 +272,96 @@ module Notion
       return new_block
     end # create
 
-    def create_collection(collection_type, collection_title, data = {})
+    private
+
+    def get(url_or_id)
+      #! retrieve a Notion Block and return its instantiated class object.
+      #! url_or_id -> the block ID or URL : ``str``
+      clean_id = extract_id(url_or_id)
+
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
+        if i >= 10
+          return {}
+        else
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
+        end
+      end
+      block_id = clean_id
+      block_title = extract_title(clean_id, jsonified_record_response)
+      block_type = extract_type(clean_id, jsonified_record_response)
+      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+
+      if block_type.nil?
+        return {}
+      else
+        block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
+        if block_class == Notion::CollectionView
+          block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
+          collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
+          return block_class.new(block_id, collection_title, block_parent_id, block_collection_id)
+        else
+          return block_class.new(block_id, block_title, block_parent_id)
+        end
+      end
+    end
+
+    def update_title(new_title, request_id, transaction_id, space_id)
+      #! Helper method for sending POST request to change title of block.
+      #! new_title -> new title for the block : ``str``
+      #! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
+      #! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
+      # setup cookies, headers, and grab/create static vars for request
       cookies = @@options["cookies"]
       headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.now.to_i
 
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      parent_id = extract_id(SecureRandom.hex(n = 16))
-      child_one = extract_id(SecureRandom.hex(n = 16))
-      child_two = extract_id(SecureRandom.hex(n = 16))
-      child_three = extract_id(SecureRandom.hex(n = 16))
-      child_four = extract_id(SecureRandom.hex(n = 16))
-      collection_id = extract_id(SecureRandom.hex(n = 16))
-      view_id = extract_id(SecureRandom.hex(n = 16))
-
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-
+      # set unique IDs for request
       request_ids = {
         :request_id => request_id,
         :transaction_id => transaction_id,
         :space_id => space_id,
       }
 
-      body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
-
-      create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
-      # set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
-      set_child_one_alive = $CollectionViewComponents.set_collection_blocks_alive(child_one, collection_id)
-      set_child_two_alive = $CollectionViewComponents.set_collection_blocks_alive(child_two, collection_id)
-      set_child_three_alive = $CollectionViewComponents.set_collection_blocks_alive(child_three, collection_id)
-      set_child_four_alive = $CollectionViewComponents.set_collection_blocks_alive(child_four, collection_id)
-      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id, children_ids = [child_one, child_two, child_three, child_four])
-      configure_columns = $CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
-      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      add_block_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
-      new_block_edited_time = $Components.last_edited_time(new_block_id)
-      collection_title = $CollectionViewComponents.set_collection_title(collection_title, collection_id)
-      insert_child_one_data = $CollectionViewComponents.insert_data(child_one, data[0]["emoji"])
-      insert_child_two_data = $CollectionViewComponents.insert_data(child_two, data[1]["emoji"])
-      insert_child_three_data = $CollectionViewComponents.insert_data(child_three, data[2]["emoji"])
-      insert_child_four_data = $CollectionViewComponents.insert_data(child_four, data[3]["emoji"])
-
+      # build and set operations to send to Notion
+      title_hash = $Components.title(@id, new_title)
+      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
+      last_edited_time_child_hash = $Components.last_edited_time(@id)
       operations = [
-        create_collection_view,
-        # set_parent_block_alive,
-        set_child_one_alive,
-        set_child_two_alive,
-        set_child_three_alive,
-        set_child_four_alive,
-        configure_view,
-        configure_columns,
-        set_parent_alive_hash,
-        add_block_hash,
-        new_block_edited_time,
-        collection_title,
-        insert_child_one_data,
-        insert_child_two_data,
-        insert_child_three_data,
-        insert_child_four_data
+        title_hash,
+        last_edited_time_parent_hash,
+        last_edited_time_child_hash,
       ]
 
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      request_body = build_payload(operations, request_ids)
+      request_body = build_payload(operations, request_ids) # defined in utils.rb
+
       response = HTTParty.post(
         request_url,
         :body => request_body.to_json,
         :cookies => cookies,
         :headers => headers,
       )
-      new_block = CollectionView.new(new_block_id, collection_title, parent_id)
-      return new_block
-    end # create_collection
+      return response.body
+    end # update_title
   end # BlockTemplate
 
   class DividerBlock < BlockTemplate
     # divider block: ---------
     @@notion_type = "divider"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -409,6 +376,10 @@ module Notion
 
     def self.name
       #! change the class.name attribute
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
 
@@ -463,12 +434,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class HeaderBlock < BlockTemplate
     # Header block: H1
     @@notion_type = "header"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -479,12 +458,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class SubSubHeaderBlock < BlockTemplate
     # Sub-Sub Header Block: H3
     @@notion_type = "sub_sub_header"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -499,12 +486,128 @@ module Notion
     def type
       @@notion_type
     end
+
+    def get_block(url_or_id)
+      #! retrieve a Notion Block and return its instantiated class object.
+      #! url_or_id -> the block ID or URL : ``str``
+      return get(url_or_id)
+    end
+
+    def get_collection(url_or_id)
+      #! retrieve a Notion Block and return its instantiated class object.
+      #! url_or_id -> the block ID or URL : ``str``
+      clean_id = extract_id(url_or_id)
+
+      request_body = {
+        :pageId => clean_id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
+        if i >= 10
+          return {}
+        else
+          jsonified_record_response = get_all_block_info(clean_id, request_body)
+          i += 1
+        end
+      end
+      block_id = clean_id
+      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
+      block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
+      block_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
+
+      return CollectionView.new(block_id, block_title, block_parent_id, block_collection_id)
+    end
+
+    def create_collection(collection_type, collection_title, data = {})
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      timestamp = DateTime.now.strftime("%Q")
+
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      parent_id = extract_id(SecureRandom.hex(n = 16))
+      collection_id = extract_id(SecureRandom.hex(n = 16))
+      view_id = extract_id(SecureRandom.hex(n = 16))
+      # p collection_id, parent_id, view_id
+
+      children = []
+      alive_blocks = []
+      data.each do |row|
+        child = extract_id(SecureRandom.hex(n = 16))
+        children.push(child)
+        alive_blocks.push($CollectionViewComponents.set_collection_blocks_alive(child, collection_id))
+      end
+
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      body = {
+        :pageId => @id,
+        :chunkNumber => 0,
+        :limit => 100,
+        :verticalColumns => false,
+      }
+
+      create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
+      # set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
+      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id, children_ids = children)
+      configure_columns = $CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
+      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
+      add_block_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = "listAfter")
+      new_block_edited_time = $Components.last_edited_time(new_block_id)
+      collection_title_hash = $CollectionViewComponents.set_collection_title(collection_title, collection_id)
+
+      operations = [
+        create_collection_view,
+        # set_parent_block_alive,
+        configure_view,
+        configure_columns,
+        set_parent_alive_hash,
+        add_block_hash,
+        new_block_edited_time,
+        collection_title_hash,
+      ]
+      operations << alive_blocks
+      all_ops = operations.flatten
+      data.each_with_index do |row, i|
+        child = children[i]
+        row.keys.each_with_index do |col_name, j|
+          child_component = $CollectionViewComponents.insert_data(child, j == 0 ? "title" : col_name, row[col_name])
+          all_ops.push(child_component)
+        end
+      end
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = build_payload(all_ops, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      p response.body
+      new_block = CollectionView.new(new_block_id, collection_title, parent_id, collection_id)
+      return new_block
+    end # create_collection
   end
 
   class ToggleBlock < BlockTemplate
     # Toggle block: best for storing children blocks
     @@notion_type = "toggle"
     def self.notion_type
+      @@notion_type
+    end
+    def type
       @@notion_type
     end
   end
@@ -515,12 +618,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+    
+    def type
+      @@notion_type
+    end
   end
 
   class NumberedBlock < BlockTemplate
     # Numbered list Block: best for an ordered list
     @@notion_type = "numbered_list"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -531,12 +642,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class CalloutBlock < BlockTemplate
     # same as quote... works similarly to page block
     @@notion_type = "callout"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -547,12 +666,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class TextBlock < BlockTemplate
     # good for just about anything (-:
     @@notion_type = "text"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -563,12 +690,20 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class TableOfContentsBlock < BlockTemplate
     # maps out the headers - sub-headers - sub-sub-headers on the page
     @@notion_type = "table_of_contents"
     def self.notion_type
+      @@notion_type
+    end
+
+    def type
       @@notion_type
     end
   end
@@ -579,6 +714,10 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 
   class ColumnBlock < BlockTemplate
@@ -587,20 +726,25 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
+    def type
+      @@notion_type
+    end
   end
 end # Notion
 
 module Notion
-  class CollectionView < Block #! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
+  class CollectionView < Core #! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
     #! by inheriting BlockTemplate, it inherits a bunch of methods that don't really apply.
     # collection views such as tables and timelines.
     attr_reader :type, :id, :title, :parent_id
     @@notion_type = "collection_view"
 
-    def initialize(id, title, parent_id)
+    def initialize(id, title, parent_id, collection_id)
       @id = id
       @title = title
       @parent_id = parent_id
+      @collection_id = collection_id
     end # initialize
 
     def self.notion_type
@@ -610,11 +754,15 @@ module Notion
     def type
       @@notion_type
     end
+
+    def add_row
+      p "ADDING ROW"
+    end
   end
 end
 
 # gather a list of all the classes defined here...
-Classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Block" }
+Classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != "BlockTemplate" and c.to_s != "Core" }
 notion_types = []
 Classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
 BLOCK_TYPES = notion_types.zip(Classes).to_h

@@ -126,6 +126,7 @@ module Utils
       #! block_id -> id of block: ``str``
       #! new_block_id -> id of new block : ``str``
       #! user_notion_id -> ID of notion user : ``str``
+      p block_type
       timestamp = DateTime.now.strftime("%Q")
       table = "block"
       path = []
@@ -347,7 +348,6 @@ module Utils
           schema_conf[col_names[i]] = {:name => col_names[i], :type => "text" }
         end
       end
-      p schema_conf 
       return {
         :id => collection_id,
         :table => "collection",
@@ -377,11 +377,11 @@ module Utils
             }
     end
 
-    def self.insert_data(block_id, data)
+    def self.insert_data(block_id, column, value)
       table = "block"
       path = [
         "properties",
-        "title"
+        column
       ]
       command = "set"
       
@@ -390,7 +390,7 @@ module Utils
        :table => table,
        :path => path,
        :command => command,
-       :args => [[data]]
+       :args => [[value]]
     }
   end
   end
