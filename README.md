@@ -1,4 +1,4 @@
-# Unofficial Notion Client for Ruby.
+# Unofficial Notion Client for Ruby.    [![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby)
 
 ## Getting Started
 To get started using this wrapper, you'll first need to retrieve your token_v2 credentials by signing into Notion in your browser of choice, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
