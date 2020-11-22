@@ -141,12 +141,12 @@ module Notion
     def move(target_block, position = "after")
       positions_hash = {
         "after" => "listAfter",
-        "child-after" => "listAfter",
+        # "child-after" => "listAfter",
         "before" => "listBefore",
-        "child-before" => "listBefore",
+      # "child-before" => "listBefore",
       }
       if !positions_hash.keys.include?(position)
-        return "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}"
+        raise "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}"
       else
         position_command = positions_hash[position]
         #! move the block to a new location.
@@ -216,60 +216,73 @@ module Notion
       end
     end
 
-    def create(block_type, block_title, after = nil)
+    def create(block_type, block_title, after = nil, position = "after")
       #! create a new block
       #! block_type -> the type of block to create : ``cls``
       #! block_title -> the title of the new block : ``str``
       #! loc -> the block_id that the new block should be placed after. ``str``
-      cookies = @@options["cookies"]
-      headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
-
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-
-      request_ids = {
-        :request_id => request_id,
-        :transaction_id => transaction_id,
-        :space_id => space_id,
+      positions_hash = {
+        "after" => "listAfter",
+        # "child-after" => "listAfter",
+        "before" => "listBefore",
+      # "child-before" => "listBefore",
       }
+      if !positions_hash.keys.include?(position)
+        raise "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}"
+      else
+        position_command = positions_hash[position]
 
-      body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
-      }
+        cookies = @@options["cookies"]
+        headers = @@options["headers"]
+        timestamp = DateTime.now.strftime("%Q")
 
-      create_hash = $Components.create(new_block_id, block_type.notion_type)
-      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      last_edited_time_parent_hash = $Components.last_edited_time(@id)
-      block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = after, command = "listAfter")
-      last_edited_time_parent_hash = $Components.last_edited_time(@id)
-      last_edited_time_child_hash = $Components.last_edited_time(@id)
-      title_hash = $Components.title(new_block_id, block_title)
+        new_block_id = extract_id(SecureRandom.hex(n = 16))
+        request_id = extract_id(SecureRandom.hex(n = 16))
+        transaction_id = extract_id(SecureRandom.hex(n = 16))
+        space_id = extract_id(SecureRandom.hex(n = 16))
 
-      operations = [
-        create_hash,
-        set_parent_alive_hash,
-        block_location_hash,
-        last_edited_time_parent_hash,
-        last_edited_time_child_hash,
-        title_hash,
-      ]
+        request_ids = {
+          :request_id => request_id,
+          :transaction_id => transaction_id,
+          :space_id => space_id,
+        }
 
-      request_url = @@method_urls[:UPDATE_BLOCK]
-      request_body = build_payload(operations, request_ids)
-      response = HTTParty.post(
-        request_url,
-        :body => request_body.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-      new_block = block_type.new(new_block_id, block_title, @id)
-      return new_block
+        body = {
+          :pageId => @id,
+          :chunkNumber => 0,
+          :limit => 100,
+          :verticalColumns => false,
+        }
+
+        create_hash = $Components.create(new_block_id, block_type.notion_type)
+        set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
+        last_edited_time_parent_hash = $Components.last_edited_time(@id)
+        block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = after, command = position_command)
+        last_edited_time_parent_hash = $Components.last_edited_time(@id)
+        last_edited_time_child_hash = $Components.last_edited_time(@id)
+        title_hash = $Components.title(new_block_id, block_title)
+
+        operations = [
+          create_hash,
+          set_parent_alive_hash,
+          block_location_hash,
+          last_edited_time_parent_hash,
+          last_edited_time_child_hash,
+          title_hash,
+        ]
+
+        request_url = @@method_urls[:UPDATE_BLOCK]
+        request_body = build_payload(operations, request_ids)
+        response = HTTParty.post(
+          request_url,
+          :body => request_body.to_json,
+          :cookies => cookies,
+          :headers => headers,
+        )
+
+        new_block = block_type.new(new_block_id, block_title, @id)
+        return new_block
+      end
     end # create
 
     private
@@ -517,9 +530,10 @@ module Notion
       block_id = clean_id
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
+      block_view_id = extract_view_ids(clean_id, jsonified_record_response).join
       block_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
 
-      return CollectionView.new(block_id, block_title, block_parent_id, block_collection_id)
+      return CollectionView.new(block_id, block_title, block_parent_id, block_collection_id, block_view_id)
     end
 
     def create_collection(collection_type, collection_title, data = {})
@@ -595,8 +609,8 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      p response.body
-      new_block = CollectionView.new(new_block_id, collection_title, parent_id, collection_id)
+
+      new_block = CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
       return new_block
     end # create_collection
   end
@@ -607,6 +621,7 @@ module Notion
     def self.notion_type
       @@notion_type
     end
+
     def type
       @@notion_type
     end
@@ -618,7 +633,7 @@ module Notion
     def self.notion_type
       @@notion_type
     end
-    
+
     def type
       @@notion_type
     end
@@ -740,11 +755,12 @@ module Notion
     attr_reader :type, :id, :title, :parent_id
     @@notion_type = "collection_view"
 
-    def initialize(id, title, parent_id, collection_id)
+    def initialize(id, title, parent_id, collection_id, view_id)
       @id = id
       @title = title
       @parent_id = parent_id
       @collection_id = collection_id
+      @view_id = view_id
     end # initialize
 
     def self.notion_type
@@ -755,8 +771,114 @@ module Notion
       @@notion_type
     end
 
-    def add_row
-      p "ADDING ROW"
+    def add_row(data)
+      #! add new row to Collection View table.
+      #! data -> JSON data to add to table : ``json``
+
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+      timestamp = DateTime.now.strftime("%Q")
+
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+      new_block_id = extract_id(SecureRandom.hex(n = 16))
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      instantiate_row = $CollectionViewComponents.add_new_row(new_block_id)
+      set_block_alive = $CollectionViewComponents.set_collection_blocks_alive(new_block_id, @collection_id)
+      new_block_edited_time = $Components.last_edited_time(new_block_id)
+      parent_edited_time = $Components.last_edited_time(@parent_id)
+
+      operations = [
+        instantiate_row,
+        set_block_alive,
+        new_block_edited_time,
+        parent_edited_time,
+      ]
+
+      data.keys.each_with_index do |col_name, j|
+        child_component = $CollectionViewComponents.insert_data(new_block_id, j == 0 ? "title" : col_name, data[col_name])
+        operations.push(child_component)
+      end
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = build_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      return true
+    end
+
+    def add_property(name, type)
+      #! add a property (column) to the table.
+      #! name -> name of the property : ``str``
+      #! type -> type of the property : ``str``
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+
+      request_id = extract_id(SecureRandom.hex(n = 16))
+      transaction_id = extract_id(SecureRandom.hex(n = 16))
+      space_id = extract_id(SecureRandom.hex(n = 16))
+
+      request_ids = {
+        :request_id => request_id,
+        :transaction_id => transaction_id,
+        :space_id => space_id,
+      }
+
+      # create updated schema
+      schema = extract_collection_schema(@collection_id, @view_id)
+      schema[name] = {
+        :name => name,
+        :type => type
+      }
+      new_schema = {
+        :schema => schema
+      }
+
+      add_collection_property = $CollectionViewComponents.add_collection_property(@collection_id, new_schema)
+
+      operations = [
+        add_collection_property
+      ]
+
+      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_body = build_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        :body => request_body.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+
+      return true
+    end
+
+    private
+
+    def extract_collection_schema(collection_id, view_id)
+      cookies = @@options["cookies"]
+      headers = @@options["headers"]
+
+      query_collection_hash = $CollectionViewComponents.query_collection(collection_id, view_id, query="")
+
+      request_url = @@method_urls[:GET_COLLECTION]
+      response = HTTParty.post(
+        request_url,
+        :body => query_collection_hash.to_json,
+        :cookies => cookies,
+        :headers => headers,
+      )
+      return response["recordMap"]["collection"][collection_id]["value"]["schema"]
     end
   end
 end

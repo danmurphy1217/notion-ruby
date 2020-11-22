@@ -149,13 +149,6 @@ module Notion
         :headers => headers,
       )
 
-      res_two = HTTParty.post(
-        "https://www.notion.so/api/v3/loadUserContent",
-        :body => { :platform => "web" }.to_json,
-        :cookies => cookies,
-        :headers => headers,
-      )
-
       jsonified_record_response = JSON.parse(response.body)["recordMap"]
       return jsonified_record_response
     end
@@ -220,6 +213,10 @@ module Notion
 
     def extract_collection_id(clean_id, jsonified_record_response)
       return jsonified_record_response["block"][clean_id]["value"]["collection_id"]
+    end
+
+    def extract_view_ids(clean_id, jsonified_record_response)
+      return jsonified_record_response["block"][clean_id]["value"]["view_ids"]
     end
 
     def extract_id(url_or_id)

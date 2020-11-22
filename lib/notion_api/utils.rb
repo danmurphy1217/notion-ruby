@@ -3,6 +3,7 @@ module Utils
   URLS = {
     :GET_BLOCK => "https://www.notion.so/api/v3/loadPageChunk",
     :UPDATE_BLOCK => "https://www.notion.so/api/v3/saveTransactions",
+    :GET_COLLECTION => "https://www.notion.so/api/v3/queryCollection",
   }
 
   class BlockComponents
@@ -185,15 +186,24 @@ module Utils
       table = "block"
       path = ["content"]
 
+      if command == "listAfter"
+        args = {
+          :after => targetted_block ? targetted_block : block_id,
+          :id => new_block_id ? new_block_id : block_id,
+        }
+      else
+        args = {
+          :before => targetted_block ? targetted_block : block_id,
+          :id => new_block_id ? new_block_id : block_id,
+        }
+      end
+
       return {
                :table => table,
                :id => block_parent_id, # ID of the parent for the new block. It should be the block that the method is invoked on.
                :path => path,
                :command => command,
-               :args => {
-                 :after => targetted_block ? targetted_block : block_id,
-                 :id => new_block_id ? new_block_id : block_id,
-               },
+               :args => args,
              }
     end
 
@@ -309,7 +319,6 @@ module Utils
     end
 
     def self.set_view_config(new_block_id, view_id, children_ids)
-
       table = "collection_view"
       path = []
       command = "update"
@@ -320,19 +329,19 @@ module Utils
       alive = true
 
       return {
-              :id => view_id,
-              :table => table,
-              :path => path,
-              :command => command,
-              :args => {
-                :id => view_id,
-                :version => version,
-                :type => type,
-                :name => name,
-                :page_sort => children_ids,
-                :parent_id => new_block_id,
-                :parent_table => parent_table,
-                :alive => alive,
+               :id => view_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :id => view_id,
+                 :version => version,
+                 :type => type,
+                 :name => name,
+                 :page_sort => children_ids,
+                 :parent_id => new_block_id,
+                 :parent_table => parent_table,
+                 :alive => alive,
                },
              }
     end
@@ -341,26 +350,26 @@ module Utils
       col_names = data[0].keys
       col_types = data[0].values
       schema_conf = {}
-      col_names.each_with_index do |name, i| 
+      col_names.each_with_index do |name, i|
         if i == 0
-          schema_conf[:title] = {:name => col_names[i], :type => "title"}
+          schema_conf[:title] = { :name => col_names[i], :type => "title" }
         else
-          schema_conf[col_names[i]] = {:name => col_names[i], :type => "text" }
+          schema_conf[col_names[i]] = { :name => col_names[i], :type => "text" }
         end
       end
       return {
-        :id => collection_id,
-        :table => "collection",
-        :path => [],
-        :command => "update",
-        :args => {
-            :id => collection_id,
-            :schema => schema_conf,
-            :parent_id => new_block_id,
-            :parent_table => "block",
-            :alive => true
-        }
-    }
+               :id => collection_id,
+               :table => "collection",
+               :path => [],
+               :command => "update",
+               :args => {
+                 :id => collection_id,
+                 :schema => schema_conf,
+                 :parent_id => new_block_id,
+                 :parent_table => "block",
+                 :alive => true,
+               },
+             }
     end
 
     def self.set_collection_title(collection_title, collection_id)
@@ -373,26 +382,72 @@ module Utils
                :table => table,
                :path => path,
                :command => command,
-               :args => [[collection_title]]
-            }
+               :args => [[collection_title]],
+             }
     end
 
     def self.insert_data(block_id, column, value)
       table = "block"
       path = [
         "properties",
-        column
+        column,
       ]
       command = "set"
-      
+
       return {
-       :id => block_id,
-       :table => table,
-       :path => path,
-       :command => command,
-       :args => [[value]]
-    }
-  end
+               :id => block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => [[value]],
+             }
+    end
+
+    def self.add_new_row(new_block_id)
+      table = "block"
+      path = []
+      command = "set"
+      type = "page"
+
+      return {
+               :id => new_block_id,
+               :table => table,
+               :path => path,
+               :command => command,
+               :args => {
+                 :type => type,
+                 :id => new_block_id,
+                 :version => 1,
+               },
+             }
+    end
+
+    def self.query_collection(collection_id, view_id, search_query = "")
+      query = {}
+      loader = {
+        :type => "table",
+        :limit => 100,
+        :searchQuery => search_query,
+        :loadContentCover => true,
+      }
+
+      return {
+               :collectionId => collection_id,
+               :collectionViewId => view_id,
+               :query => query,
+               :loader => loader,
+             }
+    end
+
+    def self.add_collection_property(collection_id, args)
+      return {
+        :id => collection_id,
+        :table => "collection",
+        :path =>[],
+        :command => "update",
+        :args => args
+      }
+    end
   end
 
   def build_payload(operations, request_ids)

@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
     spec.version        = "1.0.0"
     spec.authors        = ["Dan Murphy"]
     spec.email          = ["danielmurph8@gmail.com"]
-    spec.summary        = %q[Easily connect to Notion data with Ruby]
-    spec.description    = %q[Easily connect to and core features of Notion with Ruby]
+    spec.summary        = %q[Easily read, write, and update Notion data with Ruby]
+    spec.description    = %q[Easily read, write, and update Notion data with Ruby]
     spec.license        = "MIT"
     spec.homepage = "https://github.com/danmurphy1217/notion-ruby"
 
