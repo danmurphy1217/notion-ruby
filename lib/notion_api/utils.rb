@@ -38,7 +38,7 @@ module Utils
       table = "block"
       path = ["properties", "title"]
       command = "set"
-      args = title
+
       return {
                :id => id,
                :table => table,
@@ -55,7 +55,7 @@ module Utils
       table = "block"
       path = ["last_edited_time"]
       command = "set"
-      args = timestamp
+
       return {
                :table => table,
                :id => id,
@@ -106,15 +106,15 @@ module Utils
       table = "block"
       path = []
       command = "update"
-      parent_table = "block"
       alive = false
+      
       return {
                :id => block_id,
                :table => table,
                :path => path,
                :command => command,
                :args => {
-                 :alive => false,
+                 :alive => alive,
                },
              }
     end
@@ -348,7 +348,7 @@ module Utils
 
     def self.set_collection_columns(collection_id, new_block_id, data)
       col_names = data[0].keys
-      col_types = data[0].values
+
       schema_conf = {}
       col_names.each_with_index do |name, i|
         if i == 0

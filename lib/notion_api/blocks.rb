@@ -46,7 +46,6 @@ module Notion
         cookies = @@options["cookies"]
         headers = @@options["headers"]
         request_url = @@method_urls[:UPDATE_BLOCK]
-        timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
 
         # set random IDs for request
         request_id = extract_id(SecureRandom.hex(n = 16))
@@ -76,9 +75,12 @@ module Notion
           :cookies => cookies,
           :headers => headers,
         )
-
-        return block_class_to_convert_to.new(@id, @title, @parent_id)
-      end
+        if response.code == 200
+          return block_class_to_convert_to.new(@id, @title, @parent_id)
+        else
+          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+        end
+      end 
     end
 
     def duplicate(target_block = nil)
@@ -87,7 +89,6 @@ module Notion
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.not.to_i
 
       new_block_id = extract_id(SecureRandom.hex(n = 16))
       request_id = extract_id(SecureRandom.hex(n = 16))
@@ -112,9 +113,9 @@ module Notion
 
       user_notion_id = get_notion_id(body)
 
-      block = target_block ? get_block(target_block) : self # allows dev to place block anywhere!
+      block = target_block ? get(target_block) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(block.type, title, block.id, new_block_id, user_notion_id, root_children)
+      duplicate_hash = $Components.duplicate(self.type, title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
       block_location_hash = $Components.block_location_add(block_parent_id = block.parent_id, block_id = block.id, new_block_id = new_block_id, targetted_block = target_block, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
@@ -135,7 +136,11 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      return {}
+      if response.code == 200
+        return {}
+      else
+        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+      end
     end
 
     def move(target_block, position = "after")
@@ -165,12 +170,7 @@ module Notion
           :transaction_id => transaction_id,
           :space_id => space_id,
         }
-        body = {
-          :pageId => @id,
-          :chunkNumber => 0,
-          :limit => 100,
-          :verticalColumns => false,
-        }
+
         check_parents = (@parent_id == target_block.parent_id)
         set_block_dead_hash = $Components.set_block_to_dead(@id) # kill the block this method is invoked on...
         block_location_remove_hash = $Components.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
@@ -192,6 +192,7 @@ module Notion
           last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
           last_edited_time_new_parent_hash = $Components.last_edited_time(target_block.parent_id)
           last_edited_time_child_hash = $Components.last_edited_time(@id)
+          @parent_id = target_block.parent_id
           operations = [
             set_block_dead_hash,
             block_location_remove_hash,
@@ -202,9 +203,6 @@ module Notion
             last_edited_time_child_hash,
           ]
         end
-        if !check_parents
-          @parent_id = target_block.parent_id
-        end
         request_body = build_payload(operations, request_ids)
         response = HTTParty.post(
           request_url,
@@ -212,7 +210,11 @@ module Notion
           :cookies => cookies,
           :headers => headers,
         )
-        return self
+        if response.code == 200
+          return self
+        else
+          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+        end
       end
     end
 
@@ -234,7 +236,6 @@ module Notion
 
         cookies = @@options["cookies"]
         headers = @@options["headers"]
-        timestamp = DateTime.now.strftime("%Q")
 
         new_block_id = extract_id(SecureRandom.hex(n = 16))
         request_id = extract_id(SecureRandom.hex(n = 16))
@@ -245,13 +246,6 @@ module Notion
           :request_id => request_id,
           :transaction_id => transaction_id,
           :space_id => space_id,
-        }
-
-        body = {
-          :pageId => @id,
-          :chunkNumber => 0,
-          :limit => 100,
-          :verticalColumns => false,
         }
 
         create_hash = $Components.create(new_block_id, block_type.notion_type)
@@ -279,9 +273,12 @@ module Notion
           :cookies => cookies,
           :headers => headers,
         )
-
-        new_block = block_type.new(new_block_id, block_title, @id)
-        return new_block
+        if response.code == 200
+          new_block = block_type.new(new_block_id, block_title, @id)
+          return new_block
+        else
+          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+        end
       end
     end # create
 
@@ -319,8 +316,9 @@ module Notion
         block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
         if block_class == Notion::CollectionView
           block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
+          block_view_id = extract_view_ids(clean_id, jsonified_record_response)
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
-          return block_class.new(block_id, collection_title, block_parent_id, block_collection_id)
+          return block_class.new(block_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
         else
           return block_class.new(block_id, block_title, block_parent_id)
         end
@@ -336,7 +334,6 @@ module Notion
       cookies = @@options["cookies"]
       headers = @@options["headers"]
       request_url = @@method_urls[:UPDATE_BLOCK]
-      timestamp = DateTime.now.strftime("%Q") # 13-second timestamp (unix timestamp in MS), to get it in seconds we can use Time.now.to_i
 
       # set unique IDs for request
       request_ids = {
@@ -402,7 +399,6 @@ module Notion
       # set static variables for request
       cookies = @@options["cookies"]
       headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
       request_url = @@method_urls[:UPDATE_BLOCK]
 
       # set unique values for request
@@ -432,10 +428,14 @@ module Notion
           :cookies => cookies,
           :headers => headers,
         )
-        return true
+        if response.code == 200
+          return true
+        else
+          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+        end
       else
+        $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, 'yes'. If you want to un-check a To-Do Block, use 'no'.")
         return false
-        $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, use one of the following: 1, 'yes', of true. If you want to un-check a To-Do block, use one of the following: 0, 'no', false.")
       end
     end
   end
@@ -539,7 +539,6 @@ module Notion
     def create_collection(collection_type, collection_title, data = {})
       cookies = @@options["cookies"]
       headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
 
       new_block_id = extract_id(SecureRandom.hex(n = 16))
       parent_id = extract_id(SecureRandom.hex(n = 16))
@@ -563,13 +562,6 @@ module Notion
         :request_id => request_id,
         :transaction_id => transaction_id,
         :space_id => space_id,
-      }
-
-      body = {
-        :pageId => @id,
-        :chunkNumber => 0,
-        :limit => 100,
-        :verticalColumns => false,
       }
 
       create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
@@ -610,8 +602,13 @@ module Notion
         :headers => headers,
       )
 
-      new_block = CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
-      return new_block
+      if response.code == 200
+        new_block = CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
+        return new_block
+      else
+        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+      end
+
     end # create_collection
   end
 
@@ -763,11 +760,11 @@ module Notion
       @view_id = view_id
     end # initialize
 
-    def self.notion_type
+    def type
       @@notion_type
     end
-
-    def type
+    
+    def self.notion_type
       @@notion_type
     end
 
@@ -777,7 +774,6 @@ module Notion
 
       cookies = @@options["cookies"]
       headers = @@options["headers"]
-      timestamp = DateTime.now.strftime("%Q")
 
       request_id = extract_id(SecureRandom.hex(n = 16))
       transaction_id = extract_id(SecureRandom.hex(n = 16))
@@ -815,7 +811,12 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-      return true
+      if response.code == 200
+        p response.body
+        return true
+      else
+        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+      end
     end
 
     def add_property(name, type)
@@ -859,8 +860,11 @@ module Notion
         :cookies => cookies,
         :headers => headers,
       )
-
-      return true
+      if response.code == 200
+        return true
+      else
+        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+      end
     end
 
     private
