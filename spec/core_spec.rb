@@ -47,7 +47,7 @@ describe Notion::Core do
   context "testing the Notion::Core private methods" do
     describe "#get_notion_id" do
       it "should return the User Notion ID sent from Notion in the response headers." do
-        expect(Notion::Core.new.send("get_notion_id", @body)).to eq(ENV["user_notion_id"])
+        expect(Notion::Core.new.send("get_notion_id", $Body)).to eq(ENV["user_notion_id"])
       end
     end
 

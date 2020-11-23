@@ -14,7 +14,6 @@ branches:
 before_install:
   - gem install bundler
   - rvm list known
-  - rvm install 2.7.1
 install: bundle install
 script: rspec spec
 notifications:
