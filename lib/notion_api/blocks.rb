@@ -304,7 +304,6 @@ module Notion
           i += 1
         end
       end
-      block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
@@ -318,6 +317,7 @@ module Notion
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
           return block_class.new(clean_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
         else
+          block_title = extract_title(clean_id, jsonified_record_response)
           return block_class.new(clean_id, block_title, block_parent_id)
         end
       end
@@ -525,13 +525,12 @@ module Notion
           i += 1
         end
       end
-      block_id = clean_id
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
       block_view_id = extract_view_ids(clean_id, jsonified_record_response).join
       block_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
 
-      return CollectionView.new(block_id, block_title, block_parent_id, block_collection_id, block_view_id)
+      return CollectionView.new(clean_id, block_title, block_parent_id, block_collection_id, block_view_id)
     end
 
     def create_collection(collection_type, collection_title, data = {})

@@ -31,6 +31,7 @@ module Notion
           i += 1
         end
       end
+
       block_id = clean_id
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
@@ -154,7 +155,9 @@ module Notion
       if filter_nil_blocks.nil?
         return nil
       else
-        if !filter_nil_blocks[clean_id]["value"]["properties"].nil?
+        if filter_nil_blocks[clean_id].nil?
+          return nil 
+        else
           # titles for images are called source, while titles for text-based blocks are called title, so lets dynamically grab it
           # https://stackoverflow.com/questions/23765996/get-all-keys-from-ruby-hash/23766007
           title_value = filter_nil_blocks[clean_id]["value"]["properties"].keys[0]
@@ -188,13 +191,6 @@ module Notion
       end
     end
 
-    def extract_children_ids(clean_id, jsonified_record_response)
-      #! extract children IDs from core JSON response object.
-      #! clean_id -> the block ID or URL cleaned : ``str``
-      #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["content"]
-    end
-
     def extract_parent_id(clean_id, jsonified_record_response)
       #! extract parent ID from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
@@ -203,7 +199,7 @@ module Notion
     end
 
     def extract_collection_id(clean_id, jsonified_record_response)
-      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["collection_id"]
+      return jsonified_record_response["block"][clean_id]["value"]["collection_id"]
     end
 
     def extract_view_ids(clean_id, jsonified_record_response)

@@ -1,0 +1,699 @@
+{
+      "block": {
+          "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7": {
+              "role": "editor",
+              "value": {
+                  "id": "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                  "version": 33,
+                  "type": "page",
+                  "properties": {
+                      "title": [
+                          [
+                              "CORE.RB TESTS"
+                          ]
+                      ]
+                  },
+                  "content": [
+                      "1f5ae85f-f89f-4779-9fa4-b30c3b229cdb",
+                      "d7407d2c-adbb-497c-b99f-9f9d426d2b18",
+                      "34d03794-ecdd-e42d-bb76-7e4aa77b6503",
+                      "f1664a99-165b-49cc-811c-84f37655908a"
+                  ],
+                  "format": {
+                      "page_icon": "🍾"
+                  },
+                  "created_time": 1606148662319,
+                  "last_edited_time": 1606164600000,
+                  "parent_id": "66447bc8-17f0-44bc-81ed-3cf4802e9b00",
+                  "parent_table": "block",
+                  "alive": true,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "66447bc8-17f0-44bc-81ed-3cf4802e9b00": {
+              "role": "editor",
+              "value": {
+                  "id": "66447bc8-17f0-44bc-81ed-3cf4802e9b00",
+                  "version": 540,
+                  "type": "page",
+                  "properties": {
+                      "title": [
+                          [
+                              "Notion API Testing"
+                          ]
+                      ]
+                  },
+                  "content": [
+                      "ee0a6531-44cd-439f-a68c-1bdccbebfc8a",
+                      "f13da22b-9012-4c49-ac41-6b7f97bd519e",
+                      "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                      "b94758d4-e7df-4af8-863f-b90c11b35fff",
+                      "7c1d1c19-77ee-45cd-bc3d-82fad4bd1a78",
+                      "2cbbe0bf-34cd-409b-9162-64284b33e526",
+                      "9edc0f82-1ec2-4dff-9167-6b3e2dd0f730",
+                      "ba87b719-9207-49a7-b646-de042b266ba8",
+                      "1348703c-ad64-e138-20a7-58b13018af86",
+                      "f5ed36eb-e5c3-4c52-bda8-60be03315332",
+                      "88d108d2-e54b-1f04-4ea0-c4e2ed6c4a12",
+                      "e6e66202-8211-40a8-bffc-8215b8d07dad",
+                      "f9b96cda-6c2f-431d-906d-8c0cb892afda",
+                      "bf9892b8-8c39-47a5-9d03-2dfab5e69179",
+                      "a1702f9b-b092-4703-8f08-90339c6d9176",
+                      "0f9b43d6-448b-2a6d-e027-1a419a98cad2",
+                      "268f3c0d-c201-e5c4-3c79-426791848150",
+                      "dde32522-a7a4-ba1d-844a-d9dbfa5c9994",
+                      "54b58ffe-8258-898e-99fb-6e7e260840a3",
+                      "8ab39c03-b097-4cbf-8dc3-c37b667b371c",
+                      "1353c9ab-2509-a0ff-cbce-2cba1dd2a2e0",
+                      "b2230a72-9472-8b30-1682-cb92b53e71d8",
+                      "592743ff-9904-c9f4-d490-1d558ae918e5",
+                      "20bfcad0-8fe4-452d-a4f5-ff69ac75ad0f",
+                      "58614350-f17e-47b6-81d2-da757754eef3",
+                      "b0ce97b7-ad38-b9b9-3806-62ec8d098a0c",
+                      "90075461-b7ce-6aa4-314e-556875c69dae",
+                      "db49c942-a957-2498-e3dc-e01e7636d950",
+                      "b4e8d4ad-0ac6-f13e-e6dc-6690c7c29fea",
+                      "057f090b-8e46-4215-8fef-c1224efeddd9",
+                      "4a71d78a-37bf-ab11-9f37-b4f9a7642036",
+                      "5fcfa44c-7f60-b5bf-e2ab-c2e6304a4581",
+                      "24ee3b27-d7b4-4cfb-b837-912deccca5a4",
+                      "5e022e72-994f-40f3-8d1d-cda7f1b8b107",
+                      "9e0578f3-d4d7-4ed9-bda3-f050a6eb6dca",
+                      "5e8c4c40-a444-210d-8475-22386864089c",
+                      "3cdb51fd-25fe-29d6-edc1-7503c9b1e768",
+                      "f76fa467-cdb6-40e4-87ae-8dac19a75efc",
+                      "79bc0290-18ec-420b-ae1b-57a8f3744fcb",
+                      "9a07d006-9295-4a2c-be35-9b6bf78ee7fe",
+                      "c9db948d-91c5-0048-3a0a-7674f4e874a0",
+                      "e637befa-128f-6950-c9c0-8e71fc159c5d",
+                      "ef74f834-7185-e9e8-5bdd-5f8bece38623",
+                      "1dca3f8a-8d85-3a35-5d4c-34cfd7a066e9",
+                      "b2852fb7-a8f5-2e69-6769-c9d2a5878cf4",
+                      "054ab04e-694f-462d-30d5-1068038eb379",
+                      "1cff7eb6-ea6e-4293-7cd3-25cf79f6c7f0",
+                      "2c9b2885-ad4d-4f1f-a077-d3048c79232c",
+                      "f86323b9-8b79-74a7-f268-b1a25ff4a892"
+                  ],
+                  "permissions": [
+                      {
+                          "role": "editor",
+                          "type": "user_permission",
+                          "user_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26"
+                      }
+                  ],
+                  "created_time": 1606008660000,
+                  "last_edited_time": 1606164600000,
+                  "parent_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2",
+                  "parent_table": "space",
+                  "alive": true,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "1f5ae85f-f89f-4779-9fa4-b30c3b229cdb": {
+              "role": "editor",
+              "value": {
+                  "id": "1f5ae85f-f89f-4779-9fa4-b30c3b229cdb",
+                  "version": 19,
+                  "type": "bulleted_list",
+                  "properties": {
+                      "title": [
+                          [
+                              "first block for testing purposes..."
+                          ]
+                      ]
+                  },
+                  "created_time": 1606008667652,
+                  "last_edited_time": 1606160700000,
+                  "parent_id": "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                  "parent_table": "block",
+                  "alive": true,
+                  "copied_from": "6982f801-5da8-e44c-362a-b9cc634e78bb",
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "d7407d2c-adbb-497c-b99f-9f9d426d2b18": {
+              "role": "editor",
+              "value": {
+                  "id": "d7407d2c-adbb-497c-b99f-9f9d426d2b18",
+                  "version": 46,
+                  "type": "text",
+                  "properties": {
+                      "title": [
+                          [
+                              "second block for testing purposes..."
+                          ]
+                      ]
+                  },
+                  "created_time": 1606161600000,
+                  "last_edited_time": 1606164420000,
+                  "parent_id": "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                  "parent_table": "block",
+                  "alive": true,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "34d03794-ecdd-e42d-bb76-7e4aa77b6503": {
+              "role": "editor",
+              "value": {
+                  "id": "34d03794-ecdd-e42d-bb76-7e4aa77b6503",
+                  "version": 24,
+                  "type": "collection_view",
+                  "view_ids": [
+                      "5fdb08da-0732-49dc-d0c3-2e31fccca73a"
+                  ],
+                  "collection_id": "5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a",
+                  "created_time": 1606014865990,
+                  "last_edited_time": 1606164540000,
+                  "parent_id": "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                  "parent_table": "block",
+                  "alive": true,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "f1664a99-165b-49cc-811c-84f37655908a": {
+              "role": "editor",
+              "value": {
+                  "id": "f1664a99-165b-49cc-811c-84f37655908a",
+                  "version": 29,
+                  "type": "collection_view",
+                  "view_ids": [
+                      "7e223541-82c0-4b0b-bf41-8017f673bf6e"
+                  ],
+                  "collection_id": "a83a6cc0-ce7a-a14e-4483-4bfea6756922",
+                  "created_time": 1606013154935,
+                  "last_edited_time": 1606164600000,
+                  "parent_id": "9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7",
+                  "parent_table": "block",
+                  "alive": true,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          }
+      },
+      "space": {
+          "f687f7de-7f4c-4a86-b109-941a8dae92d2": {
+              "role": "editor",
+              "value": {
+                  "id": "f687f7de-7f4c-4a86-b109-941a8dae92d2",
+                  "version": 185,
+                  "name": "Dan's Workspace",
+                  "domain": "danmurphy",
+                  "permissions": [
+                      {
+                          "role": "editor",
+                          "type": "user_permission",
+                          "user_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26"
+                      }
+                  ],
+                  "beta_enabled": false,
+                  "pages": [
+                      "66447bc8-17f0-44bc-81ed-3cf4802e9b00",
+                      "9268e71e-aaa8-4c54-a865-bd6e3d5472ce",
+                      "c7e1114a-f161-4b94-a7e7-704fd13d5545",
+                      "71728e4a-fc6d-41a8-abef-e6c00ac781fc",
+                      "6b5485c5-94b8-4e0b-a86f-abb455394087",
+                      "c335c2a9-7cb0-4847-9db8-a7f96e64db33",
+                      "861cdea1-ea57-47b9-a529-4c52569b8be8",
+                      "be0cda9c-054b-47e4-8937-bdc4ca2badc6",
+                      "7457ecd2-ba7e-43f1-a81b-f324586e0b38",
+                      "31fab05b-ded9-42ed-b4aa-0b8da0aa61bc",
+                      "cdc37dcc-d283-42a0-9cd9-863d36a7ae80",
+                      "abc7df36-0879-4db9-a3a2-cc780fc7ae01",
+                      "67af938e-4199-4bcd-b3b4-060d062271dd",
+                      "c040f0b8-d845-414a-aa52-3d7309b72d32",
+                      "7f5d96a9-a197-42ab-b5b8-7800a2c99840",
+                      "e3401dbc-5a89-4ab1-80ca-d1e0df475497",
+                      "00394898-7a6a-423f-a2ee-9be44b7300cc",
+                      "61981b4c-cc1c-4f67-a7d5-3ff6df03ad43",
+                      "67e187b1-d9fe-42fe-8ae3-e9532496b636"
+                  ],
+                  "disable_public_access": false,
+                  "disable_guests": false,
+                  "disable_move_to_space": false,
+                  "disable_export": false,
+                  "created_time": 1588292657021,
+                  "last_edited_time": 1606008660000,
+                  "created_by_table": "notion_user",
+                  "created_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "last_edited_by_table": "notion_user",
+                  "last_edited_by_id": "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26",
+                  "shard_id": 955090,
+                  "plan_type": "personal",
+                  "invite_link_code": "df2e9c349d7e736dffbd69b5e84ef4860b4d8fe8",
+                  "invite_link_enabled": true
+              }
+          }
+      },
+      "collection_view": {
+          "5fdb08da-0732-49dc-d0c3-2e31fccca73a": {
+              "role": "editor",
+              "value": {
+                  "id": "5fdb08da-0732-49dc-d0c3-2e31fccca73a",
+                  "version": 1,
+                  "type": "table",
+                  "name": "Default View",
+                  "parent_id": "34d03794-ecdd-e42d-bb76-7e4aa77b6503",
+                  "parent_table": "block",
+                  "alive": true,
+                  "page_sort": [
+                      "785f4e24-e489-a316-50cf-b0b100c6673a",
+                      "78642d95-da23-744c-b084-46d039927bba",
+                      "96dff83c-6961-894c-39c2-c2c8bfcbfa90",
+                      "87ae8ae7-5518-fbe1-748e-eb690c707fac",
+                      "5a03dfa9-b85e-e07b-1a73-1a0a79f19f2f",
+                      "522eeef6-1e94-9309-8504-333fac06e3c4",
+                      "367ac33f-2124-9275-ca3a-88e492c774cf",
+                      "5a50bdd4-69c5-0708-5093-b135676e83c1",
+                      "edd4717c-bd35-aec9-9417-a13dfd874f00",
+                      "467b0d40-c711-9655-7bb3-10e66e627bbb",
+                      "47d7e0f8-dbaa-ed0b-45de-001c585e5f2c",
+                      "db07c63f-bb5b-0a2a-f502-62cf99be47ae",
+                      "a9856b1d-dff2-0368-9c99-da133783d051",
+                      "51dd712e-4653-98e6-d6c5-077b5a993f82",
+                      "7f565ea2-3154-39de-43d0-cbf2955370d0",
+                      "384310e4-a267-84b1-f63b-28673dd8dcbf",
+                      "063ef5e5-b7a7-3c67-1624-1bbc08498f95",
+                      "d0532c20-4b47-67ab-1a5b-033bcf00574c",
+                      "1a06a97a-f01a-d127-51b4-cf29ebefba47",
+                      "6534aad0-5ea4-53b9-a06c-57ecfb91e869",
+                      "ff9b8b89-1fed-f955-4afa-5a071198b0ee",
+                      "721fe76a-9e3c-d348-8324-994c95d77b2e",
+                      "6b0cb603-5e10-075d-f0d3-e4985b954b3e",
+                      "6e73629b-4fce-ed3d-6366-a64df4d7dc79",
+                      "20f4e316-4d44-981f-7089-c3b7deabce87",
+                      "f4dee37f-1ac2-d8d8-1c28-839dd3e69ae6",
+                      "f1c7077f-44a9-113d-a156-90ab6880c3e2",
+                      "44d0c5d7-44dc-cd9f-ba8e-2a3d7e6bafff",
+                      "42d3339e-13dc-52a6-3a5a-baa62b5ca5ae",
+                      "e3861041-5f73-f80d-3fb5-4b7aa6f9fabd",
+                      "ad55eadc-c83f-4251-3925-a74d6b37b1fd",
+                      "c7e75fc9-2f49-b89c-cbb9-9b01fd1c5bf7",
+                      "46f9932b-b16a-50da-9a60-cf26e28b67fe",
+                      "d1cb029a-87f4-4e66-8f1d-b47fcb1870fe",
+                      "834517f7-2f2e-fb4d-c28e-c1aa40fc767e",
+                      "24a16e13-0156-846c-f522-e35105a0448c",
+                      "ff8654bd-227b-7f55-a4cd-39c756996287",
+                      "9f8c4659-9d20-d3c4-bd35-543e08d5f203",
+                      "c04b24f1-07f1-609f-e677-e931a5a13f01",
+                      "5286db7b-884b-49c6-b33a-e4e8a922b4cf",
+                      "38c28379-65ad-4b13-2f73-2ad602eec5d5",
+                      "d8bbb625-32f1-fa3b-f34f-55970f36707c",
+                      "1e6b48a3-5f75-8656-404c-72013e34178d",
+                      "358e4533-54ef-2e04-e1f1-d6a336922596",
+                      "fbf44f93-52ee-0e88-262a-94982ffb3fb2"
+                  ],
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          },
+          "7e223541-82c0-4b0b-bf41-8017f673bf6e": {
+              "role": "editor",
+              "value": {
+                  "id": "7e223541-82c0-4b0b-bf41-8017f673bf6e",
+                  "version": 54,
+                  "type": "table",
+                  "name": "Default View",
+                  "parent_id": "f1664a99-165b-49cc-811c-84f37655908a",
+                  "parent_table": "block",
+                  "alive": true,
+                  "page_sort": [
+                      "cdcc3283-953f-451c-de89-3b57978a26ce",
+                      "04edc78f-be65-3602-72c0-66ff73716824",
+                      "b39a1898-42a9-a457-2d14-e68bff9381c2",
+                      "5b08d25a-66ec-c13e-bd18-8f2f32642978",
+                      "ba280c0c-7f8c-f3b4-799b-043fd4c79518",
+                      "b51f3e0d-01ff-5593-b9c3-9f61e89bf913",
+                      "a42ee8e5-44d5-b50f-859f-0de2bf61e90f",
+                      "7b19a0e1-1c16-7e1c-3a04-23f5e210cfea",
+                      "eb32d0a3-b19b-555c-e92f-c5854b51d73b",
+                      "1ee7ebe2-6c41-0d40-7c5a-bfabcc8a17f9",
+                      "4276cf67-2ef4-0d23-39f9-fa8d669eb12d",
+                      "6cc88b53-b4a1-e77a-70f1-f247878e1708",
+                      "9067d7f6-0008-6cf0-5d0f-037596b2cbf5",
+                      "7ece7d5e-5d6d-4d10-a4ca-c64cac5f0b1d",
+                      "99931edd-347c-1fd1-cd72-f18d693b6e90",
+                      "bf0afb6e-49fc-dfd7-4476-8525ac25df07",
+                      "a0777f8c-8e61-4db1-f61f-df322ee6e489",
+                      "f138e30c-9f4b-4647-f24c-3846b9adb631",
+                      "5baf2e0c-25f6-42f9-028c-4b4e7ac6594b",
+                      "3253fa3f-27ef-4e4e-deaf-eeafe4928091",
+                      "6348e88c-526e-bbd2-ff06-ca6a254fc22b",
+                      "527c234a-283f-2830-2117-f87ec3041785",
+                      "f2a3f9e0-e58e-e3d6-f8db-332199aa1cd2",
+                      "932bc28c-0482-20ac-73b5-212fcbcc841f",
+                      "9470737e-6413-622b-66ba-da36030fe94f",
+                      "83ed4e66-7340-8cad-9db5-d74e6d2776b4",
+                      "51e2443b-cfc6-e174-7122-46e1ca44ade7",
+                      "0863bd40-f80b-cf6b-42d7-89562d105e79",
+                      "77772c8b-5c3e-0f40-7840-49ee1a926555",
+                      "5d6bd569-5c5f-69fb-c551-008675a698cc",
+                      "2e8edc01-c303-5d3b-86d4-4228271019f9",
+                      "b3175f00-f8bb-404b-bdeb-210f0628c5da",
+                      "9457c48e-5847-d85d-7cd6-087879c6d836",
+                      "f8692479-df7c-a86a-35bc-e04cd67b0889",
+                      "e139e2c8-87e4-561a-df03-7b2e5378c41c",
+                      "308911e5-c67a-fc44-efd5-6443249da0bc",
+                      "a8fbaad1-5294-c2bc-cbe3-0a75a4e45388",
+                      "df44b9c0-af2d-7dd3-c380-ae3e9b0c24ab",
+                      "0fda1947-98b7-8300-9684-587f2591cf03",
+                      "89387072-0656-4a05-a397-090f0c84fec3",
+                      "a820ba85-8919-18da-e92e-5baf69a6ae90",
+                      "ae9cba8a-1b49-5aa2-55eb-23a5e5e04ac9",
+                      "f586b50a-2b52-c753-8313-37f5946564fd",
+                      "b861c429-0bc2-e784-458d-7b07d8df8d6e",
+                      "2042e60e-7e13-5635-af2c-ed4cb46e1fc1",
+                      "e86be770-7ce5-04a8-18c6-6a2ade9657be",
+                      "69ee98d9-e3b9-0273-7891-697a33d9ad13",
+                      "feeafbe7-58e8-86c3-5878-e48994e08265",
+                      "4c2abedc-e489-016c-2614-59b446efd02e",
+                      "dd8eacca-1072-0b14-b916-a5eac05e94cf",
+                      "364dc828-93d6-d1ca-7585-1753173bdbcb",
+                      "7fe28870-8c96-3d0f-7fb8-bdb1b5eafbcb",
+                      "659f8cb8-5b05-140e-241c-954dbff9a2ed",
+                      "dfff4cc9-acea-60f3-45f8-d1d146efd7e2",
+                      "e4664a4f-875d-7b2e-419a-ca0911ff9277",
+                      "fc0e5b35-00eb-97ef-3082-e19da4132c13",
+                      "48cac4ba-9f7b-2735-8d78-7335560a04b4",
+                      "b0c53582-f07b-ac59-b86f-1efc249568c9",
+                      "e252c004-3af5-f946-bdb0-3353b1055106",
+                      "3af0c813-cb1c-2fe9-b7ef-3b7521c5816d",
+                      "6da81a22-08ae-b062-17a8-0b05321041e3",
+                      "01fecf51-b58c-ae8b-0a10-0a16f6900577",
+                      "522c686a-38a3-b835-b6b5-4b1d73fbce67",
+                      "e2b724bd-3511-7143-15cb-6c1867811bbf",
+                      "7140b167-76af-9304-d369-8e00b3f8d371",
+                      "c820a616-5d57-9b08-03ec-7b950cf7c6cb",
+                      "adc329f4-7686-d6a3-6e5e-8b578d9c989c",
+                      "57816d55-2d16-b321-84db-47f6590d4520",
+                      "3277edf3-2350-bef1-e09d-42c112b7ca73",
+                      "06e04f08-3cf1-b763-cf50-8d6e739c6809",
+                      "f570944d-0a52-6540-400b-44c140dd5288",
+                      "ae0a9f68-3951-a5a9-3b24-60d9089313e4",
+                      "5ee726ca-4559-e309-af88-9f25e21af767",
+                      "f4c5d878-f2bf-cfa1-12eb-c764a1ab9cc8",
+                      "dcadbc5f-e550-49c3-97da-61262dedb8bc",
+                      "27ed5f67-f1d3-35b6-cd32-e36c0963bd9e",
+                      "cb90cafc-9aad-1e38-984c-fd82c45ba407",
+                      "880cc07d-b4d8-7e3f-6c8b-d7f34c54ba06",
+                      "17e99e7e-ef7f-1242-d5a7-8155f0d0432c",
+                      "231f8b52-defb-26ce-9625-3117df3caad3",
+                      "598182d5-7599-b508-793d-e1ed8fdeac5a",
+                      "e3e4b1d3-fa91-6ac7-dadf-e42cae3561fa",
+                      "d4e5a620-1193-990a-0b00-ee31eb271f5e",
+                      "1990e983-69a2-12e6-93eb-0419efc648fb",
+                      "2ff76189-4ef9-c143-055a-04dc8d4a0843",
+                      "5fc7d179-f02a-4f23-76d0-deaf59cdcf60",
+                      "41e0f1bc-8f73-f300-f780-7177b7ead2ed",
+                      "dcfa4235-bd49-62f5-4c7c-b1a276925c67",
+                      "06d4789f-a228-888f-ba97-7a89e0363452",
+                      "ff63c63b-6955-6e8f-ff44-655cc31dcc4d",
+                      "b38ff285-bb5d-c8fb-374f-c747a293e2e4",
+                      "b20e9e29-de26-a2f3-ab0f-13f008e17172",
+                      "49600084-629d-4fd6-bb1d-feda26564d8d",
+                      "18f2004d-d8b7-4188-b950-2622dbc70892"
+                  ],
+                  "shard_id": 955090,
+                  "space_id": "f687f7de-7f4c-4a86-b109-941a8dae92d2"
+              }
+          }
+      },
+      "collection": {
+          "5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a": {
+              "role": "editor",
+              "value": {
+                  "id": "5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a",
+                  "version": 4,
+                  "name": [
+                      [
+                          "Test Car Data"
+                      ]
+                  ],
+                  "schema": {
+                      "age": {
+                          "name": "age",
+                          "type": "text"
+                      },
+                      "vin": {
+                          "name": "vin",
+                          "type": "text"
+                      },
+                      "body": {
+                          "name": "body",
+                          "type": "text"
+                      },
+                      "fuel": {
+                          "name": "fuel",
+                          "type": "text"
+                      },
+                      "make": {
+                          "name": "make",
+                          "type": "text"
+                      },
+                      "msrp": {
+                          "name": "msrp",
+                          "type": "text"
+                      },
+                      "year": {
+                          "name": "year",
+                          "type": "text"
+                      },
+                      "model": {
+                          "name": "model",
+                          "type": "text"
+                      },
+                      "price": {
+                          "name": "price",
+                          "type": "text"
+                      },
+                      "stock": {
+                          "name": "stock",
+                          "type": "text"
+                      },
+                      "title": {
+                          "name": "dealerid",
+                          "type": "title"
+                      },
+                      "colour": {
+                          "name": "colour",
+                          "type": "text"
+                      },
+                      "engine": {
+                          "name": "engine",
+                          "type": "text"
+                      },
+                      "photos": {
+                          "name": "photos",
+                          "type": "text"
+                      },
+                      "series": {
+                          "name": "series",
+                          "type": "text"
+                      },
+                      "newused": {
+                          "name": "newused",
+                          "type": "text"
+                      },
+                      "city_mpg": {
+                          "name": "city_mpg",
+                          "type": "text"
+                      },
+                      "features": {
+                          "name": "features",
+                          "type": "text"
+                      },
+                      "odometer": {
+                          "name": "odometer",
+                          "type": "text"
+                      },
+                      "certified": {
+                          "name": "certified",
+                          "type": "text"
+                      },
+                      "door_count": {
+                          "name": "door_count",
+                          "type": "text"
+                      },
+                      "model_code": {
+                          "name": "model_code",
+                          "type": "text"
+                      },
+                      "dealer_city": {
+                          "name": "dealer_city",
+                          "type": "text"
+                      },
+                      "dealer_name": {
+                          "name": "dealer_name",
+                          "type": "text"
+                      },
+                      "description": {
+                          "name": "description",
+                          "type": "text"
+                      },
+                      "highway_mpg": {
+                          "name": "highway_mpg",
+                          "type": "text"
+                      },
+                      "photo_count": {
+                          "name": "photo_count",
+                          "type": "text"
+                      },
+                      "transmission": {
+                          "name": "transmission",
+                          "type": "text"
+                      },
+                      "dealer_region": {
+                          "name": "dealer_region",
+                          "type": "text"
+                      },
+                      "series_detail": {
+                          "name": "series_detail",
+                          "type": "text"
+                      },
+                      "dealer_address": {
+                          "name": "dealer_address",
+                          "type": "text"
+                      },
+                      "interior_color": {
+                          "name": "interior_color",
+                          "type": "text"
+                      },
+                      "inventory_date": {
+                          "name": "inventory_date",
+                          "type": "text"
+                      },
+                      "drivetrain_desc": {
+                          "name": "drivetrain_desc",
+                          "type": "text"
+                      },
+                      "dealer_postal_code": {
+                          "name": "dealer_postal_code",
+                          "type": "text"
+                      },
+                      "engine_cylinder_ct": {
+                          "name": "engine_cylinder_ct",
+                          "type": "text"
+                      },
+                      "engine_displacement": {
+                          "name": "engine_displacement",
+                          "type": "text"
+                      },
+                      "photos_last_modified_date": {
+                          "name": "photos_last_modified_date",
+                          "type": "text"
+                      }
+                  },
+                  "parent_id": "34d03794-ecdd-e42d-bb76-7e4aa77b6503",
+                  "parent_table": "block",
+                  "alive": true,
+                  "migrated": true
+              }
+          },
+          "a83a6cc0-ce7a-a14e-4483-4bfea6756922": {
+              "role": "editor",
+              "value": {
+                  "id": "a83a6cc0-ce7a-a14e-4483-4bfea6756922",
+                  "version": 51,
+                  "name": [
+                      [
+                          "Test Emoji Data"
+                      ]
+                  ],
+                  "schema": {
+                      "tags": {
+                          "name": "tags",
+                          "type": "text"
+                      },
+                      "title": {
+                          "name": "emoji",
+                          "type": "title"
+                      },
+                      "aliases": {
+                          "name": "aliases",
+                          "type": "text"
+                      },
+                      "category": {
+                          "name": "category",
+                          "type": "text"
+                      },
+                      "description": {
+                          "name": "description",
+                          "type": "text"
+                      },
+                      "ios_version": {
+                          "name": "ios_version",
+                          "type": "text"
+                      },
+                      "unicode_version": {
+                          "name": "unicode_version",
+                          "type": "text"
+                      }
+                  },
+                  "format": {
+                      "collection_page_properties": [
+                          {
+                              "visible": false,
+                              "property": "aliases"
+                          },
+                          {
+                              "visible": false,
+                              "property": "category"
+                          },
+                          {
+                              "visible": false,
+                              "property": "description"
+                          },
+                          {
+                              "visible": false,
+                              "property": "ios_version"
+                          },
+                          {
+                              "visible": false,
+                              "property": "tags"
+                          },
+                          {
+                              "visible": false,
+                              "property": "unicode_version"
+                          },
+                          {
+                              "visible": true,
+                              "property": "Foz="
+                          }
+                      ]
+                  },
+                  "parent_id": "f1664a99-165b-49cc-811c-84f37655908a",
+                  "parent_table": "block",
+                  "alive": true,
+                  "migrated": true
+              }
+          }
+      }
+  }

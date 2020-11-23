@@ -1,9 +1,12 @@
 language: ruby
 cache: bundler
 rvm:
-  - 2.7
-  - jruby
-os: ubuntu bionic 18.04
+  - 2.6
+  - 2.7.0
+  - 2.7.1
+os: 
+  - linux
+  - osx
 branches:
   only:
   - master
