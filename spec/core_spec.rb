@@ -23,7 +23,7 @@ describe Notion::Core do
 
     describe "#children" do
       it "should return an array of instantiated blocks relating to the children on the page." do
-        @page = @client.get_page($Test_page_id)
+
         @children = @page.children
         expect(@children[0].title).to eq("16:22:06 on November 20 2020")
         expect(@children[0].type).to eq("bulleted_list")

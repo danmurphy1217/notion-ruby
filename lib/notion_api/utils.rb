@@ -127,7 +127,6 @@ module Utils
       #! block_id -> id of block: ``str``
       #! new_block_id -> id of new block : ``str``
       #! user_notion_id -> ID of notion user : ``str``
-      p block_type
       timestamp = DateTime.now.strftime("%Q")
       table = "block"
       path = []

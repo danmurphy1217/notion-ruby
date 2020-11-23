@@ -6,8 +6,12 @@ RSpec.configure do |conf|
     #! constant IDs for the tests
     $Test_page_id = "66447bc8-17f0-44bc-81ed-3cf4802e9b00"
     $Test_page_url = "https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00"
+    $Test_page_id_two = "58614350-f17e-47b6-81d2-da757754eef3"
+    @page = @client.get_page($Test_page_url)
     $Test_block_id_one = "ba87b719-9207-49a7-b646-de042b266ba8"
     $Test_block_id_two = "9e0578f3-d4d7-4ed9-bda3-f050a6eb6dca"
+    $Test_block_randomized_title = "2488189f-2c91-4882-8bfe-6e1cc6f3be95"
+    $Test_block_to_convert = "bf9892b8-8c39-47a5-9d03-2dfab5e69179"
     $Test_collection_id_one = "f1664a99-165b-49cc-811c-84f37655908a"
     $Test_collection_id_two = "34d03794-ecdd-e42d-bb76-7e4aa77b6503"
     $Test_page_id_no_dashes = "66447bc817f044bc81ed3cf4802e9b00"

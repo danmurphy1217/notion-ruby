@@ -25,6 +25,8 @@ end
 
 @client = Notion::Client.new(ENV["token_v2"])
 @page = @client.get_page("https://www.notion.so/danmurphy/Testing-66447bc817f044bc81ed3cf4802e9b00")
+# @page.get_block("e0292e46-7be8-933d-fa15-36355c2d3611").duplicate
+# p @page.children
 #! Pick up with private methods in Core.rb for unit tests
 # p Notion::Core.new.send("get_notion_id", {:pageId => "66447bc8-17f0-44bc-81ed-3cf4802e9b00",:chunkNumber => 0,:limit => 100,:verticalColumns => false})
 #! 38x46 seems to be max [total of ~1748 cells]

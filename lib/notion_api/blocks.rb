@@ -6,7 +6,7 @@ require "date"
 require "logger"
 
 $LOGGER = Logger.new(STDOUT)
-$LOGGER.level = Logger::INFO
+$LOGGER.level = Logger::WARN
 
 module Notion
   class BlockTemplate < Core
@@ -115,7 +115,7 @@ module Notion
 
       block = target_block ? get(target_block) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(self.type, title, block.id, new_block_id, user_notion_id, root_children)
+      duplicate_hash = $Components.duplicate(self.type, @title, block.id, new_block_id, user_notion_id, root_children)
       set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
       block_location_hash = $Components.block_location_add(block_parent_id = block.parent_id, block_id = block.id, new_block_id = new_block_id, targetted_block = target_block, command = "listAfter")
       last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
@@ -137,7 +137,8 @@ module Notion
         :headers => headers,
       )
       if response.code == 200
-        return {}
+        class_to_return = Notion.const_get(Classes.select {|cls| Notion.const_get(cls).notion_type == self.type}.join.to_s)
+        return class_to_return.new(new_block_id, @title, block.parent_id)
       else
         raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
       end
@@ -146,12 +147,10 @@ module Notion
     def move(target_block, position = "after")
       positions_hash = {
         "after" => "listAfter",
-        # "child-after" => "listAfter",
         "before" => "listBefore",
-      # "child-before" => "listBefore",
       }
       if !positions_hash.keys.include?(position)
-        raise "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}"
+        raise ArgumentError.new("Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(", ")}")
       else
         position_command = positions_hash[position]
         #! move the block to a new location.
@@ -305,7 +304,6 @@ module Notion
           i += 1
         end
       end
-      block_id = clean_id
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
@@ -318,9 +316,9 @@ module Notion
           block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
           block_view_id = extract_view_ids(clean_id, jsonified_record_response)
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
-          return block_class.new(block_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
+          return block_class.new(clean_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
         else
-          return block_class.new(block_id, block_title, block_parent_id)
+          return block_class.new(clean_id, block_title, block_parent_id)
         end
       end
     end
@@ -372,7 +370,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -390,7 +388,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
 
     def checked=(checked_value)
@@ -445,11 +443,11 @@ module Notion
     @@notion_type = "code"
 
     def self.notion_type
-      @@notion_type
+      return @@notion_type
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -473,7 +471,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -485,7 +483,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -497,7 +495,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
 
     def get_block(url_or_id)
@@ -620,7 +618,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -632,7 +630,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -644,7 +642,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -656,7 +654,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -668,7 +666,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -680,7 +678,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -692,7 +690,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -704,7 +702,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -716,7 +714,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -728,7 +726,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 
@@ -740,7 +738,7 @@ module Notion
     end
 
     def type
-      @@notion_type
+      return @@notion_type
     end
   end
 end # Notion
@@ -761,7 +759,7 @@ module Notion
     end # initialize
 
     def type
-      @@notion_type
+      return @@notion_type
     end
     
     def self.notion_type
@@ -812,7 +810,6 @@ module Notion
         :headers => headers,
       )
       if response.code == 200
-        p response.body
         return true
       else
         raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."

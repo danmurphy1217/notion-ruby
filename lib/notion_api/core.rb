@@ -34,17 +34,10 @@ module Notion
       block_id = clean_id
       block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
-      if jsonified_record_response["block"][clean_id]["value"]["parent_table"] == "space"
-        # unique case for top-level page... top-level pages have the same ID and parent ID.
-        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
-        @@root = true
-      else
-        block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
-        @@root = false
-      end
+      block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
       if block_type != "page"
-        raise "the URL or ID passed to the get_page method must be that of a Page block."
+        raise "the URL or ID passed to the get_page method must be that of a Page Block."
       else
         return PageBlock.new(block_id, block_title, block_parent_id)
       end
@@ -78,12 +71,13 @@ module Notion
       i = 0
       while jsonified_record_response.empty?
         if i >= 10
-          return {}
+          return []
         else
           jsonified_record_response = get_all_block_info(clean_id, request_body)
           i += 1
         end
       end
+
       if jsonified_record_response["block"][clean_id]["value"]["content"]
         return jsonified_record_response["block"][clean_id]["value"]["content"]
       else
@@ -174,7 +168,11 @@ module Notion
       #! extract title from core JSON Notion response object.
       #! clean_id -> the cleaned block ID: ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response.empty? || jsonified_record_response.empty? ? nil : jsonified_record_response["collection"][collection_id]["value"]["name"].flatten.join
+      if jsonified_record_response["collection"]
+        return jsonified_record_response["collection"][collection_id]["value"]["name"].flatten.join
+      else
+        return nil
+      end
     end
 
     def extract_type(clean_id, jsonified_record_response)
@@ -194,7 +192,7 @@ module Notion
       #! extract children IDs from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response.empty? || jsonified_record_response.empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["content"]
+      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["content"]
     end
 
     def extract_parent_id(clean_id, jsonified_record_response)
@@ -209,7 +207,7 @@ module Notion
     end
 
     def extract_view_ids(clean_id, jsonified_record_response)
-      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["view_ids"]
+      return jsonified_record_response["block"][clean_id]["value"]["view_ids"] ? jsonified_record_response["block"][clean_id]["value"]["view_ids"] : []
     end
 
     def extract_id(url_or_id)
