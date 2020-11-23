@@ -51,7 +51,7 @@ describe Notion::BlockTemplate do
             @block.move(@target_block_one) # new block with new parent ID
             expect(@block.parent_id).not_to eq(initialize_parent_id)
         end
-    # end
+    end
   end
   context "testing the Notion::BlockTemplate private class methods" do
   end

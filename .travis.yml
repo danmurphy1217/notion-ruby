@@ -7,12 +7,16 @@ os: ubuntu bionic 18.04
 branches:
   only:
   - master
-  - /^testing-.*$/
-  - /^dev-.*$/
+  - /^deploy-.*$/
 before_install:
   - gem install bundler
   - rvm list known
   - rvm install 2.7.1
 install: bundle install
-gemspec: ./notion_api.gemspec
 script: rspec spec
+notifications:
+  email:
+    recipients:
+      - danielmurph8@gmail.com
+    on_success: never
+    on_failure: always
