@@ -749,7 +749,7 @@ module Notion
   class CollectionView < Core #! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
     #! by inheriting BlockTemplate, it inherits a bunch of methods that don't really apply.
     # collection views such as tables and timelines.
-    attr_reader :type, :id, :title, :parent_id
+    attr_reader :type, :id, :title, :parent_id, :collection_id, :view_id
     @@notion_type = "collection_view"
 
     def initialize(id, title, parent_id, collection_id, view_id)

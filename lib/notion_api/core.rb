@@ -149,7 +149,7 @@ module Notion
     def filter_nil_blocks(jsonified_record_response)
       #! removes any blocks that are empty [i.e. have no title / content]
       #! jsonified_record_responses -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response["block"].empty? ? nil : jsonified_record_response["block"]
+      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? nil : jsonified_record_response["block"]
     end
 
     def extract_title(clean_id, jsonified_record_response)
@@ -174,7 +174,7 @@ module Notion
       #! extract title from core JSON Notion response object.
       #! clean_id -> the cleaned block ID: ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response["collection"][collection_id]["value"]["name"].flatten.join
+      return jsonified_record_response.empty? || jsonified_record_response.empty? ? nil : jsonified_record_response["collection"][collection_id]["value"]["name"].flatten.join
     end
 
     def extract_type(clean_id, jsonified_record_response)
@@ -194,22 +194,22 @@ module Notion
       #! extract children IDs from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response.empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["content"]
+      return jsonified_record_response.empty? || jsonified_record_response.empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["content"]
     end
 
     def extract_parent_id(clean_id, jsonified_record_response)
       #! extract parent ID from core JSON response object.
       #! clean_id -> the block ID or URL cleaned : ``str``
       #! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      return jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["parent_id"]
+      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["parent_id"]
     end
 
     def extract_collection_id(clean_id, jsonified_record_response)
-      return jsonified_record_response["block"][clean_id]["value"]["collection_id"]
+      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? {} : jsonified_record_response["block"][clean_id]["value"]["collection_id"]
     end
 
     def extract_view_ids(clean_id, jsonified_record_response)
-      return jsonified_record_response["block"][clean_id]["value"]["view_ids"]
+      return jsonified_record_response.empty? || jsonified_record_response["block"].empty? ? [] : jsonified_record_response["block"][clean_id]["value"]["view_ids"]
     end
 
     def extract_id(url_or_id)
