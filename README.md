@@ -1,6 +1,5 @@
 # Unofficial Notion Client for Ruby.
-<br/>[![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby)
-<br/>[![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop)
+[![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby) [![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop)
 
 ## Getting Started
 To get started using this wrapper, you'll first need to retrieve your token_v2 credentials by signing into Notion in your browser of choice, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
