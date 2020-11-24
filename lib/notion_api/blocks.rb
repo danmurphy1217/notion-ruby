@@ -1,42 +1,33 @@
 # frozen_string_literal: true
 
-require_relative 'utils'
 require_relative 'core'
 
 require 'httparty'
 require 'date'
 require 'logger'
 
-$LOGGER = Logger.new($stdout)
-$LOGGER.level = Logger::WARN
-
 module Notion
+  # Base Template for all blocks. Inherits core methods from the Block class defined in block.rb
   class BlockTemplate < Core
-    # ! Base Template for all blocks. Inherits core methods from the Block class defined in block.rb
     include Utils
 
-    attr_reader :type, :id, :title, :parent_id
-
-    $Components = Utils::BlockComponents
-    $CollectionViewComponents = Utils::CollectionViewComponents
+    attr_reader :id, :title, :parent_id
 
     def initialize(id, title, parent_id)
       @id = id
       @title = title
       @parent_id = parent_id
-    end # initialize
+    end
 
     def title=(new_title)
       # ! Change the title of a block.
       # ! new_title -> new title for the block : ``str``
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
       update_title(new_title.to_s, request_id, transaction_id, space_id)
-      $LOGGER.info("Title changed from '#{title}' to '#{new_title}'")
       @title = new_title
-      true
-    end # title=
+    end
 
     def convert(block_class_to_convert_to)
       # ! convert a block from its current type to another.
@@ -46,14 +37,14 @@ module Notion
         self
       else
         # setup cookies, headers, and grab/create static vars for request
-        cookies = @@options['cookies']
-        headers = @@options['headers']
-        request_url = @@method_urls[:UPDATE_BLOCK]
+        cookies = Core.options['cookies']
+        headers = Core.options['headers']
+        request_url = URLS[:UPDATE_BLOCK]
 
         # set random IDs for request
-        request_id = extract_id(SecureRandom.hex(n = 16))
-        transaction_id = extract_id(SecureRandom.hex(n = 16))
-        space_id = extract_id(SecureRandom.hex(n = 16))
+        request_id = extract_id(SecureRandom.hex(16))
+        transaction_id = extract_id(SecureRandom.hex(16))
+        space_id = extract_id(SecureRandom.hex(16))
         request_ids = {
           request_id: request_id,
           transaction_id: transaction_id,
@@ -61,9 +52,9 @@ module Notion
         }
 
         # build hash's that contain the operations to send to Notions backend
-        convert_type_hash = $Components.convert_type(@id, block_class_to_convert_to)
-        last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-        last_edited_time_child_hash = $Components.last_edited_time(@id)
+        convert_type_hash = Utils::BlockComponents.convert_type(@id, block_class_to_convert_to)
+        last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
+        last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
 
         operations = [
           convert_type_hash,
@@ -78,25 +69,25 @@ module Notion
           cookies: cookies,
           headers: headers
         )
-        if response.code == 200
-          block_class_to_convert_to.new(@id, @title, @parent_id)
-        else
-          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-        end
+        unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+           Please try again, and if issues persist open an issue in GitHub."; end
+
+        block_class_to_convert_to.new(@id, @title, @parent_id)
+
       end
     end
 
     def duplicate(target_block = nil)
       # ! duplicate the block that this method is invoked upon.
       # ! target_block -> the block to place the duplicated block after. Can be any valid Block ID! : ``str``
-      cookies = @@options['cookies']
-      headers = @@options['headers']
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
+      request_url = URLS[:UPDATE_BLOCK]
 
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
+      new_block_id = extract_id(SecureRandom.hex(16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
 
       root_children = children_ids(@id)
       sub_children = []
@@ -118,11 +109,11 @@ module Notion
 
       block = target_block ? get(target_block) : self # allows dev to place block anywhere!
 
-      duplicate_hash = $Components.duplicate(type, @title, block.id, new_block_id, user_notion_id, root_children)
-      set_parent_alive_hash = $Components.set_parent_to_alive(block.parent_id, new_block_id)
-      block_location_hash = $Components.block_location_add(block_parent_id = block.parent_id, block_id = block.id, new_block_id = new_block_id, targetted_block = target_block, command = 'listAfter')
-      last_edited_time_parent_hash = $Components.last_edited_time(block.parent_id)
-      last_edited_time_child_hash = $Components.last_edited_time(block.id)
+      duplicate_hash = Utils::BlockComponents.duplicate(type, @title, block.id, new_block_id, user_notion_id, root_children)
+      set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(block.parent_id, new_block_id)
+      block_location_hash = Utils::BlockComponents.block_location_add(block.parent_id, block.id, new_block_id, target_block, 'listAfter')
+      last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(block.parent_id)
+      last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(block.id)
 
       operations = [
         duplicate_hash,
@@ -139,12 +130,11 @@ module Notion
         cookies: cookies,
         headers: headers
       )
-      if response.code == 200
-        class_to_return = Notion.const_get(Classes.select { |cls| Notion.const_get(cls).notion_type == type }.join.to_s)
-        class_to_return.new(new_block_id, @title, block.parent_id)
-      else
-        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-      end
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
+
+      class_to_return = Notion.const_get(Classes.select { |cls| Notion.const_get(cls).notion_type == type }.join.to_s)
+      class_to_return.new(new_block_id, @title, block.parent_id)
     end
 
     def move(target_block, position = 'after')
@@ -152,137 +142,128 @@ module Notion
         'after' => 'listAfter',
         'before' => 'listBefore'
       }
-      if !positions_hash.keys.include?(position)
-        raise ArgumentError, "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"
+
+      unless positions_hash.keys.include?(position); raise ArgumentError, "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"; end
+
+      position_command = positions_hash[position]
+      # ! move the block to a new location.
+      # ! target_block -> the targetted block to move to. : ``str``
+      # ! position -> where the block should be listed, in positions relative to the target_block [before, after, top-child, last-child]
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
+      request_url = URLS[:UPDATE_BLOCK]
+
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
+
+      request_ids = {
+        request_id: request_id,
+        transaction_id: transaction_id,
+        space_id: space_id
+      }
+
+      check_parents = (@parent_id == target_block.parent_id)
+      set_block_dead_hash = Utils::BlockComponents.set_block_to_dead(@id) # kill the block this method is invoked on...
+      block_location_remove_hash = Utils::BlockComponents.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
+      parent_location_hash = Utils::BlockComponents.parent_location_add(check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
+      block_location_add_hash = Utils::BlockComponents.block_location_add(check_parents ? @parent_id : target_block.parent_id, @id, target_block.id, position_command)
+      last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
+
+      if check_parents
+        last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
+        operations = [
+          set_block_dead_hash,
+          block_location_remove_hash,
+          parent_location_hash,
+          block_location_add_hash,
+          last_edited_time_parent_hash,
+          last_edited_time_child_hash
+        ]
       else
-        position_command = positions_hash[position]
-        # ! move the block to a new location.
-        # ! target_block -> the targetted block to move to. : ``str``
-        # ! position -> where the block should be listed, in positions relative to the target_block [before, after, top-child, last-child]
-        cookies = @@options['cookies']
-        headers = @@options['headers']
-        request_url = @@method_urls[:UPDATE_BLOCK]
-
-        request_id = extract_id(SecureRandom.hex(n = 16))
-        transaction_id = extract_id(SecureRandom.hex(n = 16))
-        space_id = extract_id(SecureRandom.hex(n = 16))
-
-        request_ids = {
-          request_id: request_id,
-          transaction_id: transaction_id,
-          space_id: space_id
-        }
-
-        check_parents = (@parent_id == target_block.parent_id)
-        set_block_dead_hash = $Components.set_block_to_dead(@id) # kill the block this method is invoked on...
-        block_location_remove_hash = $Components.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
-        parent_location_hash = $Components.parent_location_add(check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
-        block_location_add_hash = $Components.block_location_add(block_parent_id = check_parents ? @parent_id : target_block.parent_id, block_id = @id, targetted_block = target_block.id, command = position_command)
-
-        if check_parents
-          last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-          last_edited_time_child_hash = $Components.last_edited_time(@id)
-          operations = [
-            set_block_dead_hash,
-            block_location_remove_hash,
-            parent_location_hash,
-            block_location_add_hash,
-            last_edited_time_parent_hash,
-            last_edited_time_child_hash
-          ]
-        else
-          last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-          last_edited_time_new_parent_hash = $Components.last_edited_time(target_block.parent_id)
-          last_edited_time_child_hash = $Components.last_edited_time(@id)
-          @parent_id = target_block.parent_id
-          operations = [
-            set_block_dead_hash,
-            block_location_remove_hash,
-            parent_location_hash,
-            block_location_add_hash,
-            last_edited_time_parent_hash,
-            last_edited_time_new_parent_hash,
-            last_edited_time_child_hash
-          ]
-        end
-        request_body = build_payload(operations, request_ids)
-        response = HTTParty.post(
-          request_url,
-          body: request_body.to_json,
-          cookies: cookies,
-          headers: headers
-        )
-        if response.code == 200
-          self
-        else
-          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-        end
+        last_edited_time_new_parent_hash = Utils::BlockComponents.last_edited_time(target_block.parent_id)
+        last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
+        @parent_id = target_block.parent_id
+        operations = [
+          set_block_dead_hash,
+          block_location_remove_hash,
+          parent_location_hash,
+          block_location_add_hash,
+          last_edited_time_parent_hash,
+          last_edited_time_new_parent_hash,
+          last_edited_time_child_hash
+        ]
       end
+      request_body = build_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        body: request_body.to_json,
+        cookies: cookies,
+        headers: headers
+      )
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
+
+      self
     end
 
-    def create(block_type, block_title, after = nil, position = 'after')
+    def create(block_type, block_title, target = nil, position = 'after')
       # ! create a new block
       # ! block_type -> the type of block to create : ``cls``
       # ! block_title -> the title of the new block : ``str``
-      # ! loc -> the block_id that the new block should be placed after. ``str``
+      #! target -> the block_id that the new block should be placed after. ``str`` 
+      # ! position -> 'after' or 'before'
       positions_hash = {
         'after' => 'listAfter',
-        # "child-after" => "listAfter",
         'before' => 'listBefore'
-        # "child-before" => "listBefore",
       }
-      if !positions_hash.keys.include?(position)
-        raise "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"
-      else
-        position_command = positions_hash[position]
+      unless positions_hash.keys.include?(position); raise "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"; end
 
-        cookies = @@options['cookies']
-        headers = @@options['headers']
+      position_command = positions_hash[position]
 
-        new_block_id = extract_id(SecureRandom.hex(n = 16))
-        request_id = extract_id(SecureRandom.hex(n = 16))
-        transaction_id = extract_id(SecureRandom.hex(n = 16))
-        space_id = extract_id(SecureRandom.hex(n = 16))
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-        request_ids = {
-          request_id: request_id,
-          transaction_id: transaction_id,
-          space_id: space_id
-        }
+      new_block_id = extract_id(SecureRandom.hex(16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
 
-        create_hash = $Components.create(new_block_id, block_type.notion_type)
-        set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-        last_edited_time_parent_hash = $Components.last_edited_time(@id)
-        block_location_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = after, command = position_command)
-        last_edited_time_parent_hash = $Components.last_edited_time(@id)
-        last_edited_time_child_hash = $Components.last_edited_time(@id)
-        title_hash = $Components.title(new_block_id, block_title)
+      request_ids = {
+        request_id: request_id,
+        transaction_id: transaction_id,
+        space_id: space_id
+      }
 
-        operations = [
-          create_hash,
-          set_parent_alive_hash,
-          block_location_hash,
-          last_edited_time_parent_hash,
-          last_edited_time_child_hash,
-          title_hash
-        ]
+      create_hash = Utils::BlockComponents.create(new_block_id, block_type.notion_type)
+      set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(@id, new_block_id)
+      block_location_hash = Utils::BlockComponents.block_location_add(@id, @id, new_block_id, target, position_command)
+      last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@id)
+      last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
+      title_hash = Utils::BlockComponents.title(new_block_id, block_title)
 
-        request_url = @@method_urls[:UPDATE_BLOCK]
-        request_body = build_payload(operations, request_ids)
-        response = HTTParty.post(
-          request_url,
-          body: request_body.to_json,
-          cookies: cookies,
-          headers: headers
-        )
-        if response.code == 200
-          block_type.new(new_block_id, block_title, @id)
+      operations = [
+        create_hash,
+        set_parent_alive_hash,
+        block_location_hash,
+        last_edited_time_parent_hash,
+        last_edited_time_child_hash,
+        title_hash
+      ]
 
-        else
-          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-        end
-      end
-    end # create
+      request_url = URLS[:UPDATE_BLOCK]
+      request_body = build_payload(operations, request_ids)
+      response = HTTParty.post(
+        request_url,
+        body: request_body.to_json,
+        cookies: cookies,
+        headers: headers
+      )
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
+
+      block_type.new(new_block_id, block_title, @id)
+    end
 
     private
 
@@ -300,12 +281,10 @@ module Notion
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
       while jsonified_record_response.empty? || jsonified_record_response['block'].empty?
-        if i >= 10
-          return {}
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
       end
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
@@ -332,9 +311,9 @@ module Notion
       # ! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
       # ! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
       # setup cookies, headers, and grab/create static vars for request
-      cookies = @@options['cookies']
-      headers = @@options['headers']
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
+      request_url = URLS[:UPDATE_BLOCK]
 
       # set unique IDs for request
       request_ids = {
@@ -344,9 +323,9 @@ module Notion
       }
 
       # build and set operations to send to Notion
-      title_hash = $Components.title(@id, new_title)
-      last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-      last_edited_time_child_hash = $Components.last_edited_time(@id)
+      title_hash = Utils::BlockComponents.title(@id, new_title)
+      last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
+      last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
       operations = [
         title_hash,
         last_edited_time_parent_hash,
@@ -362,50 +341,48 @@ module Notion
         headers: headers
       )
       response.body
-    end # update_title
-  end # BlockTemplate
-
-  class DividerBlock < BlockTemplate
-    # divider block: ---------
-    @@notion_type = 'divider'
-    def self.notion_type
-      @@notion_type
-    end
-
-    def type
-      @@notion_type
     end
   end
 
-  class TodoBlock < BlockTemplate
-    # To-Do block: best for checklists and tracking to-dos.
-    @@notion_type = 'to_do'
-
-    def self.notion_type
-      @@notion_type
-    end
-
-    def self.name
-      # ! change the class.name attribute
-      @@notion_type
-    end
+  # divider block: ---------
+  class DividerBlock < BlockTemplate
+    @notion_type = 'divider'
+    @type = 'divider'
 
     def type
-      @@notion_type
+      Notion::DividerBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
+    end
+  end
+
+  # To-Do block: best for checklists and tracking to-dos.
+  class TodoBlock < BlockTemplate
+    @notion_type = 'to_do'
+    @type = 'to_do'
+
+    def type
+      Notion::TodoBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
 
     def checked=(checked_value)
       # ! change the checked property of the Todo Block.
       # ! checked_value -> boolean value used to determine whether the block should be checked [yes, 1, true] or not [no, 0, false] : ``bool | str``
       # set static variables for request
-      cookies = @@options['cookies']
-      headers = @@options['headers']
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
+      request_url = URLS[:UPDATE_BLOCK]
 
       # set unique values for request
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
       request_ids = {
         request_id: request_id,
         transaction_id: transaction_id,
@@ -413,9 +390,9 @@ module Notion
       }
 
       if %w[yes no].include?(checked_value.downcase)
-        checked_hash = $Components.checked_todo(@id, checked_value.downcase)
-        last_edited_time_parent_hash = $Components.last_edited_time(@parent_id)
-        last_edited_time_child_hash = $Components.last_edited_time(@id)
+        checked_hash = Utils::BlockComponents.checked_todo(@id, checked_value.downcase)
+        last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
+        last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
 
         operations = [
           checked_hash,
@@ -429,76 +406,83 @@ module Notion
           cookies: cookies,
           headers: headers
         )
-        if response.code == 200
-          true
-        else
-          raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-        end
+        unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+           Please try again, and if issues persist open an issue in GitHub."; end
+
+        true
       else
-        $LOGGER.error("#{checked_value} is not an accepted input value. If you want to check a To-Do block, 'yes'. If you want to un-check a To-Do Block, use 'no'.")
         false
       end
     end
   end
 
+  # Code block: used to store code, should be assigned a coding language.
   class CodeBlock < BlockTemplate
-    # Code block: used to store code, should be assigned a coding language.
-    @@notion_type = 'code'
-
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'code'
+    @type = 'code'
 
     def type
-      @@notion_type
+      Notion::CodeBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # Header block: H1
   class HeaderBlock < BlockTemplate
-    # Header block: H1
-    @@notion_type = 'header'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'header'
+    @type = 'header'
 
     def type
-      @@notion_type
+      Notion::HeaderBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # SubHeader Block: H2
   class SubHeaderBlock < BlockTemplate
-    # SubHeader Block: H2
-    @@notion_type = 'sub_header'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'sub_header'
+    @type = 'sub_header'
 
     def type
-      @@notion_type
+      Notion::SubHeaderBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # Sub-Sub Header Block: H3
   class SubSubHeaderBlock < BlockTemplate
-    # Sub-Sub Header Block: H3
-    @@notion_type = 'sub_sub_header'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'sub_sub_header'
+    @type = 'sub_sub_header'
 
     def type
-      @@notion_type
+      Notion::SubSubHeaderBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # Page Block, entrypoint for the application
   class PageBlock < BlockTemplate
-    @@notion_type = 'page'
-
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'page'
+    @type = 'page'
 
     def type
-      @@notion_type
+      Notion::PageBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
 
     def get_block(url_or_id)
@@ -521,12 +505,10 @@ module Notion
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
       while jsonified_record_response.empty? || jsonified_record_response['block'].empty?
-        if i >= 10
-          return {}
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
       end
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
       block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
@@ -537,26 +519,26 @@ module Notion
     end
 
     def create_collection(_collection_type, collection_title, data = {})
-      cookies = @@options['cookies']
-      headers = @@options['headers']
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
-      parent_id = extract_id(SecureRandom.hex(n = 16))
-      collection_id = extract_id(SecureRandom.hex(n = 16))
-      view_id = extract_id(SecureRandom.hex(n = 16))
+      new_block_id = extract_id(SecureRandom.hex(16))
+      parent_id = extract_id(SecureRandom.hex(16))
+      collection_id = extract_id(SecureRandom.hex(16))
+      view_id = extract_id(SecureRandom.hex(16))
       # p collection_id, parent_id, view_id
 
       children = []
       alive_blocks = []
       data.each do |_row|
-        child = extract_id(SecureRandom.hex(n = 16))
+        child = extract_id(SecureRandom.hex(16))
         children.push(child)
-        alive_blocks.push($CollectionViewComponents.set_collection_blocks_alive(child, collection_id))
+        alive_blocks.push(Utils::CollectionViewComponents.set_collection_blocks_alive(child, collection_id))
       end
 
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
 
       request_ids = {
         request_id: request_id,
@@ -564,14 +546,14 @@ module Notion
         space_id: space_id
       }
 
-      create_collection_view = $CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
-      # set_parent_block_alive = $CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
-      configure_view = $CollectionViewComponents.set_view_config(new_block_id, view_id, children_ids = children)
-      configure_columns = $CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
-      set_parent_alive_hash = $Components.set_parent_to_alive(@id, new_block_id)
-      add_block_hash = $Components.block_location_add(@id, @id, new_block_id, targetted_block = nil, command = 'listAfter')
-      new_block_edited_time = $Components.last_edited_time(new_block_id)
-      collection_title_hash = $CollectionViewComponents.set_collection_title(collection_title, collection_id)
+      create_collection_view = Utils::CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
+      # set_parent_block_alive = Utils::CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
+      configure_view = Utils::CollectionViewComponents.set_view_config(new_block_id, view_id, children)
+      configure_columns = Utils::CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
+      set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(@id, new_block_id)
+      add_block_hash = Utils::BlockComponents.block_location_add(@id, @id, new_block_id, nil, 'listAfter')
+      new_block_edited_time = Utils::BlockComponents.last_edited_time(new_block_id)
+      collection_title_hash = Utils::CollectionViewComponents.set_collection_title(collection_title, collection_id)
 
       operations = [
         create_collection_view,
@@ -588,12 +570,12 @@ module Notion
       data.each_with_index do |row, i|
         child = children[i]
         row.keys.each_with_index do |col_name, j|
-          child_component = $CollectionViewComponents.insert_data(child, j.zero? ? 'title' : col_name, row[col_name])
+          child_component = Utils::CollectionViewComponents.insert_data(child, j.zero? ? 'title' : col_name, row[col_name])
           all_ops.push(child_component)
         end
       end
 
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_url = URLS[:UPDATE_BLOCK]
       request_body = build_payload(all_ops, request_ids)
       response = HTTParty.post(
         request_url,
@@ -602,155 +584,183 @@ module Notion
         headers: headers
       )
 
-      if response.code == 200
-        CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
 
-      else
-        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-      end
-    end # create_collection
+      CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
+    end
   end
 
+  # Toggle block: best for storing children blocks
   class ToggleBlock < BlockTemplate
-    # Toggle block: best for storing children blocks
-    @@notion_type = 'toggle'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'toggle'
+    @type = 'toggle'
 
     def type
-      @@notion_type
+      Notion::ToggleBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # Bullet list block: best for an unordered list
   class BulletedBlock < BlockTemplate
-    # Bullet list block: best for an unordered list
-    @@notion_type = 'bulleted_list'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'bulleted_list'
+    @type = 'bulleted_list'
 
     def type
-      @@notion_type
+      Notion::BulletedBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # Numbered list Block: best for an ordered list
   class NumberedBlock < BlockTemplate
-    # Numbered list Block: best for an ordered list
-    @@notion_type = 'numbered_list'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'numbered_list'
+    @type = 'numbered_list'
 
     def type
-      @@notion_type
+      Notion::NumberedBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # best for memorable information
   class QuoteBlock < BlockTemplate
-    # best for memorable information
-    @@notion_type = 'quote'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'quote'
+    @type = 'quote'
 
     def type
-      @@notion_type
+      Notion::QuoteBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # same as quote... works similarly to page block
   class CalloutBlock < BlockTemplate
-    # same as quote... works similarly to page block
-    @@notion_type = 'callout'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'callout'
+    @type = 'callout'
 
     def type
-      @@notion_type
+      Notion::CalloutBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # simiilar to code block but for mathematical functions.
   class LatexBlock < BlockTemplate
-    # simiilar to code block but for mathematical functions.
-    @@notion_type = 'equation'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'equation'
+    @type = 'equation'
 
     def type
-      @@notion_type
+      Notion::LatexBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # good for just about anything (-:
   class TextBlock < BlockTemplate
-    # good for just about anything (-:
-    @@notion_type = 'text'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'text'
+    @type = 'text'
 
     def type
-      @@notion_type
+      Notion::TextBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # good for visual information
   class ImageBlock < BlockTemplate
-    # good for visual information
-    @@notion_type = 'image'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'image'
+    @type = 'image'
 
     def type
-      @@notion_type
+      Notion::ImageBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # maps out the headers - sub-headers - sub-sub-headers on the page
   class TableOfContentsBlock < BlockTemplate
-    # maps out the headers - sub-headers - sub-sub-headers on the page
-    @@notion_type = 'table_of_contents'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'table_of_contents'
+    @type = 'table_of_contents'
 
     def type
-      @@notion_type
+      Notion::TableOfContentsBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # no use case for this yet.
   class ColumnListBlock < BlockTemplate
-    # TODO: no use case for this yet.
-    @@notion_type = 'column_list'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'column_list'
+    @type = 'column_list'
 
     def type
-      @@notion_type
+      Notion::ColumnListBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
 
+  # no use case for this yet.
   class ColumnBlock < BlockTemplate
-    # TODO: no use case for this yet.
-    @@notion_type = 'column'
-    def self.notion_type
-      @@notion_type
-    end
+    @notion_type = 'column'
+    @type = 'column'
 
     def type
-      @@notion_type
+      Notion::ColumnBlock.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
     end
   end
-end # Notion
+end
 
 module Notion
-  class CollectionView < Core # ! should be Block... this class will be extended by CV-based classes, and will define method only exposed to them.
-    # ! by inheriting BlockTemplate, it inherits a bunch of methods that don't really apply.
-    # collection views such as tables and timelines.
-    attr_reader :type, :id, :title, :parent_id, :collection_id, :view_id
+  # collection views such as tables and timelines.
+  class CollectionView < Core
+    attr_reader :id, :title, :parent_id, :collection_id, :view_id
 
-    @@notion_type = 'collection_view'
+    @notion_type = 'collection_view'
+    @type = 'collection_view'
+
+    def type
+      Notion::CollectionView.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
+    end
 
     def initialize(id, title, parent_id, collection_id, view_id)
       @id = id
@@ -758,27 +768,19 @@ module Notion
       @parent_id = parent_id
       @collection_id = collection_id
       @view_id = view_id
-    end # initialize
-
-    def type
-      @@notion_type
-    end
-
-    def self.notion_type
-      @@notion_type
     end
 
     def add_row(data)
       # ! add new row to Collection View table.
       # ! data -> JSON data to add to table : ``json``
 
-      cookies = @@options['cookies']
-      headers = @@options['headers']
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
-      new_block_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
+      new_block_id = extract_id(SecureRandom.hex(16))
 
       request_ids = {
         request_id: request_id,
@@ -786,10 +788,10 @@ module Notion
         space_id: space_id
       }
 
-      instantiate_row = $CollectionViewComponents.add_new_row(new_block_id)
-      set_block_alive = $CollectionViewComponents.set_collection_blocks_alive(new_block_id, @collection_id)
-      new_block_edited_time = $Components.last_edited_time(new_block_id)
-      parent_edited_time = $Components.last_edited_time(@parent_id)
+      instantiate_row = Utils::CollectionViewComponents.add_new_row(new_block_id)
+      set_block_alive = Utils::CollectionViewComponents.set_collection_blocks_alive(new_block_id, @collection_id)
+      new_block_edited_time = Utils::BlockComponents.last_edited_time(new_block_id)
+      parent_edited_time = Utils::BlockComponents.last_edited_time(@parent_id)
 
       operations = [
         instantiate_row,
@@ -799,11 +801,11 @@ module Notion
       ]
 
       data.keys.each_with_index do |col_name, j|
-        child_component = $CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_name, data[col_name])
+        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_name, data[col_name])
         operations.push(child_component)
       end
 
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_url = URLS[:UPDATE_BLOCK]
       request_body = build_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
@@ -811,23 +813,22 @@ module Notion
         cookies: cookies,
         headers: headers
       )
-      if response.code == 200
-        true
-      else
-        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
-      end
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
+
+      true
     end
 
     def add_property(name, type)
       # ! add a property (column) to the table.
       # ! name -> name of the property : ``str``
       # ! type -> type of the property : ``str``
-      cookies = @@options['cookies']
-      headers = @@options['headers']
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-      request_id = extract_id(SecureRandom.hex(n = 16))
-      transaction_id = extract_id(SecureRandom.hex(n = 16))
-      space_id = extract_id(SecureRandom.hex(n = 16))
+      request_id = extract_id(SecureRandom.hex(16))
+      transaction_id = extract_id(SecureRandom.hex(16))
+      space_id = extract_id(SecureRandom.hex(16))
 
       request_ids = {
         request_id: request_id,
@@ -845,13 +846,13 @@ module Notion
         schema: schema
       }
 
-      add_collection_property = $CollectionViewComponents.add_collection_property(@collection_id, new_schema)
+      add_collection_property = Utils::CollectionViewComponents.add_collection_property(@collection_id, new_schema)
 
       operations = [
         add_collection_property
       ]
 
-      request_url = @@method_urls[:UPDATE_BLOCK]
+      request_url = URLS[:UPDATE_BLOCK]
       request_body = build_payload(operations, request_ids)
       response = HTTParty.post(
         request_url,
@@ -859,22 +860,82 @@ module Notion
         cookies: cookies,
         headers: headers
       )
-      if response.code == 200
-        true
-      else
-        raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}. Please try again, and if issues persist open an issue in GitHub."
+      unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
+         Please try again, and if issues persist open an issue in GitHub."; end
+
+      true
+    end
+
+    def row(row_id)
+      # ! retrieve a row from a CollectionView Table.
+      # ! row_id -> the ID for the row to retrieve: ``str``
+      clean_id = extract_id(row_id)
+
+      request_body = {
+        pageId: clean_id,
+        chunkNumber: 0,
+        limit: 100,
+        verticalColumns: false
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      schema = extract_collection_schema(@collection_id, @view_id)
+      keys = schema.keys
+      column_names = keys.map { |key| schema[key]['name'] }
+      i = 0
+      while jsonified_record_response.empty? || jsonified_record_response['block'].empty?
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
       end
+      row_jsonified_response = jsonified_record_response['block'][clean_id]['value']['properties']
+      row_data = {}
+      keys.each_with_index { |key, idx| row_data[column_names[idx]] = row_jsonified_response[key] ? row_jsonified_response[key].flatten : [] }
+      row_data
+    end
+
+    def row_ids
+      # ! retrieve all Collection View table rows.
+      clean_id = extract_id(@id)
+
+      request_body = {
+        pageId: clean_id,
+        chunkNumber: 0,
+        limit: 100,
+        verticalColumns: false
+      }
+
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty? || jsonified_record_response['block'].empty?
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
+      end
+
+      jsonified_record_response['collection_view'][@view_id]['value']['page_sort']
+    end
+
+    def rows
+      # ! returns all rows as instantiated class instances.
+      row_id_array = row_ids
+      parent_id = @parent_id
+      collection_id = @collection_id
+      view_id = @view_id
+
+      row_id_array.map { |row_id| Notion::TableRow.new(row_id, parent_id, collection_id, view_id) }
     end
 
     private
 
     def extract_collection_schema(collection_id, view_id)
-      cookies = @@options['cookies']
-      headers = @@options['headers']
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-      query_collection_hash = $CollectionViewComponents.query_collection(collection_id, view_id, query = '')
+      query_collection_hash = Utils::CollectionViewComponents.query_collection(collection_id, view_id, '')
 
-      request_url = @@method_urls[:GET_COLLECTION]
+      request_url = URLS[:GET_COLLECTION]
       response = HTTParty.post(
         request_url,
         body: query_collection_hash.to_json,
@@ -882,6 +943,26 @@ module Notion
         headers: headers
       )
       response['recordMap']['collection'][collection_id]['value']['schema']
+    end
+  end
+  # Class for each row in a Collection View Table.
+  class CollectionViewRow < Core
+    @notion_type = 'table_row'
+    @type = 'table_row'
+
+    def type
+      Notion::CollectionViewRow.notion_type
+    end
+
+    class << self
+      attr_reader :notion_type, :type
+    end
+
+    def initialize(id, parent_id, collection_id, view_id)
+      @id = id
+      @parent_id = parent_id
+      @collection_id = collection_id
+      @view_id = view_id
     end
   end
 end

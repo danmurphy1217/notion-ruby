@@ -4,13 +4,22 @@ require_relative 'utils'
 require 'httparty'
 
 module Notion
+  # the initial methods available to an instantiated Cloent object are defined
   class Core
     include Utils
-    @@method_urls = URLS # defined in Utils
-    @@options = { 'cookies' => { token_v2: nil }, 'headers' => { 'Content-Type' => 'application/json' } }
-    @@type_whitelist = 'divider'
+    @options = { 'cookies' => { :token_v2 => nil, 'x-active-user-header' => nil }, 'headers' => { 'Content-Type' => 'application/json' } }
+    @type_whitelist = 'divider'
 
-    attr_reader :token_v2, :active_user_header, :clean_id, :cookies, :headers
+    class << self
+      attr_reader :options, :type_whitelist, :token_v2, :active_user_header
+    end
+
+    attr_reader :clean_id, :cookies, :headers
+
+    def initialize(token_v2, active_user_header)
+      @@token_v2 = token_v2
+      @@active_user_header = active_user_header
+    end
 
     def get_page(url_or_id)
       # ! retrieve a Notion Page Block and return its instantiated class object.
@@ -26,12 +35,10 @@ module Notion
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
       while jsonified_record_response.empty? || jsonified_record_response['block'].empty?
-        if i >= 10
-          return {}
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
       end
 
       block_id = clean_id
@@ -39,11 +46,9 @@ module Notion
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
-      if block_type != 'page'
-        raise 'the URL or ID passed to the get_page method must be that of a Page Block.'
-      else
-        PageBlock.new(block_id, block_title, block_parent_id)
-      end
+      raise 'the URL or ID passed to the get_page method must be that of a Page Block.' if block_type != 'page'
+
+      PageBlock.new(block_id, block_title, block_parent_id)
     end
 
     def children(url_or_id = @id)
@@ -73,12 +78,10 @@ module Notion
       jsonified_record_response = get_all_block_info(clean_id, request_body)
       i = 0
       while jsonified_record_response.empty?
-        if i >= 10
-          return []
-        else
-          jsonified_record_response = get_all_block_info(clean_id, request_body)
-          i += 1
-        end
+        return {} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
       end
 
       jsonified_record_response['block'][clean_id]['value']['content'] || []
@@ -86,22 +89,14 @@ module Notion
 
     private
 
-    def self.token_v2=(token_v2)
-      @@token_v2 = token_v2
-    end
-
-    def self.active_user_header=(active_user_header)
-      @@active_user_header = active_user_header
-    end
-
     def get_notion_id(body)
       # ! retrieves a users ID from the headers of a Notion response object.
       # ! body -> the body to send in the request : ``Hash``
-      @@options['cookies'][:token_v2] = @@token_v2
-      @@options['headers']['x-active-user-header'] = @@active_user_header
-      cookies = @@options['cookies']
-      headers = @@options['headers']
-      request_url = @@method_urls[:GET_BLOCK]
+      Core.options['cookies'][:token_v2] = @@token_v2
+      Core.options['headers']['x-notion-active-user-header'] = @@active_user_header
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
+      request_url = URLS[:GET_BLOCK]
 
       response = HTTParty.post(
         request_url,
@@ -121,12 +116,12 @@ module Notion
     def get_all_block_info(_clean_id, body)
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
-      @@options['cookies'][:token_v2] = @@token_v2
-      @@options['headers']['x-notion-active-user-header'] = @@active_user_header
-      cookies = @@options['cookies']
-      headers = @@options['headers']
+      Core.options['cookies'][:token_v2] = @@token_v2
+      Core.options['headers']['x-notion-active-user-header'] = @active_user_header
+      cookies = Core.options['cookies']
+      headers = Core.options['headers']
 
-      request_url = @@method_urls[:GET_BLOCK]
+      request_url = URLS[:GET_BLOCK]
 
       response = HTTParty.post(
         request_url,
@@ -149,15 +144,13 @@ module Notion
       # ! clean_id -> the cleaned block ID: ``str``
       # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
       filter_nil_blocks = filter_nil_blocks(jsonified_record_response)
-      if filter_nil_blocks.nil?
-        nil
-      elsif filter_nil_blocks[clean_id].nil?
+      if filter_nil_blocks.nil? || filter_nil_blocks[clean_id].nil? || filter_nil_blocks[clean_id]['value']['properties'].nil?
         nil
       else
         # titles for images are called source, while titles for text-based blocks are called title, so lets dynamically grab it
         # https://stackoverflow.com/questions/23765996/get-all-keys-from-ruby-hash/23766007
         title_value = filter_nil_blocks[clean_id]['value']['properties'].keys[0]
-        @@type_whitelist.include?(filter_nil_blocks[clean_id]['value']['type']) ? nil : jsonified_record_response['block'][clean_id]['value']['properties'][title_value].flatten[0]
+        Core.type_whitelist.include?(filter_nil_blocks[clean_id]['value']['type']) ? nil : jsonified_record_response['block'][clean_id]['value']['properties'][title_value].flatten[0]
 
       end
     end
@@ -166,9 +159,7 @@ module Notion
       # ! extract title from core JSON Notion response object.
       # ! clean_id -> the cleaned block ID: ``str``
       # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      if jsonified_record_response['collection']
-        jsonified_record_response['collection'][collection_id]['value']['name'].flatten.join
-      end
+      jsonified_record_response['collection'][collection_id]['value']['name'].flatten.join if jsonified_record_response['collection']
     end
 
     def extract_type(clean_id, jsonified_record_response)
