@@ -2,21 +2,25 @@ language: ruby
 cache: bundler
 dist: bionic
 rvm:
-  - 2.5
-  - 2.6
-  - 2.7
+- 2.5
+- 2.6
+- 2.7
 branches:
   only:
   - master
-  - /^deploy-.*$/
+  - "/^deploy-.*$/"
 before_install:
-  - gem install bundler
-  - rvm list known
+- gem install bundler
+- rvm list known
 install: bundle install
 script: rspec spec
 notifications:
   email:
     recipients:
-      - danielmurph8@gmail.com
+    - danielmurph8@gmail.com
     on_success: never
     on_failure: always
+env:
+  global:
+  - secure: ISJIBqqiLGQbuGLf+5HsyME7uDVDft0Ah6JJ+bynve1dxJS3God/VqOv0VpiV6KnDqY6ivqb6/AcabAnDcs/mBCiEcC9t2Y/fmN60SEpz7Mdw1B/NUie+zB2Bu2o/BckrOj2HA+ok4bjZgdv4EZV20QK33gmYYMIsANz760EMTJmaluDC52TSHBEzXEPOfa3qf20WPAcW8cFuSHkFwZ3ynoMqlD2RfGvYbJYsCs2O3ugtWIb7cQTkFOJvEAAhWpelnsAxRaztCK6IKYCTKQ8N1GESvu3zApXzzHrsYimO1RWb1FahHAfQ+BB9tGPOgyRdJ242vyxybHr8kCYW44DDccM1RDH9iKw5DIoKE507YrWmYq+LiPkMXDlJeqlBCeIYTjyxJO8lLS+gdHjPw1CuWZk1OQh0bNqOoAaEs3PEi3kyTHoXX0LZHCboVRAsMDjXpW0UAYQqWz604JA0/FXwSvUr8K8wX1R+axEh07yQKKLWOO+O0z6aUsD8HZa8723lHXwfiOl+bC+/a4TIvOJ9fqn5zm4TlXw40wocWpwR2SssZ7N1XpVfe650ZQ/HwdGMKXhmSHwSiWdhCmICBJQB6Gfp1p3rqFFdhmyzEmYRrQj+x+Q3QHKvyaCCiatrbb/iDLlkonBxqLtJD9HusHmWrg9iXBBu+5Kv1VY6NRtXOY=
+  - secure: Ek538gssOTnkUqxHYqpn6izFZbib3fdk5ohcKB0LFyDBl7g8ifCFKDp5MXuldVFJZ8ZHiAiaRLzPEY1t1mU4lVOM8TvjX8TcussmU4yntlvsHyByQm2YLQU+xMQ0nUSNsMMN7Q2k532mLs1UoEvuQu/XmUrqJp4O5h+cdp6Q3ZCqNqYGotn9UtSFN7lQjuQoWqyPiV13F4n+4nuX1QFVUkpv4/iC6rrqb+TvkYShEYbnCrYbNooxnE2QDHAOLFhZOTHH4gteopuk2Fs+WgEliEpPpDzHjpS62yJo8HruvaCU5a9sEH9PppnxlP1aHx/XvHP5N+MG/KkHjxL+i/uvrw1+CjIwIvqFRAJHr0rY/wXyAT3tTk4Tr/SnPBK7xgaAOnhUzHNqwGGTPGcUehScg3pngXWZ8KToqokgJH1fRWvsh0jpK9PSe0mpGVVbzYbZeCPQZIBE1Gnpdl7Nu6aSK8TdMPKkFMGe329eSKoj3gNyX+bSkWnJyBoG9rpx27CTYAQWmcFKC31J6dkHNR1KV4UbqaAYZ8UB6A9ylLrJ0GutGh1Jniw0tI+PyYOoFg4sdVRwa62kxNAq5/ytvBXteco+QJFAmJDhbIDqIF5z1j2JePb4hDSSW/B93wTUazxYTsfPOyAcpxuEiwajEfe2kYUMhnNT3WBIHMSsRinNEXc=
