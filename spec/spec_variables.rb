@@ -1,6 +1,5 @@
 module Helpers
-    $Body = { :pageId => $Test_page_id, :chunkNumber => 0, :limit => 100, :verticalColumns => false }
-
+    
     #! CORE_SPEC.RB HELPERS
     $Client = Notion::Client.new(ENV["token_v2"])
     $Core_spec_url = "https://www.notion.so/danmurphy/CORE-RB-TESTS-9c50a7b39ad74f2baa08b3c95f1f19e7"
@@ -28,6 +27,7 @@ module Helpers
     # test block IDs
     $Test_core_block_id_one = "1f5ae85f-f89f-4779-9fa4-b30c3b229cdb"
     $Test_core_block_id_two = "d7407d2c-adbb-497c-b99f-9f9d426d2b18"
+    $Body = { :pageId => $Core_spec_page_id, :chunkNumber => 0, :limit => 100, :verticalColumns => false }
 
 
     #! BLOCKS_SPEC.RB HELPERS
