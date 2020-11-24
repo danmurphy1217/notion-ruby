@@ -1,6 +1,8 @@
-require_relative "blocks"
-require_relative "core"
-require "csv"
+# frozen_string_literal: true
+
+require_relative 'blocks'
+require_relative 'core'
+require 'csv'
 # require "gemoji"
 
 module Notion
@@ -23,11 +25,10 @@ end
 # rows = []
 # csv.to_a.map {|row|  rows.push(row.to_hash) }
 
-@client = Notion::Client.new(ENV["token_v2"])
-@page = @client.get_page("https://www.notion.so/danmurphy/Testing-66447bc817f044bc81ed3cf4802e9b00")
-# @page.get_block("e0292e46-7be8-933d-fa15-36355c2d3611").duplicate
+# @client = Notion::Client.new(ENV["token_v2"])
+# @page = @client.get_page("https://www.notion.so/danmurphy/CORE-RB-TESTS-9c50a7b39ad74f2baa08b3c95f1f19e7")
 # p @page.children
-#! Pick up with private methods in Core.rb for unit tests
+# ! Pick up with private methods in Core.rb for unit tests
 # p Notion::Core.new.send("get_notion_id", {:pageId => "66447bc8-17f0-44bc-81ed-3cf4802e9b00",:chunkNumber => 0,:limit => 100,:verticalColumns => false})
-#! 38x46 seems to be max [total of ~1748 cells]
+# ! 38x46 seems to be max [total of ~1748 cells]
 # p Classes.each { |cls| @block.create(Notion.const_get(cls.to_s), DateTime.now.strftime("%H:%M:%S on %B %d %Y"), loc="df9a4bf7-0e0d-78d9-fa13-c5df01df033b") }
