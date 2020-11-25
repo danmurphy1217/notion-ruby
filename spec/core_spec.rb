@@ -47,14 +47,14 @@ describe Notion::Core do
   context "testing the Notion::Core private methods" do
     describe "#get_notion_id" do
       it "should return the User Notion ID sent from Notion in the response headers." do
-        expect(Notion::Core.new.send("get_notion_id", $Body)).to eq(ENV["user_notion_id"])
+        expect($Client.send("get_notion_id", $Body)).to eq(ENV["user_notion_id"])
       end
     end
 
     describe "#get_last_page_block_id" do
       it "should return the User Notion ID sent from Notion in the response headers." do
         @children_ids = $Core_spec_page.children_ids
-        expect(Notion::Core.new.send("get_last_page_block_id", $Core_spec_page_id_no_dashes)).to eq(@children_ids[-1])
+        expect($Client.send("get_last_page_block_id", $Core_spec_page_id_no_dashes)).to eq(@children_ids[-1])
       end
     end
 
@@ -66,50 +66,50 @@ describe Notion::Core do
 
     describe "#extract_title" do
       it "should extract the title of a block and return it" do
-        expect(Notion::Core.new.send("extract_title", $Core_spec_page_id, $Jsonified_core_page)).to eq("CORE.RB TESTS")
-        expect(Notion::Core.new.send("extract_title", $Test_core_block_id_one, $Jsonified_core_page)).to eq("first block for testing purposes...")
-        expect(Notion::Core.new.send("extract_title", $Test_core_block_id_two, $Jsonified_core_page)).to eq("second block for testing purposes...")
+        expect($Client.send("extract_title", $Core_spec_page_id, $Jsonified_core_page)).to eq("CORE.RB TESTS")
+        expect($Client.send("extract_title", $Test_core_block_id_one, $Jsonified_core_page)).to eq("first block for testing purposes...")
+        expect($Client.send("extract_title", $Test_core_block_id_two, $Jsonified_core_page)).to eq("second block for testing purposes...")
       end
     end
     describe "#extract_collection_title" do
       it "should extract the title of a collection and return it" do
         @collection_one_id = $Core_spec_page.get_collection($Test_collection_block_id_one).collection_id
         @collection_two_id = $Core_spec_page.get_collection($Test_collection_block_id_two).collection_id
-        expect(Notion::Core.new.send("extract_collection_title", $Test_collection_block_id_one, @collection_one_id, $Jsonified_core_page)).to eq("Test Emoji Data")
-        expect(Notion::Core.new.send("extract_collection_title", $Test_collection_block_id_two, @collection_two_id, $Jsonified_core_page)).to eq("Test Car Data")
+        expect($Client.send("extract_collection_title", $Test_collection_block_id_one, @collection_one_id, $Jsonified_core_page)).to eq("Test Emoji Data")
+        expect($Client.send("extract_collection_title", $Test_collection_block_id_two, @collection_two_id, $Jsonified_core_page)).to eq("Test Car Data")
       end
     end
     describe "#extract_type" do
       it "should extract the type of a block and return it" do
-        expect(Notion::Core.new.send("extract_type", $Core_spec_page_id, $Jsonified_core_page)).to eq("page")
-        expect(Notion::Core.new.send("extract_type", $Test_core_block_id_one, $Jsonified_core_page)).to eq("bulleted_list")
-        expect(Notion::Core.new.send("extract_type", $Test_core_block_id_two, $Jsonified_core_page)).to eq("text")
+        expect($Client.send("extract_type", $Core_spec_page_id, $Jsonified_core_page)).to eq("page")
+        expect($Client.send("extract_type", $Test_core_block_id_one, $Jsonified_core_page)).to eq("bulleted_list")
+        expect($Client.send("extract_type", $Test_core_block_id_two, $Jsonified_core_page)).to eq("text")
       end
     end
     describe "#extract_parent_id" do
       it "should return the parent id of the object the method is invoked on." do
-        expect(Notion::Core.new.send("extract_parent_id", $Core_spec_page_id, $Jsonified_core_page).gsub("-", "")).to eq($Core_spec_page_parent_no_dashes)
-        expect(Notion::Core.new.send("extract_parent_id", $Test_core_block_id_one, $Jsonified_response_block_one)).to eq($Core_spec_page_id)
-        expect(Notion::Core.new.send("extract_parent_id", $Test_core_block_id_two, $Jsonified_response_block_two)).to eq($Core_spec_page_id)
+        expect($Client.send("extract_parent_id", $Core_spec_page_id, $Jsonified_core_page).gsub("-", "")).to eq($Core_spec_page_parent_no_dashes)
+        expect($Client.send("extract_parent_id", $Test_core_block_id_one, $Jsonified_response_block_one)).to eq($Core_spec_page_id)
+        expect($Client.send("extract_parent_id", $Test_core_block_id_two, $Jsonified_response_block_two)).to eq($Core_spec_page_id)
       end
     end
     describe "#extract_collection_id" do
       it "should return the collection id of the Collection View object the method is invoked on." do
-        expect(Notion::Core.new.send("extract_collection_id", $Test_collection_block_id_one, $Jsonified_core_page)).to eq($Test_collection_id_one)
-        expect(Notion::Core.new.send("extract_collection_id", $Test_collection_block_id_two, $Jsonified_core_page)).to eq($Test_collection_id_two)
+        expect($Client.send("extract_collection_id", $Test_collection_block_id_one, $Jsonified_core_page)).to eq($Test_collection_id_one)
+        expect($Client.send("extract_collection_id", $Test_collection_block_id_two, $Jsonified_core_page)).to eq($Test_collection_id_two)
       end
     end
     describe "#extract_view_ids" do
       it "should return the view ids of the Collection View object the method is invoked on." do
-        expect(Notion::Core.new.send("extract_view_ids", $Test_collection_block_id_one, $Jsonified_core_page)).to be_an_instance_of(Array)
-        expect(Notion::Core.new.send("extract_view_ids", $Test_collection_block_id_two, $Jsonified_core_page)).to be_an_instance_of(Array)
+        expect($Client.send("extract_view_ids", $Test_collection_block_id_one, $Jsonified_core_page)).to be_an_instance_of(Array)
+        expect($Client.send("extract_view_ids", $Test_collection_block_id_two, $Jsonified_core_page)).to be_an_instance_of(Array)
       end
     end
     describe "#extract_id" do
       it "should return the cleaned ID of the URL or ID passed." do
-        expect(Notion::Core.new.send("extract_id", $Core_spec_page_id)).to eq($Core_spec_page_id)
-        expect(Notion::Core.new.send("extract_id", $Core_spec_page_id).gsub("-", "")).to eq($Core_spec_page_id_no_dashes)
-        expect(Notion::Core.new.send("extract_id", $Core_spec_url)).to eq($Core_spec_page_id)
+        expect($Client.send("extract_id", $Core_spec_page_id)).to eq($Core_spec_page_id)
+        expect($Client.send("extract_id", $Core_spec_page_id).gsub("-", "")).to eq($Core_spec_page_id_no_dashes)
+        expect($Client.send("extract_id", $Core_spec_url)).to eq($Core_spec_page_id)
       end
     end
   end

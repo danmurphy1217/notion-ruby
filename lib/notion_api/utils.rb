@@ -74,6 +74,7 @@ module Utils
       table = 'block'
       path = []
       command = 'update'
+
       {
         id: id,
         table: table,
@@ -178,7 +179,7 @@ module Utils
       }
     end
 
-    def self.block_location_add(block_parent_id, block_id, new_block_id = nil, targetted_block, command)
+    def self.block_location_add(block_parent_id, block_id, new_block_id = nil, target, command)
       # ! payload for duplicating a block. Most properties should be
       # ! inherited from the block class the method is invoked on.
       # ! block_parent_id -> id of parent block : ``str``
@@ -189,12 +190,12 @@ module Utils
 
       args = if command == 'listAfter'
                {
-                 after: targetted_block || block_id,
+                 after: target || block_id,
                  id: new_block_id || block_id
                }
              else
                {
-                 before: targetted_block || block_id,
+                 before: target || block_id,
                  id: new_block_id || block_id
                }
              end

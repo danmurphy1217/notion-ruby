@@ -1,7 +1,8 @@
 module Helpers
+    #! CONSTANTS
+    $Client = Notion::Client.new(ENV["token_v2"])
     
     #! CORE_SPEC.RB HELPERS
-    $Client = Notion::Client.new(ENV["token_v2"])
     $Core_spec_url = "https://www.notion.so/danmurphy/CORE-RB-TESTS-9c50a7b39ad74f2baa08b3c95f1f19e7"
     # errant data...
     $Core_spec_invalid_url_one = "https://www.notion.so/danmurphy/CORE-RB-TESTS-9c50a7b39ad74f2baa08b3c95f1f19e71" # one too many chars
@@ -31,23 +32,27 @@ module Helpers
 
 
     #! BLOCKS_SPEC.RB HELPERS
-    
+    $Block_spec_url = "https://www.notion.so/danmurphy/BLOCKS-RB-TESTS-b94758d4e7df4af8863fb90c11b35fff"
+    $Block_spec_sub_url = "https://www.notion.so/danmurphy/sub-blocks-37f78a617d8b47988869368a18bcb791"
+    $Block_spec_page_url = "https://www.notion.so/danmurphy/Page-for-move-dc6febdbefac4fbc8eed70232e20454e"
+    $Block_spec_get_url = "https://www.notion.so/danmurphy/Page-for-gets-b8d4eb9b27634044863b544ff2d542e9"
+    $Block_spec_create_url = "https://www.notion.so/danmurphy/Page-for-creates-4518d1fce157451f937827605dd1fbe4"
+    $Block_spec_add_url = "https://www.notion.so/danmurphy/Page-for-add-rows-15fd6f2e99014f869ecc5b059a69da79"
+    $Block_spec_page = $Client.get_page($Block_spec_url)
+    $Block_spec_sub_page = $Client.get_page($Block_spec_sub_url)
+    $Block_spec_move_page = $Client.get_page($Block_spec_page_url)
+    $Block_spec_get_page = $Client.get_page($Block_spec_get_url)
+    $Block_spec_create_page = $Client.get_page($Block_spec_create_url)
+    $Block_spec_add_page = $Client.get_page($Block_spec_add_url)
 
-    #! constant IDs for the tests
-    # $Page = $Client.get_page($Test_page_url)
-    # $Test_page_id = "66447bc8-17f0-44bc-81ed-3cf4802e9b00"
-    # $Test_page_url = "https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00"
-    # $Test_page_id_two = "58614350-f17e-47b6-81d2-da757754eef3"
-    # $Test_block_id_one = "ba87b719-9207-49a7-b646-de042b266ba8"
-    # $Test_block_id_two = "9e0578f3-d4d7-4ed9-bda3-f050a6eb6dca"
-    # $Test_block_randomized_title = "2488189f-2c91-4882-8bfe-6e1cc6f3be95"
-    # $Test_block_to_convert = "bf9892b8-8c39-47a5-9d03-2dfab5e69179"
-    # $Root_id = "f687f7de-7f4c-4a86-b109-941a8dae92d2"
-
-    # #! constant JSON / data for the tests
-    # @jsonified_response_page = Notion::Core.new.send("get_all_block_info", $Test_page_id, @body)
-    # @jsonified_response_block_one = Notion::Core.new.send("get_all_block_info", $Test_block_id_one, @body)
-    # @jsonified_response_block_two = Notion::Core.new.send("get_all_block_info", $Test_block_id_two, @body)
-    # @jsonified_response_collection_one = Notion::Core.new.send("get_all_block_info", $Test_collection_id_one, @body)
-    # @jsonified_response_collection_two = Notion::Core.new.send("get_all_block_info", $Test_collection_id_two, @body)
+    $Block_spec_title_id = "5e5f1ec2-8af4-429e-bcb2-bac6d6f49798"
+    $Block_spec_convert_id = "7a08ca2f-a73d-4464-bad0-5e536524329a"
+    $Block_spec_duplicate_id_one = "b240e279-df40-4d36-b3b1-dbc419abbcd8"
+    $Block_spec_duplicate_id_target = "b61f8da8-7bf4-4149-891a-5a043d83fc46"
+    $Block_spec_move_id_target = "45cd1ef1-7130-427e-99e2-f49ba558222a"
+    $Block_spec_get_id = "d2580628-2e93-4a0c-a23a-1efb116b4a99"
+    $Block_spec_get_collection_id = "3224c94f-e660-4092-9dba-d26b69b68d40"
+    $Block_spec_add_row_id = "eaa144ab-d91b-4640-b13a-a0ba1c8dd450"
+    $Vehicle_data_csv = File.read("./spec/fixtures/vauto_inventory.csv")
+    $Json = JSON.parse(File.read("./spec/fixtures/emoji_data.json"))
 end
