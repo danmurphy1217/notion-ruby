@@ -190,6 +190,6 @@ Additionally, say you already have a Table and want to add a new row with it con
 ```
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
->>> @collection = @page.get_collection()
+>>> @collection = @page.get_collection("f1664a99-165b-49cc-811c-84f37655908a")
 >>> @collection.add_row(JSON.parse(File.read("path/to/new_emoji_row.json")))
 ```
