@@ -74,7 +74,7 @@ module Utils
       table = 'block'
       path = []
       command = 'update'
-      p block_class_to_convert_to.notion_type
+
       {
         id: id,
         table: table,

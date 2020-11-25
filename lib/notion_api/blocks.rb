@@ -772,7 +772,7 @@ module Notion
 
     def add_row(data)
       # ! add new row to Collection View table.
-      # ! data -> JSON data to add to table : ``json``
+      # ! data -> data to add to table : ``hash``
 
       cookies = Core.options['cookies']
       headers = Core.options['headers']
@@ -781,6 +781,10 @@ module Notion
       transaction_id = extract_id(SecureRandom.hex(16))
       space_id = extract_id(SecureRandom.hex(16))
       new_block_id = extract_id(SecureRandom.hex(16))
+      schema = extract_collection_schema(@collection_id, @view_id)
+      keys = schema.keys
+      col_map = {}
+      keys.map { |key| col_map[schema[key]['name']]  = key }
 
       request_ids = {
         request_id: request_id,
@@ -801,7 +805,7 @@ module Notion
       ]
 
       data.keys.each_with_index do |col_name, j|
-        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_name, data[col_name])
+        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_map[col_name], data[col_name])
         operations.push(child_component)
       end
 
@@ -813,10 +817,11 @@ module Notion
         cookies: cookies,
         headers: headers
       )
+
       unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
          Please try again, and if issues persist open an issue in GitHub."; end
 
-      true
+        Notion::CollectionViewRow.new(new_block_id, @parent_id, @collection_id, @view_id)
     end
 
     def add_property(name, type)
@@ -924,7 +929,7 @@ module Notion
       collection_id = @collection_id
       view_id = @view_id
 
-      row_id_array.map { |row_id| Notion::TableRow.new(row_id, parent_id, collection_id, view_id) }
+      row_id_array.map { |row_id| Notion::CollectionViewRow.new(row_id, parent_id, collection_id, view_id) }
     end
 
     private
@@ -955,9 +960,10 @@ module Notion
     end
 
     class << self
-      attr_reader :notion_type, :type
+      attr_reader :notion_type, :type, :parent_id
     end
 
+    attr_reader :parent_id, :id
     def initialize(id, parent_id, collection_id, view_id)
       @id = id
       @parent_id = parent_id
