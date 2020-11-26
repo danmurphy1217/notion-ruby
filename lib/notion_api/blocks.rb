@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
 require_relative 'core'
-
 require 'httparty'
-require 'date'
-require 'logger'
 
-module Notion
+module NotionAPI
   # Base Template for all blocks. Inherits core methods from the Block class defined in block.rb
   class BlockTemplate < Core
     include Utils
@@ -133,11 +130,14 @@ module Notion
       unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
          Please try again, and if issues persist open an issue in GitHub."; end
 
-      class_to_return = Notion.const_get(Classes.select { |cls| Notion.const_get(cls).notion_type == type }.join.to_s)
+      class_to_return = NotionAPI.const_get(Classes.select { |cls| NotionAPI.const_get(cls).notion_type == type }.join.to_s)
       class_to_return.new(new_block_id, @title, block.parent_id)
     end
 
     def move(target_block, position = 'after')
+      # ! move the block to a new location.
+      # ! target_block -> the targetted block to move to. : ``str``
+      # ! position -> where the block should be listed, in positions relative to the target_block [before, after, top-child, last-child]
       positions_hash = {
         'after' => 'listAfter',
         'before' => 'listBefore'
@@ -146,9 +146,6 @@ module Notion
       unless positions_hash.keys.include?(position); raise ArgumentError, "Invalid position. You said: #{position}, valid options are: #{positions_hash.keys.join(', ')}"; end
 
       position_command = positions_hash[position]
-      # ! move the block to a new location.
-      # ! target_block -> the targetted block to move to. : ``str``
-      # ! position -> where the block should be listed, in positions relative to the target_block [before, after, top-child, last-child]
       cookies = Core.options['cookies']
       headers = Core.options['headers']
       request_url = URLS[:UPDATE_BLOCK]
@@ -211,7 +208,7 @@ module Notion
       # ! create a new block
       # ! block_type -> the type of block to create : ``cls``
       # ! block_title -> the title of the new block : ``str``
-      #! target -> the block_id that the new block should be placed after. ``str`` 
+      # ! target -> the block_id that the new block should be placed after. ``str`` 
       # ! position -> 'after' or 'before'
       positions_hash = {
         'after' => 'listAfter',
@@ -292,8 +289,8 @@ module Notion
       if block_type.nil?
         {}
       else
-        block_class = Notion.const_get(BLOCK_TYPES[block_type].to_s)
-        if block_class == Notion::CollectionView
+        block_class = NotionAPI.const_get(BLOCK_TYPES[block_type].to_s)
+        if block_class == NotionAPI::CollectionView
           block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
           block_view_id = extract_view_ids(clean_id, jsonified_record_response)
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
@@ -308,8 +305,9 @@ module Notion
     def update_title(new_title, request_id, transaction_id, space_id)
       # ! Helper method for sending POST request to change title of block.
       # ! new_title -> new title for the block : ``str``
-      # ! request_id -> the unique ID for the request. Generated using SecureRandom : ``str``
-      # ! transaction_id -> the unique ID for the transactions. Generated using SecureRandom: ``str``
+      # ! request_id -> the unique ID for the request key. Generated using SecureRandom : ``str``
+      # ! transaction_id -> the unique ID for the transaction key. Generated using SecureRandom: ``str``
+      # ! transaction_id -> the unique ID for the space key. Generated using SecureRandom: ``str``
       # setup cookies, headers, and grab/create static vars for request
       cookies = Core.options['cookies']
       headers = Core.options['headers']
@@ -350,7 +348,7 @@ module Notion
     @type = 'divider'
 
     def type
-      Notion::DividerBlock.notion_type
+      NotionAPI::DividerBlock.notion_type
     end
 
     class << self
@@ -364,7 +362,7 @@ module Notion
     @type = 'to_do'
 
     def type
-      Notion::TodoBlock.notion_type
+      NotionAPI::TodoBlock.notion_type
     end
 
     class << self
@@ -373,7 +371,7 @@ module Notion
 
     def checked=(checked_value)
       # ! change the checked property of the Todo Block.
-      # ! checked_value -> boolean value used to determine whether the block should be checked [yes, 1, true] or not [no, 0, false] : ``bool | str``
+      # ! checked_value -> boolean value used to determine whether the block should be checked [yes] or not [no] : ``str``
       # set static variables for request
       cookies = Core.options['cookies']
       headers = Core.options['headers']
@@ -422,7 +420,7 @@ module Notion
     @type = 'code'
 
     def type
-      Notion::CodeBlock.notion_type
+      NotionAPI::CodeBlock.notion_type
     end
 
     class << self
@@ -436,7 +434,7 @@ module Notion
     @type = 'header'
 
     def type
-      Notion::HeaderBlock.notion_type
+      NotionAPI::HeaderBlock.notion_type
     end
 
     class << self
@@ -450,7 +448,7 @@ module Notion
     @type = 'sub_header'
 
     def type
-      Notion::SubHeaderBlock.notion_type
+      NotionAPI::SubHeaderBlock.notion_type
     end
 
     class << self
@@ -464,7 +462,7 @@ module Notion
     @type = 'sub_sub_header'
 
     def type
-      Notion::SubSubHeaderBlock.notion_type
+      NotionAPI::SubSubHeaderBlock.notion_type
     end
 
     class << self
@@ -478,7 +476,7 @@ module Notion
     @type = 'page'
 
     def type
-      Notion::PageBlock.notion_type
+      NotionAPI::PageBlock.notion_type
     end
 
     class << self
@@ -492,7 +490,7 @@ module Notion
     end
 
     def get_collection(url_or_id)
-      # ! retrieve a Notion Block and return its instantiated class object.
+      # ! retrieve a Notion Collection and return its instantiated class object.
       # ! url_or_id -> the block ID or URL : ``str``
       clean_id = extract_id(url_or_id)
 
@@ -518,7 +516,13 @@ module Notion
       CollectionView.new(clean_id, block_title, block_parent_id, block_collection_id, block_view_id)
     end
 
-    def create_collection(_collection_type, collection_title, data = {})
+    def create_collection(_collection_type, collection_title, data)
+      # ! create a Notion Collection View and return its instantiated class object.
+      # ! _collection_type -> the type of collection to create : ``str``
+      # ! collection_title -> the title of the collection view : ``str``
+      # ! data -> JSON data to add to the table : ``str``
+
+      unless %w[table].include?(_collection_type) ; raise ArgumentError, "That collection type is not yet supported. Try: \"table\"."; end
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
@@ -526,7 +530,6 @@ module Notion
       parent_id = extract_id(SecureRandom.hex(16))
       collection_id = extract_id(SecureRandom.hex(16))
       view_id = extract_id(SecureRandom.hex(16))
-      # p collection_id, parent_id, view_id
 
       children = []
       alive_blocks = []
@@ -547,7 +550,6 @@ module Notion
       }
 
       create_collection_view = Utils::CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
-      # set_parent_block_alive = Utils::CollectionViewComponents.set_collection_blocks_alive(parent_id, collection_id)
       configure_view = Utils::CollectionViewComponents.set_view_config(new_block_id, view_id, children)
       configure_columns = Utils::CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
       set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(@id, new_block_id)
@@ -557,7 +559,6 @@ module Notion
 
       operations = [
         create_collection_view,
-        # set_parent_block_alive,
         configure_view,
         configure_columns,
         set_parent_alive_hash,
@@ -597,7 +598,7 @@ module Notion
     @type = 'toggle'
 
     def type
-      Notion::ToggleBlock.notion_type
+      NotionAPI::ToggleBlock.notion_type
     end
 
     class << self
@@ -611,7 +612,7 @@ module Notion
     @type = 'bulleted_list'
 
     def type
-      Notion::BulletedBlock.notion_type
+      NotionAPI::BulletedBlock.notion_type
     end
 
     class << self
@@ -625,7 +626,7 @@ module Notion
     @type = 'numbered_list'
 
     def type
-      Notion::NumberedBlock.notion_type
+      NotionAPI::NumberedBlock.notion_type
     end
 
     class << self
@@ -639,7 +640,7 @@ module Notion
     @type = 'quote'
 
     def type
-      Notion::QuoteBlock.notion_type
+      NotionAPI::QuoteBlock.notion_type
     end
 
     class << self
@@ -653,7 +654,7 @@ module Notion
     @type = 'callout'
 
     def type
-      Notion::CalloutBlock.notion_type
+      NotionAPI::CalloutBlock.notion_type
     end
 
     class << self
@@ -667,7 +668,7 @@ module Notion
     @type = 'equation'
 
     def type
-      Notion::LatexBlock.notion_type
+      NotionAPI::LatexBlock.notion_type
     end
 
     class << self
@@ -681,7 +682,7 @@ module Notion
     @type = 'text'
 
     def type
-      Notion::TextBlock.notion_type
+      NotionAPI::TextBlock.notion_type
     end
 
     class << self
@@ -695,7 +696,7 @@ module Notion
     @type = 'image'
 
     def type
-      Notion::ImageBlock.notion_type
+      NotionAPI::ImageBlock.notion_type
     end
 
     class << self
@@ -709,7 +710,7 @@ module Notion
     @type = 'table_of_contents'
 
     def type
-      Notion::TableOfContentsBlock.notion_type
+      NotionAPI::TableOfContentsBlock.notion_type
     end
 
     class << self
@@ -723,7 +724,7 @@ module Notion
     @type = 'column_list'
 
     def type
-      Notion::ColumnListBlock.notion_type
+      NotionAPI::ColumnListBlock.notion_type
     end
 
     class << self
@@ -737,7 +738,7 @@ module Notion
     @type = 'column'
 
     def type
-      Notion::ColumnBlock.notion_type
+      NotionAPI::ColumnBlock.notion_type
     end
 
     class << self
@@ -746,7 +747,7 @@ module Notion
   end
 end
 
-module Notion
+module NotionAPI
   # collection views such as tables and timelines.
   class CollectionView < Core
     attr_reader :id, :title, :parent_id, :collection_id, :view_id
@@ -755,7 +756,7 @@ module Notion
     @type = 'collection_view'
 
     def type
-      Notion::CollectionView.notion_type
+      NotionAPI::CollectionView.notion_type
     end
 
     class << self
@@ -821,7 +822,7 @@ module Notion
       unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
          Please try again, and if issues persist open an issue in GitHub."; end
 
-        Notion::CollectionViewRow.new(new_block_id, @parent_id, @collection_id, @view_id)
+         NotionAPI::CollectionViewRow.new(new_block_id, @parent_id, @collection_id, @view_id)
     end
 
     def add_property(name, type)
@@ -929,12 +930,15 @@ module Notion
       collection_id = @collection_id
       view_id = @view_id
 
-      row_id_array.map { |row_id| Notion::CollectionViewRow.new(row_id, parent_id, collection_id, view_id) }
+      row_id_array.map { |row_id| NotionAPI::CollectionViewRow.new(row_id, parent_id, collection_id, view_id) }
     end
 
     private
 
     def extract_collection_schema(collection_id, view_id)
+      # ! retrieve the collection scehma. Useful for 'building' the backbone for a table.
+      # ! collection_id -> the collection ID : ``str``
+      # ! view_id -> the view ID : ``str``
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
@@ -956,7 +960,7 @@ module Notion
     @type = 'table_row'
 
     def type
-      Notion::CollectionViewRow.notion_type
+      NotionAPI::CollectionViewRow.notion_type
     end
 
     class << self
@@ -974,7 +978,7 @@ module Notion
 end
 
 # gather a list of all the classes defined here...
-Classes = Notion.constants.select { |c| Notion.const_get(c).is_a? Class and c.to_s != 'BlockTemplate' and c.to_s != 'Core' }
+Classes = NotionAPI.constants.select { |c| NotionAPI.const_get(c).is_a? Class and c.to_s != 'BlockTemplate' and c.to_s != 'Core' and c.to_s !='Client' }
 notion_types = []
-Classes.each { |cls| notion_types.push(Notion.const_get(cls).notion_type) }
+Classes.each { |cls| notion_types.push(NotionAPI.const_get(cls).notion_type) }
 BLOCK_TYPES = notion_types.zip(Classes).to_h

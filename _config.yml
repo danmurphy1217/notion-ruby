@@ -5,4 +5,4 @@ relative_links:
   collections: true
 include:
   - README.md
-  - LICENSE
+  - LICENSE.md

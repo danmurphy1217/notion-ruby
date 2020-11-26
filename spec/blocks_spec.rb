@@ -1,7 +1,7 @@
 require "notion_api"
 
-describe Notion::BlockTemplate do
-  context "testing the Notion::BlockTemplate public class methods" do
+describe NotionAPI::BlockTemplate do
+  context "testing the NotionAPI::BlockTemplate public class methods" do
     describe "#title=" do
       it "should update the title of the block the method is invoked on." do
         @block = $Block_spec_page.get_block($Block_spec_title_id)
@@ -17,10 +17,10 @@ describe Notion::BlockTemplate do
     describe "#convert" do
       it "should convert the block to a different type and return the new block." do
         @block = $Block_spec_page.get_block($Block_spec_convert_id)
-        filtered_classes = Classes.select { |cls| !%w[:CollectionView :TableRowView].include?(cls)}
+        filtered_classes = Classes.select { |cls| !%w[:CollectionView :CollectionViewRow].include?(cls)}
         number_of_classes = filtered_classes.length
         class_for_conversion = filtered_classes[rand(0...number_of_classes)]
-        notion_class_object = Notion.const_get(class_for_conversion.to_s)
+        notion_class_object = NotionAPI.const_get(class_for_conversion.to_s)
         @converted_block = @block.convert(notion_class_object)
 
         expect(@converted_block.type).to eq(notion_class_object.notion_type)
@@ -54,7 +54,7 @@ describe Notion::BlockTemplate do
     end
     describe "#move" do
       it "should move the block the method is invoked on to a new location after or before the target_block." do
-        @new_block = $Block_spec_move_page.create(Notion::TextBlock, 'I\'ll be moved...')
+        @new_block = $Block_spec_move_page.create(NotionAPI::TextBlock, 'I\'ll be moved...')
         initial_parent_id = @new_block.parent_id
         initial_title = @new_block.title
         initial_id = @new_block.id
@@ -126,7 +126,7 @@ describe Notion::BlockTemplate do
     describe "#get" do
         it "should return a block instance." do
             $Blocks = $Block_spec_get_page.send('get', $Block_spec_get_id)
-            expect($Blocks).to be_an_instance_of(Notion::TodoBlock)
+            expect($Blocks).to be_an_instance_of(NotionAPI::TodoBlock)
             expect($Blocks.id).to eq($Block_spec_get_id)
             expect($Blocks.parent_id).to eq($Block_spec_get_page.id)
             expect($Blocks.title).to eq("TODO Block")

@@ -3,7 +3,7 @@
 require_relative 'utils'
 require 'httparty'
 
-module Notion
+module NotionAPI
   # the initial methods available to an instantiated Cloent object are defined
   class Core
     include Utils
@@ -158,6 +158,7 @@ module Notion
     def extract_collection_title(_clean_id, collection_id, jsonified_record_response)
       # ! extract title from core JSON Notion response object.
       # ! clean_id -> the cleaned block ID: ``str``
+      # ! collection_id -> the collection ID: ``str``
       # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
       jsonified_record_response['collection'][collection_id]['value']['name'].flatten.join if jsonified_record_response['collection']
     end
@@ -183,6 +184,9 @@ module Notion
     end
 
     def extract_collection_id(clean_id, jsonified_record_response)
+      # ! extract the collection ID
+      # ! clean_id -> the block ID or URL cleaned : ``str``
+      # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
       jsonified_record_response['block'][clean_id]['value']['collection_id']
     end
 

@@ -1,6 +1,6 @@
 module Helpers
     #! CONSTANTS
-    $Client = Notion::Client.new(ENV["token_v2"])
+    $Client = NotionAPI::Client.new(ENV["token_v2"])
     
     #! CORE_SPEC.RB HELPERS
     $Core_spec_url = "https://www.notion.so/danmurphy/CORE-RB-TESTS-9c50a7b39ad74f2baa08b3c95f1f19e7"
@@ -46,7 +46,7 @@ module Helpers
     $Block_spec_add_page = $Client.get_page($Block_spec_add_url)
 
     $Block_spec_title_id = "5e5f1ec2-8af4-429e-bcb2-bac6d6f49798"
-    $Block_spec_convert_id = "7a08ca2f-a73d-4464-bad0-5e536524329a"
+    $Block_spec_convert_id = "5f363f19-3dc6-4458-9c20-f2202d749729"
     $Block_spec_duplicate_id_one = "b240e279-df40-4d36-b3b1-dbc419abbcd8"
     $Block_spec_duplicate_id_target = "b61f8da8-7bf4-4149-891a-5a043d83fc46"
     $Block_spec_move_id_target = "45cd1ef1-7130-427e-99e2-f49ba558222a"

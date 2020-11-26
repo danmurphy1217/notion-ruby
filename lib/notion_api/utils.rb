@@ -51,7 +51,7 @@ module Utils
     end
 
     def self.last_edited_time(id)
-      # ! payload for last edited time
+      # ! payload for updating the last edited time
       # ! id -> either the block ID or parent ID : ``str``
       timestamp = DateTime.now.strftime('%Q')
       table = 'block'
@@ -70,7 +70,7 @@ module Utils
     def self.convert_type(id, block_class_to_convert_to)
       # ! payload for converting a block to a different type.
       # ! id -> id of the block to convert : ``str``
-      # ! block_class_to_convert_to -> type to convert to block to: ``cls``
+      # ! block_class_to_convert_to -> type to convert to block to: ``NotionAPI::<Block_Type>``
       table = 'block'
       path = []
       command = 'update'
@@ -87,6 +87,9 @@ module Utils
     end
 
     def self.set_parent_to_alive(block_parent_id, new_block_id)
+      # ! payload for setting a blocks parent ID to 'alive'
+      # ! block_parent_id -> the blocks parent ID : ``str``
+      # ! new_block_id -> the new block ID, who is a child of the parent : ``str``
       table = 'block'
       path = []
       command = 'update'
@@ -106,6 +109,8 @@ module Utils
     end
 
     def self.set_block_to_dead(block_id)
+      # ! payload for setting a block to dead (alive == true)
+      # ! block_id -> the block ID to 'kill' : ``str``
       table = 'block'
       path = []
       command = 'update'
@@ -130,6 +135,7 @@ module Utils
       # ! block_id -> id of block: ``str``
       # ! new_block_id -> id of new block : ``str``
       # ! user_notion_id -> ID of notion user : ``str``
+      # ! contents -> The children of the block
       timestamp = DateTime.now.strftime('%Q')
       table = 'block'
       path = []
@@ -160,6 +166,9 @@ module Utils
     end
 
     def self.parent_location_add(block_parent_id, block_id)
+      # ! payload for adding a parent
+      # ! block_parent_id -> the parent id of the block : ``str``
+      # ! block_id -> the id of the block : ``str``
       table = 'block'
       path = []
       command = 'update'
@@ -184,7 +193,9 @@ module Utils
       # ! inherited from the block class the method is invoked on.
       # ! block_parent_id -> id of parent block : ``str``
       # ! block_id -> id of block: ``str``
-      # ! after -> location of ID to place the new block after : ``str``
+      # ! new_block_id -> id of the new block: ``str``
+      # ! target -> the ID of the target block : ``str``
+      # ! command -> the position of the block, before or after, in relation to the target : ``str``
       table = 'block'
       path = ['content']
 
@@ -229,7 +240,8 @@ module Utils
 
     def self.checked_todo(block_id, standardized_check_val)
       # ! payload for setting a "checked" value for TodoBlock.
-      # !
+      # ! block_id -> the ID of the block to remove : ``str``
+      # ! standardized_check_val -> tyes/no value, determines the checked property of the block : ``str``
       table = 'block'
       path = ['properties']
       command = 'update'
@@ -247,7 +259,7 @@ module Utils
     def self.update_codeblock_language(block_id, coding_language)
       # ! update the language for a codeblock
       # ! block_id -> id of the code block
-      # ! new_language -> language to change the block to.
+      # ! coding_language -> language to change the block to.
       table = 'block'
       path = ['properties']
       command = 'update'
@@ -266,6 +278,10 @@ module Utils
 
   class CollectionViewComponents
     def self.create_collection_view(new_block_id, collection_id, view_ids)
+      # ! payload for creating a collection view
+      # ! new_block_id -> id of the new block
+      # ! collection_id -> ID of the collection.
+      # ! view_ids -> id of the view
       table = 'block'
       command = 'update'
       path = []
@@ -293,6 +309,9 @@ module Utils
     end
 
     def self.set_collection_blocks_alive(new_block_id, collection_id)
+      # ! payload for setting the collection blocks to alive.
+      # ! new_block_id -> id of the new block
+      # ! collection_id -> ID of the collection.
       table = 'block'
       path = []
       command = 'update'
@@ -321,6 +340,10 @@ module Utils
     end
 
     def self.set_view_config(new_block_id, view_id, children_ids)
+      # ! payload for setting the configurations of the view.
+      # ! new_block_id -> id of the new block
+      # ! view_id -> id of the view
+      # ! children_ids -> IDs for the children of the collection.
       table = 'collection_view'
       path = []
       command = 'update'
@@ -349,6 +372,10 @@ module Utils
     end
 
     def self.set_collection_columns(collection_id, new_block_id, data)
+      # ! payload for setting the columns of the table.
+      # ! collection_id -> ID of the collection.
+      # ! new_block_id -> id of the new block
+      # ! data -> json data to insert into table.
       col_names = data[0].keys
 
       schema_conf = {}
@@ -375,6 +402,9 @@ module Utils
     end
 
     def self.set_collection_title(collection_title, collection_id)
+      # ! payload for setting the title of the collection.
+      # ! collection_title -> title of the collection.
+      # ! collection_id -> ID of the collection.
       table = 'collection'
       path = ['name']
       command = 'set'
@@ -389,6 +419,10 @@ module Utils
     end
 
     def self.insert_data(block_id, column, value)
+      # ! payload for inserting data into the table.
+      # ! block_id -> the ID of the block : ``str``
+      # ! column -> the name of the column to insert data into.
+      # ! value -> the value to insert into the column.
       table = 'block'
       path = [
         'properties',
@@ -406,6 +440,8 @@ module Utils
     end
 
     def self.add_new_row(new_block_id)
+      # ! payload for adding a new row to the table.
+      # ! new_block_id -> the ID of the new row : ``str``
       table = 'block'
       path = []
       command = 'set'
@@ -425,6 +461,10 @@ module Utils
     end
 
     def self.query_collection(collection_id, view_id, search_query = '')
+      # ! payload for querying the table for data.
+      # ! collection_id -> the collection ID : ``str``
+      # ! view_id -> the view ID : ``str``
+      # ! search_query -> the query for searching the table : ``str``
       query = {}
       loader = {
         type: 'table',
@@ -442,6 +482,9 @@ module Utils
     end
 
     def self.add_collection_property(collection_id, args)
+      # ! payload for adding a column to the table.
+      # ! collection_id -> the collection ID : ``str``
+      # ! args -> the definition of the column : ``str``
       {
         id: collection_id,
         table: 'collection',
@@ -453,10 +496,13 @@ module Utils
   end
 
   def build_payload(operations, request_ids)
+    # ! properly formats the payload for Notions backend.
+    # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
+    # ! request_ids -> the unique IDs for the request : ``str``
     request_id = request_ids[:request_id]
     transaction_id = request_ids[:transaction_id]
     space_id = request_ids[:space_id]
-    $Payload = {
+    payload = {
       requestId: request_id,
       transactions: [
         {
@@ -467,6 +513,6 @@ module Utils
         }
       ]
     }
-    $Payload
+    payload
   end
 end

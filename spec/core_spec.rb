@@ -1,7 +1,7 @@
 require "notion_api"
 
-describe Notion::Core do
-  context "testing the Notion::Core public class methods" do
+describe NotionAPI::Core do
+  context "testing the NotionAPI::Core public class methods" do
     describe "#get_page_errant" do
       it "should error due to incorrect URL/ID input." do
         expect { $Client.get_page($Core_spec_invalid_url_one) }.to raise_error(ArgumentError)
@@ -44,7 +44,7 @@ describe Notion::Core do
     end
   end
 
-  context "testing the Notion::Core private methods" do
+  context "testing the NotionAPI::Core private methods" do
     describe "#get_notion_id" do
       it "should return the User Notion ID sent from Notion in the response headers." do
         expect($Client.send("get_notion_id", $Body)).to eq(ENV["user_notion_id"])

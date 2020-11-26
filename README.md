@@ -6,7 +6,7 @@ To get started using package, you'll first need to retrieve your token_v2 creden
 
 From here, you can instantiate the Notion Client with the following code:
 ```ruby
->>> @client = Notion::Client.new("<insert_v2_token_here>")
+>>> @client = NotionAPI::Client.new("<insert_v2_token_here>")
 ```
 ## Retrieving a Page
 A typical starting point is the `get_page` method, which returns a Notion Page Block. The `get_page` method accepts the ID (formatted or not) or the URL of the page:
@@ -20,7 +20,7 @@ A typical starting point is the `get_page` method, which returns a Notion Page B
 ```
 All three of these will return the same block instance:
 ```ruby
-#<Notion::PageBlock id="d2ce338f-19e8-47f5-86bd-17679f490e66" title="TEST" parent_id="<omitted>">
+#<NotionAPI::PageBlock id="d2ce338f-19e8-47f5-86bd-17679f490e66" title="TEST" parent_id="<omitted>">
 ```
 The following attributes can be read from any block class instance:
 1. `id`: the ID associated with the block.
@@ -53,11 +53,11 @@ Any Notion Block has access to the following methods:
 >>> @block = @client.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
 >>> @block.type
 "text"
->>> @new_block = @block.convert(Notion::CalloutBlock)
+>>> @new_block = @block.convert(NotionAPI::CalloutBlock)
 >>> @new_block.type
 "callout"
 >>> @new_block # new class instance returned...
-#<Notion::CalloutBlock:0x00007ffb75b19ea0 id="2cbbe0bf-34cd-409b-9162-64284b33e526" title="New Title Here" parent_id="d2ce338f-19e8-47f5-86bd-17679f490e66">
+#<NotionAPI::CalloutBlock:0x00007ffb75b19ea0 id="2cbbe0bf-34cd-409b-9162-64284b33e526" title="New Title Here" parent_id="d2ce338f-19e8-47f5-86bd-17679f490e66">
 ```
 3. `duplicate`→ duplicate the current block.
 ```ruby
@@ -77,8 +77,7 @@ To retrieve a collection, you use the `get_collection` method. This method is de
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66")
 >>> @page.get_collection("34d03794-ecdd-e42d-bb76-7e4aa77b6503")
-#<Notion::CollectionView:0x00007fecd8859770 @id="34d03794-ecdd-e42d-bb76-7e4aa77b6503", @title="Car Data", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">
-The following methods are available to a Table View Collection:
+#<NotionAPI::CollectionView:0x00007fecd8859770 @id="34d03794-ecdd-e42d-bb76-7e4aa77b6503", @title="Car Data", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">
 ```
 Any Notion Block has access to the following methods:
 1. `row_ids` → retrieve the IDs associated with each row.
@@ -92,61 +91,63 @@ ent.rb
 ```ruby
 >>> @collection = @page.get_collection("34d03794-ecdd-e42d-bb76-7e4aa77b6503")
 >>> @collection.rows
-#<Notion::CollectionViewRow:0x00007ffecca82078 @id="785f4e24-e489-a316-50cf-b0b100c6673a", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">,..., #<Notion::CollectionViewRow:0x00007ffecca81998 @id="fbf44f93-52ee-0e88-262a-94982ffb3fb2", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">]
+#<NotionAPI::CollectionViewRow:0x00007ffecca82078 @id="785f4e24-e489-a316-50cf-b0b100c6673a", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">,..., #<NotionAPI::CollectionViewRow:0x00007ffecca81998 @id="fbf44f93-52ee-0e88-262a-94982ffb3fb2", @parent_id="9c50a7b3-9ad7-4f2b-aa08-b3c95f1f19e7", @collection_id="5ea0fa7c-00cd-4ee0-1915-8b5c423f8f3a", @view_id="5fdb08da-0732-49dc-d0c3-2e31fccca73a">]
 ```
 3. `row("<row_id>")` → retrieve a specific row.
 ```ruby
 >>> @collection = @page.get_collection("34d03794-ecdd-e42d-bb76-7e4aa77b6503")
->>> @collection.row("")
+>>> @collection.row("f1c7077f-44a9-113d-a156-90ab6880c3e2")
 {"age"=>[9], "vin"=>["1C6SRFLT1MN591852"], "body"=>["4D Crew Cab"], "fuel"=>["Gasoline"], "make"=>["Ram"], "msrp"=>[64935], "year"=>[2021], "model"=>[1500], "price"=>[59688], "stock"=>["21R14"], "dealerid"=>["MP2964D"], "colour"=>["Bright White Clearcoat"], "engine"=>["HEMI 5.7L V8 Multi Displacement VVT"], "photos"=>["http://vehicle-photos-published.vauto.com/d0/c2/dd/8b-1307-4c67-8d31-5a301764b875/image-1.jpg"], "series"=>["Rebel"], "newused"=>["N"], "city_mpg"=>[""],...,"engine_cylinder_ct"=>[8], "engine_displacement"=>[5.7], "photos_last_modified_date"=>["11/13/2020 8:16:56 AM"]}
 ```
 
 ## Creating New Blocks
 To create a new block, you have a few options:
 ### Create a block whose parent is the page
-If you want to create a new block whose parent ID is the page, call the `create` method on the PageBlock instance.
+If you want to create a new block whose parent ID is the **page**, call the `create` method on the PageBlock instance.
 1. `@page.create("<type_of_block", "title of block")` → create a new block at the end of the page.
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
->>> @page.create(Notion::TextBlock, "Hiya!")
-#<Notion::TextBlock:0x00007fecd4459770 **omitted**>
+>>> @page.create(NotionAPI::TextBlock, "Hiya!")
+#<NotionAPI::TextBlock:0x00007fecd4459770 **omitted**>
 ```
 2. `@page.create("<type_of_block", "title of block", "target_block_id")` → create a new block after the target block.
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
->>> @page.create(Notion::TextBlock, "Hiya!", "ee0a6531-44cd-439f-a68c-1bdccbebfc8a")
-#<Notion::TextBlock:0x00007fecd8859770 **omitted**>
+>>> @page.create(NotionAPI::TextBlock, "Hiya!", "ee0a6531-44cd-439f-a68c-1bdccbebfc8a")
+#<NotionAPI::TextBlock:0x00007fecd8859770 **omitted**>
 ```
 3. `@page.create("<type_of_block"), "title of block", "target_block_id", "before/after")` → create a new block after or before the target block.
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
->>> @page.create(Notion::TextBlock, "Hiya!", "ee0a6531-44cd-439f-a68c-1bdccbebfc8a", "before")
-#<Notion::TextBlock:0x00007fecd8859880 **omitted**>
+>>> @page.create(NotionAPI::TextBlock, "Hiya!", "ee0a6531-44cd-439f-a68c-1bdccbebfc8a", "before")
+#<NotionAPI::TextBlock:0x00007fecd8859880 **omitted**>
 ```
 ### Create a block whose parent is another block
-If you want to create a nested block whose parent ID is another block, call the `create` method on the Block you want to nest new blocks within.
+If you want to create a nested block whose parent ID is **another block**, call the `create` method on that block.
 1. `@block.create("<type_of_block", "title of block")` → create a new nested block whose parent ID is @block.id
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
 >>> @block = @page.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
->>> @block.create(Notion::TextBlock, "Hiya!") # create a nested text block
-#<Notion::TextBlock:0x00007fecd8861780 **omitted**>
+>>> @block.create(NotionAPI::TextBlock, "Hiya!") # create a nested text block
+#<NotionAPI::TextBlock:0x00007fecd8861780 **omitted**>
 ```
 2. `@block.create("<type_of_block", "title of block", "target_block")` → create a new nested block whose parent ID is @block.id and whose location is after the target block
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
 >>> @block = @page.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
->>> @block.create(Notion::TextBlock, "Hiya!" "ae3d1c60-b9d1-0ac0-0fff-16d3fc8907a2") # create a nested text block after a specific child
-#<Notion::TextBlock:0x00007fecd8859781 **omitted**>
+>>> @block.create(NotionAPI::TextBlock, "Hiya!" "ae3d1c60-b9d1-0ac0-0fff-16d3fc8907a2") # create a nested text block after a specific child
+#<NotionAPI::TextBlock:0x00007fecd8859781 **omitted**>
 ```
 3. `@block.create("<type_of_block", "title of block", "target_block", "before/after")` → reate a new nested block whose parent ID is @block.id and whose location is before the target block
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
 >>> @block = @page.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
->>> @block.create(Notion::TextBlock, "Hiya!" "ae3d1c60-b9d1-0ac0-0fff-16d3fc8907a2", "before") # create a nested text block before a specific child
-#<Notion::TextBlock:0x00007fecd8859781 **omitted**>
+>>> @block.create(NotionAPI::TextBlock, "Hiya!" "ae3d1c60-b9d1-0ac0-0fff-16d3fc8907a2", "before") # create a nested text block before a specific child
+#<NotionAPI::TextBlock:0x00007fecd8859781 **omitted**>
 ```
+The simplest way to describe this: the parent ID of the created block is the ID of the block the `create` method is invoked on. If the `create` method is invoked on a **PageBlock**, the block is a child of that page. If the `create` method is invoked on a block within the page, the block is a child of that block.
 
+** NOTE: Notion only supports 'nesting' certain block types. If you try to nest a block that cannot be nested, it will fail. **
 ## Creating New Collections
 Let's say we have the following JSON data:
 ```json
