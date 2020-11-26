@@ -2,7 +2,16 @@
 [![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby) [![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop)
 
 ## Getting Started
-To get started using package, you'll first need to retrieve your token_v2 credentials by signing into Notion online, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
+### Installation
+to install the gem:
+```ruby
+gem install notion
+```
+Then, place this at the top of your file:
+```ruby
+require 'notion_api' 
+```
+To get started using the gem, you'll first need to retrieve your token_v2 credentials by signing into Notion online, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
 
 From here, you can instantiate the Notion Client with the following code:
 ```ruby
