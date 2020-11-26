@@ -150,7 +150,7 @@ module NotionAPI
         # titles for images are called source, while titles for text-based blocks are called title, so lets dynamically grab it
         # https://stackoverflow.com/questions/23765996/get-all-keys-from-ruby-hash/23766007
         title_value = filter_nil_blocks[clean_id]['value']['properties'].keys[0]
-        Core.type_whitelist.include?(filter_nil_blocks[clean_id]['value']['type']) ? nil : jsonified_record_response['block'][clean_id]['value']['properties'][title_value].flatten[0]
+        Core.type_whitelist.include?(filter_nil_blocks[clean_id]['value']['type']) ? nil : jsonified_record_response['block'][clean_id]['value']['properties'][title_value].flatten[0] 
 
       end
     end
@@ -160,7 +160,7 @@ module NotionAPI
       # ! clean_id -> the cleaned block ID: ``str``
       # ! collection_id -> the collection ID: ``str``
       # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      jsonified_record_response['collection'][collection_id]['value']['name'].flatten.join if jsonified_record_response['collection']
+      jsonified_record_response['collection'][collection_id]['value']['name'].flatten.join if jsonified_record_response['collection'] and jsonified_record_response['collection'][collection_id]['value']['name']
     end
 
     def extract_type(clean_id, jsonified_record_response)

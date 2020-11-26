@@ -3,9 +3,9 @@
 module Utils
   # ! defines utility functions and static variables for this application.
   URLS = {
-    GET_BLOCK: 'https://www.notion.so/api/v3/loadPageChunk',
-    UPDATE_BLOCK: 'https://www.notion.so/api/v3/saveTransactions',
-    GET_COLLECTION: 'https://www.notion.so/api/v3/queryCollection'
+    GET_BLOCK: "https://www.notion.so/api/v3/loadPageChunk",
+    UPDATE_BLOCK: "https://www.notion.so/api/v3/saveTransactions",
+    GET_COLLECTION: "https://www.notion.so/api/v3/queryCollection",
   }.freeze
 
   class BlockComponents
@@ -15,10 +15,10 @@ module Utils
       # ! payload for creating a block.
       # ! block_id -> id of the new block : ``str``
       # ! block_type -> type of block to create : ``cls``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
-      timestamp = DateTime.now.strftime('%Q')
+      command = "update"
+      timestamp = DateTime.now.strftime("%Q")
       {
         id: block_id,
         table: table,
@@ -29,41 +29,41 @@ module Utils
           type: block_type,
           properties: {},
           created_time: timestamp,
-          last_edited_time: timestamp
-        }
+          last_edited_time: timestamp,
+        },
       }
     end
 
     def self.title(id, title)
       # ! payload for updating the title of a block
       # ! id -> the ID to update the title of : ``str``
-      table = 'block'
+      table = "block"
       path = %w[properties title]
-      command = 'set'
+      command = "set"
 
       {
         id: id,
         table: table,
         path: path,
         command: command,
-        args: [[title]]
+        args: [[title]],
       }
     end
 
     def self.last_edited_time(id)
       # ! payload for updating the last edited time
       # ! id -> either the block ID or parent ID : ``str``
-      timestamp = DateTime.now.strftime('%Q')
-      table = 'block'
-      path = ['last_edited_time']
-      command = 'set'
+      timestamp = DateTime.now.strftime("%Q")
+      table = "block"
+      path = ["last_edited_time"]
+      command = "set"
 
       {
         table: table,
         id: id,
         path: path,
         command: command,
-        args: timestamp
+        args: timestamp,
       }
     end
 
@@ -71,9 +71,9 @@ module Utils
       # ! payload for converting a block to a different type.
       # ! id -> id of the block to convert : ``str``
       # ! block_class_to_convert_to -> type to convert to block to: ``NotionAPI::<Block_Type>``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
+      command = "update"
 
       {
         id: id,
@@ -81,8 +81,8 @@ module Utils
         path: path,
         command: command,
         args: {
-          type: block_class_to_convert_to.notion_type
-        }
+          type: block_class_to_convert_to.notion_type,
+        },
       }
     end
 
@@ -90,10 +90,10 @@ module Utils
       # ! payload for setting a blocks parent ID to 'alive'
       # ! block_parent_id -> the blocks parent ID : ``str``
       # ! new_block_id -> the new block ID, who is a child of the parent : ``str``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
-      parent_table = 'block'
+      command = "update"
+      parent_table = "block"
       alive = true
       {
         id: new_block_id,
@@ -103,17 +103,17 @@ module Utils
         args: {
           parent_id: block_parent_id,
           parent_table: parent_table,
-          alive: alive
-        }
+          alive: alive,
+        },
       }
     end
 
     def self.set_block_to_dead(block_id)
       # ! payload for setting a block to dead (alive == true)
       # ! block_id -> the block ID to 'kill' : ``str``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
+      command = "update"
       alive = false
 
       {
@@ -122,8 +122,8 @@ module Utils
         path: path,
         command: command,
         args: {
-          alive: alive
-        }
+          alive: alive,
+        },
       }
     end
 
@@ -136,10 +136,10 @@ module Utils
       # ! new_block_id -> id of new block : ``str``
       # ! user_notion_id -> ID of notion user : ``str``
       # ! contents -> The children of the block
-      timestamp = DateTime.now.strftime('%Q')
-      table = 'block'
+      timestamp = DateTime.now.strftime("%Q")
+      table = "block"
       path = []
-      command = 'update'
+      command = "update"
 
       {
         id: new_block_id,
@@ -151,17 +151,17 @@ module Utils
           version: 10,
           type: block_type,
           properties: {
-            title: [[block_title]]
+            title: [[block_title]],
           },
           content: contents, # root-level blocks
           created_time: timestamp,
           last_edited_time: timestamp,
-          created_by_table: 'notion_user',
+          created_by_table: "notion_user",
           created_by_id: user_notion_id,
-          last_edited_by_table: 'notion_user',
+          last_edited_by_table: "notion_user",
           last_edited_by_id: user_notion_id,
-          copied_from: block_id
-        }
+          copied_from: block_id,
+        },
       }
     end
 
@@ -169,10 +169,10 @@ module Utils
       # ! payload for adding a parent
       # ! block_parent_id -> the parent id of the block : ``str``
       # ! block_id -> the id of the block : ``str``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
-      parent_table = 'block'
+      command = "update"
+      parent_table = "block"
       alive = true
 
       {
@@ -183,8 +183,8 @@ module Utils
         args: {
           parent_id: block_parent_id,
           parent_table: parent_table,
-          alive: alive
-        }
+          alive: alive,
+        },
       }
     end
 
@@ -196,27 +196,27 @@ module Utils
       # ! new_block_id -> id of the new block: ``str``
       # ! target -> the ID of the target block : ``str``
       # ! command -> the position of the block, before or after, in relation to the target : ``str``
-      table = 'block'
-      path = ['content']
+      table = "block"
+      path = ["content"]
 
-      args = if command == 'listAfter'
-               {
+      args = if command == "listAfter"
+          {
                  after: target || block_id,
-                 id: new_block_id || block_id
+                 id: new_block_id || block_id,
                }
-             else
-               {
+        else
+          {
                  before: target || block_id,
-                 id: new_block_id || block_id
+                 id: new_block_id || block_id,
                }
-             end
+        end
 
       {
         table: table,
         id: block_parent_id, # ID of the parent for the new block. It should be the block that the method is invoked on.
         path: path,
         command: command,
-        args: args
+        args: args,
       }
     end
 
@@ -224,17 +224,17 @@ module Utils
       # ! removes a notion block
       # ! block_parent_id -> the parent ID of the block to remove : ``str``
       # ! block_id -> the ID of the block to remove : ``str``
-      table = 'block'
-      path = ['content']
-      command = 'listRemove'
+      table = "block"
+      path = ["content"]
+      command = "listRemove"
       {
         table: table,
         id: block_parent_id, # ID of the parent for the new block. It should be the block that the method is invoked on.
         path: path,
         command: command,
         args: {
-          id: block_id
-        }
+          id: block_id,
+        },
       }
     end
 
@@ -242,17 +242,17 @@ module Utils
       # ! payload for setting a "checked" value for TodoBlock.
       # ! block_id -> the ID of the block to remove : ``str``
       # ! standardized_check_val -> tyes/no value, determines the checked property of the block : ``str``
-      table = 'block'
-      path = ['properties']
-      command = 'update'
+      table = "block"
+      path = ["properties"]
+      command = "update"
       {
         id: block_id,
         table: table,
         path: path,
         command: command,
         args: {
-          checked: [[standardized_check_val]]
-        }
+          checked: [[standardized_check_val]],
+        },
       }
     end
 
@@ -260,9 +260,9 @@ module Utils
       # ! update the language for a codeblock
       # ! block_id -> id of the code block
       # ! coding_language -> language to change the block to.
-      table = 'block'
-      path = ['properties']
-      command = 'update'
+      table = "block"
+      path = ["properties"]
+      command = "update"
 
       {
         id: block_id,
@@ -270,8 +270,8 @@ module Utils
         path: path,
         command: command,
         args: {
-          language: [[coding_language]]
-        }
+          language: [[coding_language]],
+        },
       }
     end
   end
@@ -282,12 +282,12 @@ module Utils
       # ! new_block_id -> id of the new block
       # ! collection_id -> ID of the collection.
       # ! view_ids -> id of the view
-      table = 'block'
-      command = 'update'
+      table = "block"
+      command = "update"
       path = []
-      type = 'collection_view'
+      type = "collection_view"
       properties = {}
-      timestamp = DateTime.now.strftime('%Q')
+      timestamp = DateTime.now.strftime("%Q")
 
       {
         id: new_block_id,
@@ -299,12 +299,12 @@ module Utils
           type: type,
           collection_id: collection_id,
           view_ids: [
-            view_ids
+            view_ids,
           ],
           properties: properties,
           created_time: timestamp,
-          last_edited_time: timestamp
-        }
+          last_edited_time: timestamp,
+        },
       }
     end
 
@@ -312,14 +312,14 @@ module Utils
       # ! payload for setting the collection blocks to alive.
       # ! new_block_id -> id of the new block
       # ! collection_id -> ID of the collection.
-      table = 'block'
+      table = "block"
       path = []
-      command = 'update'
-      parent_table = 'collection'
+      command = "update"
+      parent_table = "collection"
       alive = true
-      type = 'page'
+      type = "page"
       properties = {}
-      timestamp = DateTime.now.strftime('%Q')
+      timestamp = DateTime.now.strftime("%Q")
 
       {
         id: new_block_id,
@@ -334,23 +334,22 @@ module Utils
           alive: alive,
           properties: properties,
           created_time: timestamp,
-          last_edited_time: timestamp
-        }
+          last_edited_time: timestamp,
+        },
       }
     end
 
-    def self.set_view_config(new_block_id, view_id, children_ids)
+    def self.set_view_config(collection_type, new_block_id, view_id, children_ids)
       # ! payload for setting the configurations of the view.
       # ! new_block_id -> id of the new block
       # ! view_id -> id of the view
       # ! children_ids -> IDs for the children of the collection.
-      table = 'collection_view'
+      table = "collection_view"
       path = []
-      command = 'update'
+      command = "update"
       version = 0
-      type = 'table'
-      name = 'Default View'
-      parent_table = 'block'
+      name = "Default View"
+      parent_table = "block"
       alive = true
 
       {
@@ -361,13 +360,13 @@ module Utils
         args: {
           id: view_id,
           version: version,
-          type: type,
+          type: collection_type,
           name: name,
           page_sort: children_ids,
           parent_id: new_block_id,
           parent_table: parent_table,
-          alive: alive
-        }
+          alive: alive,
+        },
       }
     end
 
@@ -377,75 +376,86 @@ module Utils
       # ! new_block_id -> id of the new block
       # ! data -> json data to insert into table.
       col_names = data[0].keys
+      data_mappings = {Integer => "number", String => "text", Array => "text", Float => "number", Date => "date"}
+      exceptions = [ArgumentError, TypeError]
+      data_types = col_names.map do |name|
+        # TODO: this is a little hacky... should probably think about a better way or add a requirement for user input to match a certain criteria.
+        begin 
+          DateTime.parse(data[0][name]) ? data_mappings[Date] : nil
+        rescue *exceptions
+          data_mappings[data[0][name].class] 
+        end
+      end
 
       schema_conf = {}
       col_names.each_with_index do |_name, i|
         if i.zero?
-          schema_conf[:title] = { name: col_names[i], type: 'title' }
+          schema_conf[:title] = { name: col_names[i], type: "title" }
         else
-          schema_conf[col_names[i]] = { name: col_names[i], type: 'text' }
+          schema_conf[col_names[i]] = { name: col_names[i], type: data_types[i] }
         end
       end
-      {
+      return {
         id: collection_id,
-        table: 'collection',
+        table: "collection",
         path: [],
-        command: 'update',
+        command: "update",
         args: {
           id: collection_id,
           schema: schema_conf,
           parent_id: new_block_id,
-          parent_table: 'block',
-          alive: true
-        }
-      }
+          parent_table: "block",
+          alive: true,
+        },
+      }, data_types
     end
 
     def self.set_collection_title(collection_title, collection_id)
       # ! payload for setting the title of the collection.
       # ! collection_title -> title of the collection.
       # ! collection_id -> ID of the collection.
-      table = 'collection'
-      path = ['name']
-      command = 'set'
+      table = "collection"
+      path = ["name"]
+      command = "set"
 
       {
         id: collection_id,
         table: table,
         path: path,
         command: command,
-        args: [[collection_title]]
+        args: [[collection_title]],
       }
     end
 
-    def self.insert_data(block_id, column, value)
+    def self.insert_data(block_id, column, value, mapping)
       # ! payload for inserting data into the table.
       # ! block_id -> the ID of the block : ``str``
       # ! column -> the name of the column to insert data into.
       # ! value -> the value to insert into the column.
-      table = 'block'
+      # ! mapping -> the column data type.
+      table = "block"
       path = [
-        'properties',
-        column
+        "properties",
+        column,
       ]
-      command = 'set'
+      command = "set"
 
       {
         id: block_id,
         table: table,
         path: path,
         command: command,
-        args: [[value]]
+        args: mapping == "date" ? [["‣",[["d",{"type": "date","start_date": value}]]]] : [[value]],
       }
     end
 
     def self.add_new_row(new_block_id)
       # ! payload for adding a new row to the table.
       # ! new_block_id -> the ID of the new row : ``str``
-      table = 'block'
+      table = "block"
       path = []
-      command = 'set'
-      type = 'page'
+      command = "set"
+      type = "page"
 
       {
         id: new_block_id,
@@ -455,29 +465,29 @@ module Utils
         args: {
           type: type,
           id: new_block_id,
-          version: 1
-        }
+          version: 1,
+        },
       }
     end
 
-    def self.query_collection(collection_id, view_id, search_query = '')
+    def self.query_collection(collection_id, view_id, search_query = "")
       # ! payload for querying the table for data.
       # ! collection_id -> the collection ID : ``str``
       # ! view_id -> the view ID : ``str``
       # ! search_query -> the query for searching the table : ``str``
       query = {}
       loader = {
-        type: 'table',
+        type: "table",
         limit: 100,
         searchQuery: search_query,
-        loadContentCover: true
+        loadContentCover: true,
       }
 
       {
         collectionId: collection_id,
         collectionViewId: view_id,
         query: query,
-        loader: loader
+        loader: loader,
       }
     end
 
@@ -485,12 +495,56 @@ module Utils
       # ! payload for adding a column to the table.
       # ! collection_id -> the collection ID : ``str``
       # ! args -> the definition of the column : ``str``
+      args["format"] = {
+        "table_properties" => [
+          {
+                  "property" => "title",
+                  "visible" => true,
+                  "width" => 280,
+                },
+          {
+                  "property" => "aliases",
+                  "visible" => true,
+                  "width" => 200,
+                },
+          {
+                  "property" => "category",
+                  "visible" => true,
+                  "width" => 200,
+                },
+          {
+                  "property" => "description",
+                  "visible" => true,
+                  "width" => 200,
+                },
+          {
+                  "property" => "ios_version",
+                  "visible" => true,
+                  "width" => 200,
+                },
+          {
+                  "property" => "tags",
+                  "visible" => true,
+                  "width" => 200,
+                },
+                {
+                  "property" => "phone",
+                  "visible" => true,
+                  "width" => 200,
+                },
+          {
+                  "property" => "unicode_version",
+                  "visible" => true,
+                  "width" => 200,
+                }
+        ],
+      }
       {
         id: collection_id,
-        table: 'collection',
+        table: "collection",
         path: [],
-        command: 'update',
-        args: args
+        command: "update",
+        args: args,
       }
     end
   end
@@ -509,9 +563,9 @@ module Utils
           id: transaction_id,
           shardId: 955_090,
           spaceId: space_id,
-          operations: operations
-        }
-      ]
+          operations: operations,
+        },
+      ],
     }
     payload
   end

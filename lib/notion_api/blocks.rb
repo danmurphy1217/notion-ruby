@@ -516,13 +516,14 @@ module NotionAPI
       CollectionView.new(clean_id, block_title, block_parent_id, block_collection_id, block_view_id)
     end
 
-    def create_collection(_collection_type, collection_title, data)
+    def create_collection(collection_type, collection_title, data)
       # ! create a Notion Collection View and return its instantiated class object.
       # ! _collection_type -> the type of collection to create : ``str``
       # ! collection_title -> the title of the collection view : ``str``
       # ! data -> JSON data to add to the table : ``str``
 
-      unless %w[table].include?(_collection_type) ; raise ArgumentError, "That collection type is not yet supported. Try: \"table\"."; end
+      valid_types = %w[table board list timeline calendar gallery]
+      unless valid_types.include?(collection_type) ; raise ArgumentError, "That collection type is not yet supported. Try: #{valid_types.join}."; end
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
@@ -550,8 +551,12 @@ module NotionAPI
       }
 
       create_collection_view = Utils::CollectionViewComponents.create_collection_view(new_block_id, collection_id, view_id)
-      configure_view = Utils::CollectionViewComponents.set_view_config(new_block_id, view_id, children)
-      configure_columns = Utils::CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
+      configure_view = Utils::CollectionViewComponents.set_view_config(collection_type, new_block_id, view_id, children)
+      
+      # returns the JSON and some useful column mappings...
+      column_data = Utils::CollectionViewComponents.set_collection_columns(collection_id, new_block_id, data)
+      configure_columns_hash = column_data[0]
+      column_mappings = column_data[1]
       set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(@id, new_block_id)
       add_block_hash = Utils::BlockComponents.block_location_add(@id, @id, new_block_id, nil, 'listAfter')
       new_block_edited_time = Utils::BlockComponents.last_edited_time(new_block_id)
@@ -560,7 +565,7 @@ module NotionAPI
       operations = [
         create_collection_view,
         configure_view,
-        configure_columns,
+        configure_columns_hash,
         set_parent_alive_hash,
         add_block_hash,
         new_block_edited_time,
@@ -571,7 +576,7 @@ module NotionAPI
       data.each_with_index do |row, i|
         child = children[i]
         row.keys.each_with_index do |col_name, j|
-          child_component = Utils::CollectionViewComponents.insert_data(child, j.zero? ? 'title' : col_name, row[col_name])
+          child_component = Utils::CollectionViewComponents.insert_data(child, j.zero? ? 'title' : col_name, row[col_name], column_mappings[j])
           all_ops.push(child_component)
         end
       end
@@ -806,7 +811,7 @@ module NotionAPI
       ]
 
       data.keys.each_with_index do |col_name, j|
-        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_map[col_name], data[col_name])
+        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? 'title' : col_map[col_name], data[col_name], j.zero? ? schema['title']["type"] : schema[col_map[col_name]]['type'])
         operations.push(child_component)
       end
 
