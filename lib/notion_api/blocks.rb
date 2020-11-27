@@ -322,11 +322,9 @@ module NotionAPI
 
       # build and set operations to send to Notion
       title_hash = Utils::BlockComponents.title(@id, new_title)
-      last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
       last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
       operations = [
         title_hash,
-        last_edited_time_parent_hash,
         last_edited_time_child_hash
       ]
 
