@@ -37,6 +37,9 @@ The following attributes can be read from any block class instance:
 3. `parent_id`: the parent ID of the block.
 4. `type`: the type of the block.
 
+To update the title of the page:
+![Update the title of a page](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/change_title.gif)
+
 ## Retrieving a Block within the Page
 Now that you have retrieved a Notion Page, you have full access to the blocks on that page. You can retrieve a specific block or collection view, retrieve all children IDs (array of children IDs), or retrieve all children (array of children class instances).
 
@@ -48,6 +51,7 @@ To retrieve a specific block, you can use the `get_block` method. This method ac
 #<TextBlock id="2cbbe0bf-34cd-409b-9162-64284b33e526" title="TEST" parent_id="d2ce338f-19e8-47f5-86bd-17679f490e66">
 ```
 Any Notion Block has access to the following methods:
+
 1. `title=` → change the title of a block.
 ```ruby
 >>> @block = @client.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
@@ -57,6 +61,8 @@ Any Notion Block has access to the following methods:
 >>> @block.title
 "New Title Here"
 ```
+For example:
+![Update the title of a block](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/change%20block%20title.gif)
 2. `convert` → convert a block to a different type.
 ```ruby
 >>> @block = @client.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
@@ -68,12 +74,17 @@ Any Notion Block has access to the following methods:
 >>> @new_block # new class instance returned...
 #<NotionAPI::CalloutBlock:0x00007ffb75b19ea0 id="2cbbe0bf-34cd-409b-9162-64284b33e526" title="New Title Here" parent_id="d2ce338f-19e8-47f5-86bd-17679f490e66">
 ```
+For example:
+![Convert a page](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/change%20to%20todo%2C%20check.gif)
+
 3. `duplicate`→ duplicate the current block.
 ```ruby
 >>> @block = @client.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
 >>> @block.duplicate # block is duplicated and placed directly after the current block
 >>> @block.duplicate("f13da22b-9012-4c49-ac41-6b7f97bd519e") # the duplicated block is placed after 'f13da22b-9012-4c49-ac41-6b7f97bd519e'
 ```
+For example:
+![Convert a page](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/duplicate.gif)
 4. `move` → move a block to another location.
 ```ruby
 >>> @block = @client.get_block("2cbbe0bf-34cd-409b-9162-64284b33e526")
@@ -81,6 +92,8 @@ Any Notion Block has access to the following methods:
 >>> @block.move(@target_block) # @block moved to **after** @target_block
 >>> @block.move(@target_block, "before") # @block moved to **before** @target_block
 ```
+For example:
+![move a block](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/move_before_and_after.gif)
 ### Get a Collection View - Table
 To retrieve a collection, you use the `get_collection` method. This method is designed to work with Table collections, but the codebase is actively being updated to support others:
 ```ruby
@@ -110,6 +123,27 @@ ent.rb
 ```
 
 ## Creating New Blocks
+Here's a high-level example:
+![create a callout a block](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/create.gif)
+The block types available to the `create` method are:
+1. `DividerBlock`
+2. `TodoBlock`
+3. `CodeBlock` 
+4. `HeaderBlock` 
+5. `SubHeaderBlock`
+6. `SubSubHeaderBlock`
+7. `PageBlock`
+8. `ToggleBlock`
+9. `BulletedBlock`
+10. `NumberedBlock`
+11. `QuoteBlock`
+12. `CalloutBlock`
+13. `LatexBlock`
+14. `TextBlock` 
+15. `ImageBlock` and 
+16. `TableOfContentsBlock`.
+If you want to create a collection, utilize the `create_collection` method [defined below].
+
 To create a new block, you have a few options:
 ### Create a block whose parent is the page
 If you want to create a new block whose parent ID is the **page**, call the `create` method on the PageBlock instance.
@@ -181,11 +215,14 @@ Let's say we have the following JSON data:
   }
 ]
 ```
-A new collection containing this data is created with the following code:
+A new table collection view containing this data is created with the following code:
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
 >>> @page.create_collection("table", "title for table", JSON.parse(File.read("./path/to/emoji_json_data.json")))
 ```
+Here's an example with a larger dataset:
+![create a collection view table](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/create%20collection.gif)
+
 Additionally, say you already have a Table and want to add a new row with it containing the following data:
 ```ruby
 {
@@ -203,3 +240,10 @@ Additionally, say you already have a Table and want to add a new row with it con
 >>> @collection = @page.get_collection("f1664a99-165b-49cc-811c-84f37655908a")
 >>> @collection.add_row(JSON.parse(File.read("path/to/new_emoji_row.json")))
 ```
+
+The first argument passed to `create_collection` determines which type of collection view to create. In the above example, a "table" is created, but other supported options are:
+1. list
+2. board
+3. calendar
+4. timeline
+5. gallery
