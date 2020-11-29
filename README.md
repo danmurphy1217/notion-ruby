@@ -13,7 +13,7 @@ gem install notion
 ```
 Then, place this at the top of your file:
 ```ruby
-require 'notion_api' 
+require 'notion_api'
 ```
 To get started using the gem, you'll first need to retrieve your token_v2 credentials by signing into Notion online, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
 
@@ -132,8 +132,8 @@ Here's a high-level example:
 The block types available to the `create` method are:
 1. `DividerBlock`
 2. `TodoBlock`
-3. `CodeBlock` 
-4. `HeaderBlock` 
+3. `CodeBlock`
+4. `HeaderBlock`
 5. `SubHeaderBlock`
 6. `SubSubHeaderBlock`
 7. `PageBlock`
@@ -143,8 +143,8 @@ The block types available to the `create` method are:
 11. `QuoteBlock`
 12. `CalloutBlock`
 13. `LatexBlock`
-14. `TextBlock` 
-15. `ImageBlock` and 
+14. `TextBlock`
+15. `ImageBlock` and
 16. `TableOfContentsBlock`.
 If you want to create a collection, utilize the `create_collection` method [defined below].
 
@@ -251,3 +251,17 @@ The first argument passed to `create_collection` determines which type of collec
 3. calendar
 4. timeline
 5. gallery
+
+## Troubleshooting
+### No results returned when attempting to get a page
+Additionnaly to your `token_v2` credentials, you'll need to grab the `x-notion-active-user-header` from a Notion AJAX API call.
+The endpoint used by this wrapper to load a page is `/loadPageChunk`, check out the request headers in your developer tools Network tab.
+
+From here, you can instantiate the Notion Client with the following code:
+```ruby
+>>> @client = NotionAPI::Client.new(
+  "<insert_v2_token_here>",
+  "<insert_x_notion_active_user_header_here>"
+)
+```
+
