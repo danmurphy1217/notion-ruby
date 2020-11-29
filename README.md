@@ -1,5 +1,5 @@
 # Unofficial Notion Client for Ruby.
-[![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby) [![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop)
+[![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby) [![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop) [![Gem Version](https://badge.fury.io/rb/notion.svg)](https://badge.fury.io/rb/notion)
 
 - Read the [blog post](https://towardsdatascience.com/introducing-the-notion-api-ruby-gem-d47d4a6ef0ca), which outlines why I built this and some of the functionality.
 - Check out the [Gem](https://rubygems.org/gems/notion)!
