@@ -113,6 +113,29 @@ module NotionAPI
       children_ids(url_or_id).empty? ? [] : children_ids(url_or_id)[-1]
     end
 
+    def get_block_props_and_format(clean_id, block_title)
+      request_body = {
+        pageId: clean_id,
+        chunkNumber: 0,
+        limit: 100,
+        verticalColumns: false
+      }
+      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      i = 0
+      while jsonified_record_response.empty?
+        return {:properties => {title: [[block_title]]}, :format => {}} if i >= 10
+
+        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        i += 1
+      end
+      properties = jsonified_record_response['block'][clean_id]['value']['properties']
+      formats = jsonified_record_response['block'][clean_id]['value']['format']
+      return {
+        :properties => properties,
+        :format => formats
+      }
+    end
+
     def get_all_block_info(_clean_id, body)
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
@@ -193,7 +216,7 @@ module NotionAPI
     def extract_view_ids(clean_id, jsonified_record_response)
       jsonified_record_response['block'][clean_id]['value']['view_ids'] || []
     end
-
+    
     def extract_id(url_or_id)
       # ! parse and clean the URL or ID object provided.
       # ! url_or_id -> the block ID or URL : ``str``

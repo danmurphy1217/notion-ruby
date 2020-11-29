@@ -127,7 +127,7 @@ module Utils
       }
     end
 
-    def self.duplicate(block_type, block_title, block_id, new_block_id, user_notion_id, contents)
+    def self.duplicate(block_type, block_title, block_id, new_block_id, user_notion_id, contents, properties, formatting)
       # ! payload for duplicating a block. Most properties should be
       # ! inherited from the block class the method is invoked on.
       # ! block_type -> type of block that is being duplicated : ``cls``
@@ -150,9 +150,8 @@ module Utils
           id: new_block_id,
           version: 10,
           type: block_type,
-          properties: {
-            title: [[block_title]],
-          },
+          properties: properties,
+          format: formatting,
           content: contents, # root-level blocks
           created_time: timestamp,
           last_edited_time: timestamp,
@@ -272,6 +271,14 @@ module Utils
         args: {
           language: [[coding_language]],
         },
+      }
+    end
+    def self.add_emoji_icon(block_id, icon)
+      {
+        id: block_id,
+        table:"block",
+        path:["format","page_icon"],
+        command:"set","args": icon
       }
     end
   end

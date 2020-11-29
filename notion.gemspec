@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
     spec.files = Dir[
         "lib/**/*.rb",
     ]
+
     spec.extra_rdoc_files = [
       "LICENSE.md",
       "README.md",
