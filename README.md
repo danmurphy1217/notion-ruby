@@ -270,7 +270,7 @@ The first argument passed to `create_collection` determines which type of collec
 
 ## Troubleshooting
 ### No results returned when attempting to get a page
-Additionnaly to your `token_v2` credentials, you'll need to grab the `x-notion-active-user-header` from a Notion AJAX API call.
+If an empty hash is returned when you attempt to retrieve a Notion page, you'll need to include the `x-notion-active-user-header` when instantiating the Notion Client.
 The endpoint used by this wrapper to load a page is `/loadPageChunk`, check out the request headers in your developer tools Network tab.
 
 From here, you can instantiate the Notion Client with the following code:
