@@ -140,7 +140,7 @@ module NotionAPI
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
       Core.options['cookies'][:token_v2] = @@token_v2
-      Core.options['headers']['x-notion-active-user-header'] = @active_user_header
+      Core.options['headers']['x-notion-active-user-header'] = @@active_user_header
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
