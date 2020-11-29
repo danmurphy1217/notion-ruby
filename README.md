@@ -114,7 +114,7 @@ For example:
 ```
 For example:
 ![move a block](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/move_before_and_after.gif)
-### Get a Collection View - Table
+### Get a Collection View
 To retrieve a collection, you use the `get_collection` method. This method is designed to work with Table collections, but the codebase is actively being updated to support others:
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/TEST-PAGE-d2ce338f19e847f586bd17679f490e66")
