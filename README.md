@@ -1,9 +1,25 @@
+
+
 # Unofficial Notion Client for Ruby.
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/f13e49a8807e4fe297273f48bd8d7a61)](https://app.codacy.com/gh/danmurphy1217/notion-ruby?utm_source=github.com&utm_medium=referral&utm_content=danmurphy1217/notion-ruby&utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.com/danmurphy1217/notion-ruby.svg?branch=master)](https://travis-ci.com/danmurphy1217/notion-ruby) [![Ruby Style Guide](https://img.shields.io/badge/code_style-rubocop-brightgreen.svg)](https://github.com/rubocop-hq/rubocop) [![Gem Version](https://badge.fury.io/rb/notion.svg)](https://badge.fury.io/rb/notion)
 
 - Read the [blog post](https://towardsdatascience.com/introducing-the-notion-api-ruby-gem-d47d4a6ef0ca), which outlines why I built this and some of the functionality.
 - Check out the [Gem](https://rubygems.org/gems/notion)!
+
+## Table of Contents
+- [Getting Started](#getting-started)
+  * [Installation](#installation)
+- [Retrieving a Page](#retrieving-a-page)
+- [Retrieving a Block within the Page](#retrieving-a-block-within-the-page)
+  * [Get a Block](#get-a-block)
+  * [Get a Collection View - Table](#get-a-collection-view---table)
+- [Creating New Blocks](#creating-new-blocks)
+  * [Create a block whose parent is the page](#create-a-block-whose-parent-is-the-page)
+  * [Create a block whose parent is another block](#create-a-block-whose-parent-is-another-block)
+- [Creating New Collections](#creating-new-collections)
+- [Troubleshooting](#troubleshooting)
+  * [No results returned when attempting to get a page](#no-results-returned-when-attempting-to-get-a-page)
 
 ## Getting Started
 ### Installation
@@ -13,7 +29,7 @@ gem install notion
 ```
 Then, place this at the top of your file:
 ```ruby
-require 'notion_api' 
+require 'notion_api'
 ```
 To get started using the gem, you'll first need to retrieve your token_v2 credentials by signing into Notion online, navigating to the developer tools, inspecting the cookies, and finding the value associated with the **token_v2** key.
 
@@ -132,8 +148,8 @@ Here's a high-level example:
 The block types available to the `create` method are:
 1. `DividerBlock`
 2. `TodoBlock`
-3. `CodeBlock` 
-4. `HeaderBlock` 
+3. `CodeBlock`
+4. `HeaderBlock`
 5. `SubHeaderBlock`
 6. `SubSubHeaderBlock`
 7. `PageBlock`
@@ -143,8 +159,8 @@ The block types available to the `create` method are:
 11. `QuoteBlock`
 12. `CalloutBlock`
 13. `LatexBlock`
-14. `TextBlock` 
-15. `ImageBlock` and 
+14. `TextBlock`
+15. `ImageBlock` and
 16. `TableOfContentsBlock`.
 If you want to create a collection, utilize the `create_collection` method [defined below].
 
@@ -251,3 +267,17 @@ The first argument passed to `create_collection` determines which type of collec
 3. calendar
 4. timeline
 5. gallery
+
+## Troubleshooting
+### No results returned when attempting to get a page
+If an empty hash is returned when you attempt to retrieve a Notion page, you'll need to include the `x-notion-active-user-header` when instantiating the Notion Client.
+The endpoint used by this wrapper to load a page is `/loadPageChunk`, check out the request headers in your developer tools Network tab.
+
+From here, you can instantiate the Notion Client with the following code:
+```ruby
+>>> @client = NotionAPI::Client.new(
+  "<insert_v2_token_here>",
+  "<insert_x_notion_active_user_header_here>"
+)
+```
+
