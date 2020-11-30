@@ -46,7 +46,7 @@ module Helpers
     $Block_spec_add_page = $Client.get_page($Block_spec_add_url)
 
     $Block_spec_title_id = "5e5f1ec2-8af4-429e-bcb2-bac6d6f49798"
-    $Block_spec_convert_id = "a770e01f-8b58-4f29-91be-1e3f4173c2b0"
+    $Block_spec_convert_id = "60526527-da05-4b58-99f0-6e1d18d60dd4"
     $Block_spec_duplicate_id_one = "b240e279-df40-4d36-b3b1-dbc419abbcd8"
     $Block_spec_duplicate_id_target = "b61f8da8-7bf4-4149-891a-5a043d83fc46"
     $Block_spec_move_id_target = "45cd1ef1-7130-427e-99e2-f49ba558222a"
