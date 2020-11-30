@@ -13,7 +13,7 @@
 - [Retrieving a Page](#retrieving-a-page)
 - [Retrieving a Block within the Page](#retrieving-a-block-within-the-page)
   * [Get a Block](#get-a-block)
-  * [Get a Collection View - Table](#get-a-collection-view---table)
+  * [Get a Collection View](#get-a-collection-view)
 - [Creating New Blocks](#creating-new-blocks)
   * [Create a block whose parent is the page](#create-a-block-whose-parent-is-the-page)
   * [Create a block whose parent is another block](#create-a-block-whose-parent-is-another-block)
