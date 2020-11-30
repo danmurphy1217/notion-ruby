@@ -225,4 +225,19 @@ module NotionAPI
         @view_id = view_id
       end
     end
+
+    class CollectionViewPage < CollectionView
+      @notion_type = 'collection_view_page'
+      @type = 'collection_view_page'
+  
+      def type
+        NotionAPI::CollectionViewRow.notion_type
+      end
+  
+      class << self
+        attr_reader :notion_type, :type, :parent_id
+      end
+  
+      attr_reader :parent_id, :id
+    end
 end

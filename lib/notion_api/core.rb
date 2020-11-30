@@ -42,13 +42,21 @@ module NotionAPI
       end
 
       block_id = clean_id
-      block_title = extract_title(clean_id, jsonified_record_response)
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
-      raise 'the URL or ID passed to the get_page method must be that of a Page Block.' if block_type != 'page'
+      raise 'the URL or ID passed to the get_page method must be that of a Page Block.' if !['collection_view_page', 'page'].include?(block_type)
 
-      PageBlock.new(block_id, block_title, block_parent_id)
+      if block_type == "page"
+        block_title = extract_title(clean_id, jsonified_record_response)
+        PageBlock.new(block_id, block_title, block_parent_id)
+      elsif block_type == "collection_view_page"
+        collection_id = extract_collection_id(block_id, jsonified_record_response)
+        block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
+        view_id = extract_view_ids(block_id, jsonified_record_response)[0]
+
+        CollectionViewPage.new(block_id, block_title, block_parent_id, collection_id, view_id)
+      end
     end
 
     def children(url_or_id = @id)
