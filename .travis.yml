@@ -2,7 +2,7 @@ language: ruby
 cache: bundler
 dist: bionic
 rvm:
-- 2.5
+# using .filter, so much be >= 2.6
 - 2.6
 - 2.7
 branches:
