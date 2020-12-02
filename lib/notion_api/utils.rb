@@ -554,6 +554,30 @@ module Utils
         args: args,
       }
     end
+
+    def self.update_property_value(page_id, column_name, new_value)
+      # ! update the specified column_name to new_value
+      # ! page_id -> the ID of the page: ``str``
+      # ! column_name -> the name of the column ["property"] to update: ``str``
+      # ! new_value -> the new value to assign to that column ["property"]: ``str``
+      table = "block"
+      path = [
+        "properties",
+        column_name
+      ]
+      command = "set"
+      args = [[
+        new_value
+      ]]
+
+      {
+        id: page_id,
+        table: table,
+        path: path,
+        command: command,
+        args: args
+      }
+    end
   end
 
   def build_payload(operations, request_ids)

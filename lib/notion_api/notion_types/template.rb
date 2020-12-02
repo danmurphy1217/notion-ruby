@@ -304,7 +304,15 @@ module NotionAPI
             block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
             block_view_id = extract_view_ids(clean_id, jsonified_record_response)
             collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
-            block_class.new(clean_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
+            
+            block = block_class.new(clean_id, collection_title, block_parent_id, block_collection_id, block_view_id.join)
+            schema = extract_collection_schema(block_collection_id, block_view_id[0])
+            column_mappings = schema.keys
+            column_names = column_mappings.map { |mapping| schema[mapping]['name']}
+            block.instance_variable_set(:@column_names, column_names)
+            CollectionView.class_eval{attr_reader :column_names}
+
+            block
           else
             block_title = extract_title(clean_id, jsonified_record_response)
             block_class.new(clean_id, block_title, block_parent_id)

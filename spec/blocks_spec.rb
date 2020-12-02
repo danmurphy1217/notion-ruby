@@ -73,7 +73,7 @@ describe NotionAPI::BlockTemplate do
         it "should return a collection block." do
             @collection = $Block_spec_get_page.get_collection($Block_spec_get_collection_id)
             expect(@collection.title).to eq("Copy of Test Car Data")
-            
+
             i = 0
             $Vehicle_data_csv.split("\n").each {|r| i += 1}
 
@@ -81,7 +81,7 @@ describe NotionAPI::BlockTemplate do
 
             expect(@collection.row_ids.length).to eq(45).and(eq(i - 1))
             expect(@rows.length).to eq(45).and(eq(i - 1))
-            
+
             # ! row parent should == collection parent should == page ID
             expect(@rows[0].parent_id).to eq(@collection.parent_id)
             expect(@rows[0].parent_id).to eq($Block_spec_get_page.id)
@@ -89,38 +89,55 @@ describe NotionAPI::BlockTemplate do
     end
     describe "#create_collection" do
         it "should create a collection view table and return it." do
-          title = "Emoji Data: #{DateTime.now.strftime('%Q')}"  
+          title = "Emoji Data: #{DateTime.now.strftime('%Q')}"
           @collection = $Block_spec_create_page.create_collection("table", title, $Json)
           expect(@collection.title).to eq(title)
           expect(@collection.row_ids.length).to eq($Json.length)
           @rows = @collection.rows
           # ! ensure correct order of mapping...
           @rows.each_with_index do |row, i|
-            expect(@collection.row(@rows[i].id)['emoji']).to eq([$Json[i]["emoji"]])
+            expect(@collection.row(@rows[i].id).emoji).to eq($Json[i]["emoji"])
           end
         end
     end
-    describe "#add_row" do
-        it "should create a collection view table and return it." do
-          @collection = $Block_spec_add_page.get_collection($Block_spec_add_row_id)
-          
-          # ! column values
-          @col_one = "#{SecureRandom.hex(16)}"
-          @col_two = "https://www.electronjs.org/"
-          @col_three = "#{DateTime.now.strftime('%Q')}"
-          @col_six = "danielmurph8@gmail.com"
-          @col_seven = "3028934649"
+  describe "#add_row" do
+    before(:context) {
+      @collection = $Block_spec_add_page.get_collection($Block_spec_add_row_id)
+      @col_one = "#{SecureRandom.hex(16)}"
+      @col_two = "https://www.electronjs.org/"
+      @col_three = "#{DateTime.now.strftime("%Q")}"
+      @col_six = "danielmurph8@gmail.com"
+      @col_seven = "3028934649"
 
-          @json_data = {"Col One" => "#{SecureRandom.hex(16)}", "Col Two" => @col_two, "Col Three" => @col_three, "Col Four" => @col_three, "Col Five" => @col_two, "Col Six" => @col_six, "Col Seven" => @col_seven}
-          @new_row = @collection.add_row(@json_data)
-          @new_row_info = @collection.row(@new_row.id)
-          
-          @col_names = @json_data.keys
-
-          @col_names.each do |col_name|
-            expect(@new_row_info[col_name]).to eq([@json_data[col_name]])
-          end
-        end
+      @json_data = { "Col One" => @col_one, "Col Two" => @col_two, "Col Three" => @col_three, "Col Four" => @col_three, "Col Five" => @col_two, "Col Six" => @col_six, "Col Seven" => @col_seven }
+      @new_row = @collection.add_row(@json_data)
+      @new_row_info = @collection.row(@new_row.id)
+    }
+    subject { @new_row_info }
+    
+    it "should have a col_one method that equals json_data['col one']." do
+      p @new_row_info
+      expect(@new_row_info.col_one).to eq(@json_data["Col One"])
+    end
+    it "should have a col_one method that equals json_data['col two']." do
+      p @new_row_info
+      expect(@new_row_info.col_two).to eq(@json_data["Col Two"])
+    end
+    it "should have a col_one method that equals json_data['col three']." do
+      p @new_row_info
+      expect(@new_row_info.col_three).to eq(@json_data["Col Three"])
+    end
+    it "should have a col_one method that equals json_data['col four']." do
+      p @new_row_info
+      expect(@new_row_info.col_four).to eq(@json_data["Col Four"])
+    end
+    it "should have a col_one method that equals json_data['col five']." do
+      p @new_row_info
+      expect(@new_row_info.col_five).to eq(@json_data["Col Five"])
+    end
+    it "should have a col_one method that equals json_data['col six']." do
+      p @new_row_info
+      expect(@new_row_info.col_six).to eq(@json_data["Col Six"])
     end
   end
   context "testing the Notion::BlockTemplate private class methods" do
@@ -133,5 +150,7 @@ describe NotionAPI::BlockTemplate do
             expect($Blocks.title).to eq("TODO Block")
         end
       end
+    end
   end
 end
+
