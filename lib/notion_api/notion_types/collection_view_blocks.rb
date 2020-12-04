@@ -57,7 +57,8 @@ module NotionAPI
       ]
 
       data.keys.each_with_index do |col_name, j|
-        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, j.zero? ? "title" : col_map[col_name], data[col_name], j.zero? ? schema["title"]["type"] : schema[col_map[col_name]]["type"])
+        unless col_map.keys.include?(col_name.to_s); raise ArgumentError, "Column '#{col_name.to_s}' does not exist." end
+        child_component = Utils::CollectionViewComponents.insert_data(new_block_id, col_map[col_name.to_s], data[col_name], schema[col_map[col_name.to_s]]["type"])
         operations.push(child_component)
       end
 
