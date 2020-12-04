@@ -54,7 +54,7 @@ module NotionAPI
         collection_id = extract_collection_id(block_id, jsonified_record_response)
         block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
         view_id = extract_view_ids(block_id, jsonified_record_response)[0]
-        schema = extract_collection_schema(collection_id, view_id)
+        schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
         column_mappings = schema.keys
         column_names = column_mappings.map { |mapping| schema[mapping]['name']}
 
@@ -250,24 +250,28 @@ module NotionAPI
         raise ArgumentError, 'Expected a Notion page URL or a page ID. Please consult the documentation for further information.'
       end
     end
-    # TODO: lets update this to not have to make a full isolated request [if possible]
-    def extract_collection_schema(collection_id, view_id)
+
+    def extract_collection_schema(collection_id, view_id, response = {})
       # ! retrieve the collection scehma. Useful for 'building' the backbone for a table.
       # ! collection_id -> the collection ID : ``str``
       # ! view_id -> the view ID : ``str``
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
-      query_collection_hash = Utils::CollectionViewComponents.query_collection(collection_id, view_id, '')
+      if response.empty?
+        query_collection_hash = Utils::CollectionViewComponents.query_collection(collection_id, view_id, '')
 
-      request_url = URLS[:GET_COLLECTION]
-      response = HTTParty.post(
-        request_url,
-        body: query_collection_hash.to_json,
-        cookies: cookies,
-        headers: headers
-      )
-      response['recordMap']['collection'][collection_id]['value']['schema']
+        request_url = URLS[:GET_COLLECTION]
+        response = HTTParty.post(
+          request_url,
+          body: query_collection_hash.to_json,
+          cookies: cookies,
+          headers: headers
+        )
+        response['recordMap']['collection'][collection_id]['value']['schema']
+      else
+        response['collection'][collection_id]['value']['schema']
+      end
     end
     
     def extract_collection_data(collection_id, view_id)

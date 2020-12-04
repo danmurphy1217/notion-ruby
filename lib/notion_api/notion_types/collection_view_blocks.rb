@@ -149,7 +149,7 @@ module NotionAPI
       column_mappings = schema.keys
       column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
 
-      collection_row = CollectionViewRow.new(row_id, @id, @collection_id, @view_id)
+      collection_row = CollectionViewRow.new(row_id, @parent_id, @collection_id, @view_id)
       collection_row.instance_variable_set(:@column_names, column_names)
       CollectionViewRow.class_eval { attr_reader :column_names }
 
@@ -211,20 +211,27 @@ module NotionAPI
       collection_data = extract_collection_data(@collection_id, @view_id)
       schema = collection_data["collection"][collection_id]["value"]["schema"]
       column_mappings = schema.keys
-      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
+      column_hash = {}
+      column_names = column_mappings.map { |mapping| column_hash[mapping] = schema[mapping]["name"].downcase }
       
-      row.column_names.each_with_index do |column, i|
+      column_hash.keys.each_with_index do |column, i|
         # loop over the column names...
         # set instance variables for each column, allowing the dev to 'read' the column value
-        cleaned_column = column.split(" ").join("_").downcase.to_sym
+        cleaned_column = column_hash[column].split(" ").join("_").downcase.to_sym
 
-        p row_data["value"]["properties"][column_mappings[i]], !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]])
-        row.instance_variable_set("@#{cleaned_column}", !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]]) ? row_data["value"]["properties"]["title"][0][0] : row_data["value"]["properties"][column_mappings[i]][0][0])
+        # p row_data["value"]["properties"][column_mappings[i]], !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]])
+        if row_data["value"]["properties"].nil? or row_data["value"]["properties"][column].nil?
+          value = ""
+        else
+          value = row_data["value"]["properties"][column][0][0]  
+        end
+
+        row.instance_variable_set("@#{cleaned_column}", value)
         CollectionViewRow.class_eval { attr_reader cleaned_column }
         # then, define singleton methods for each column that are used to update the table cell 
         row.define_singleton_method("#{cleaned_column}=") do |new_value|
           # neat way to get the name of the currently invoked method...
-          parsed_method = __method__.to_s[0...-1]
+          parsed_method = __method__.to_s[0...-1].split("_").join(" ")
           cookies = Core.options["cookies"]
           headers = Core.options["headers"]
 
@@ -237,7 +244,8 @@ module NotionAPI
             transaction_id: transaction_id,
             space_id: space_id,
           }
-          update_property_value = Utils::CollectionViewComponents.update_property_value(@id, parsed_method, new_value)
+
+          update_property_value = Utils::CollectionViewComponents.update_property_value(@id, column_hash.key(parsed_method), new_value)
 
           operations = [
             update_property_value,
@@ -255,7 +263,7 @@ module NotionAPI
                Please try again, and if issues persist open an issue in GitHub.";end
           
           # set the instance variable to the updated value!
-          _ = row.instance_variable_set("@#{parsed_method}".downcase, new_value)
+          _ = row.instance_variable_set("@#{__method__.to_s[0...-1]}", new_value)
           row
         end
       end
@@ -269,6 +277,10 @@ module NotionAPI
 
     def type
       NotionAPI::CollectionViewRow.notion_type
+    end
+
+    def inspect
+      "CollectionViewRow - id: #{self.id} - parent id: #{self.parent_id}"
     end
 
     class << self
