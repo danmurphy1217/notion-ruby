@@ -116,27 +116,21 @@ describe NotionAPI::BlockTemplate do
     subject { @new_row_info }
     
     it "should have a col_one method that equals json_data['col one']." do
-      p @new_row_info
       expect(@new_row_info.col_one).to eq(@json_data["Col One"])
     end
     it "should have a col_one method that equals json_data['col two']." do
-      p @new_row_info
       expect(@new_row_info.col_two).to eq(@json_data["Col Two"])
     end
     it "should have a col_one method that equals json_data['col three']." do
-      p @new_row_info
       expect(@new_row_info.col_three).to eq(@json_data["Col Three"])
     end
     it "should have a col_one method that equals json_data['col four']." do
-      p @new_row_info
       expect(@new_row_info.col_four).to eq(@json_data["Col Four"])
     end
     it "should have a col_one method that equals json_data['col five']." do
-      p @new_row_info
       expect(@new_row_info.col_five).to eq(@json_data["Col Five"])
     end
     it "should have a col_one method that equals json_data['col six']." do
-      p @new_row_info
       expect(@new_row_info.col_six).to eq(@json_data["Col Six"])
     end
   end

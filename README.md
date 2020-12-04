@@ -8,18 +8,23 @@
 - Check out the [Gem](https://rubygems.org/gems/notion)!
 
 ## Table of Contents
-- [Getting Started](#getting-started)
-  * [Installation](#installation)
-- [Retrieving a Page](#retrieving-a-page)
-- [Retrieving a Block within the Page](#retrieving-a-block-within-the-page)
-  * [Get a Block](#get-a-block)
-  * [Get a Collection View](#get-a-collection-view)
-- [Creating New Blocks](#creating-new-blocks)
-  * [Create a block whose parent is the page](#create-a-block-whose-parent-is-the-page)
-  * [Create a block whose parent is another block](#create-a-block-whose-parent-is-another-block)
-- [Creating New Collections](#creating-new-collections)
-- [Troubleshooting](#troubleshooting)
-  * [No results returned when attempting to get a page](#no-results-returned-when-attempting-to-get-a-page)
+- [Unofficial Notion Client for Ruby.](#unofficial-notion-client-for-ruby)
+  - [Table of Contents](#table-of-contents)
+  - [Getting Started](#getting-started)
+    - [Installation](#installation)
+  - [Retrieving a Page](#retrieving-a-page)
+  - [Retrieving a CollectionView Page](#retrieving-a-collectionview-page)
+  - [Retrieving a Block within the Page](#retrieving-a-block-within-the-page)
+    - [Get a Block](#get-a-block)
+    - [Get a Collection View](#get-a-collection-view)
+  - [Creating New Blocks](#creating-new-blocks)
+    - [Create a block whose parent is the page](#create-a-block-whose-parent-is-the-page)
+    - [Create a block whose parent is another block](#create-a-block-whose-parent-is-another-block)
+  - [Creating New Collections](#creating-new-collections)
+  - [Updating Collection View Cells](#updating-collection-view-cells)
+  - [Troubleshooting](#troubleshooting)
+    - [No results returned when attempting to get a page](#no-results-returned-when-attempting-to-get-a-page)
+    - [Retrieve a full-page Collection View](#retrieve-a-full-page-collection-view)
 
 ## Getting Started
 ### Installation
@@ -60,6 +65,8 @@ The following attributes can be read from any block class instance:
 To update the title of the page:
 ![Update the title of a page](https://github.com/danmurphy1217/notion-ruby/blob/master/gifs/change_title.gif)
 
+## Retrieving a CollectionView Page
+This is achieved by passing the ID of the Collection View to the `get_page` method. Currently, the full URL of a Collection View Page is not supported (next up on the features list!). Once you retrieve the Collection View Page, all of the methods exposed to a normal Collection View instance are available (such as `.rows`, `.row(<row_id>)`, and all else outlined in [Updating a Collection](#updating-collection-view-cells)).
 ## Retrieving a Block within the Page
 Now that you have retrieved a Notion Page, you have full access to the blocks on that page. You can retrieve a specific block or collection view, retrieve all children IDs (array of children IDs), or retrieve all children (array of children class instances).
 
@@ -268,6 +275,28 @@ The first argument passed to `create_collection` determines which type of collec
 4. timeline
 5. gallery
 
+## Updating Collection View Cells
+When you retrieve a `CollectionViewRow` instance with `.row(<row_id>)` or a list of `CollectionViewRow` instances with `.rows`, a handful of methods are created. Each row instance has access attributes that represent the properties in the Notion Collection View. So, let's say we are working with the following Notion Collection View:
+| emoji | description  | category            | aliases | tags    | unicode_version | ios_version |
+|-------|--------------|---------------------|---------|---------|-----------------|-------------|
+| 😉     | "winking face" | "Smileys & Emotion" | "wink"  | "flirt" | "6.0"           | "6.0"       |
+
+If you wanted to update the unicode and ios versions, you could use the following code:
+```ruby
+>>> collection_view = @page.get_collection("1234567") # the ID of the collection block is 1234567
+>>> rows = collection_view.rows
+>>> row[0].unicode_version = "updated version here!"
+>>> row[0].ios_version = "I was updated too!"
+```
+Now, your Collection View will look like this:
+| emoji | description  | category            | aliases | tags    | unicode_version | ios_version |
+|-------|--------------|---------------------|---------|---------|-----------------|-------------|
+| 😉     |   "winking face"   | "Smileys & Emotion" | "wink"  | "flirt" | "updated version here!"          | "I was updated too!" |
+
+You can also add new rows with the `.add_row({<data!>})` method and add new properties with the `.add_property("name_of_property", "type_of_property")` method.
+
+**One important thing to be aware of:**
+When adding a row with `.add_row`, the hash of data passed must be in the same order as it appears in your Notion Collection View.
 ## Troubleshooting
 ### No results returned when attempting to get a page
 If an empty hash is returned when you attempt to retrieve a Notion page, you'll need to include the `x-notion-active-user-header` when instantiating the Notion Client.
@@ -280,4 +309,9 @@ From here, you can instantiate the Notion Client with the following code:
   "<insert_x_notion_active_user_header_here>"
 )
 ```
-
+### Retrieve a full-page Collection View
+Currently, either a "normal" Page URL or the Page Block ID is accepted to the `get_page` method. Therefore, if you pass the full URL to the CV Table, it will raise an error:
+```text
+the URL or ID passed to the get_page method must be that of a Page Block.
+```
+To avoid this, you must pass only the ID of the full-page collection-view to the `get_page` method. This is next up on the features list, so passing the full URL will be supported soon:smile:
