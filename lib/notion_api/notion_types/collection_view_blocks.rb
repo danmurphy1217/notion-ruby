@@ -33,7 +33,9 @@ module NotionAPI
       transaction_id = extract_id(SecureRandom.hex(16))
       space_id = extract_id(SecureRandom.hex(16))
       new_block_id = extract_id(SecureRandom.hex(16))
-      schema = extract_collection_schema(@collection_id, @view_id)
+      collection_data = extract_collection_data(collection_id, view_id)
+      last_row_id = collection_data["collection_view"][@view_id]["value"]["page_sort"][-1]
+      schema = collection_data['collection'][collection_id]['value']['schema']
       keys = schema.keys
       col_map = {}
       keys.map { |key| col_map[schema[key]["name"]] = key }
@@ -47,17 +49,24 @@ module NotionAPI
       instantiate_row = Utils::CollectionViewComponents.add_new_row(new_block_id)
       set_block_alive = Utils::CollectionViewComponents.set_collection_blocks_alive(new_block_id, @collection_id)
       new_block_edited_time = Utils::BlockComponents.last_edited_time(new_block_id)
-      parent_edited_time = Utils::BlockComponents.last_edited_time(@parent_id)
+      page_sort = Utils::BlockComponents.row_location_add(last_row_id, new_block_id, @view_id)
 
       operations = [
         instantiate_row,
         set_block_alive,
         new_block_edited_time,
-        parent_edited_time,
+        page_sort
       ]
 
       data.keys.each_with_index do |col_name, j|
         unless col_map.keys.include?(col_name.to_s); raise ArgumentError, "Column '#{col_name.to_s}' does not exist." end
+        if %q[select multi_select].include?(schema[col_map[col_name.to_s]]["type"])
+          options = schema[col_map[col_name.to_s]]["options"].map {|option| option["value"]}
+          if !options.include?(data[col_name])
+            create_new_option = Utils::CollectionViewComponents.add_new_option(col_map[col_name.to_s], data[col_name], @collection_id)
+            operations.push(create_new_option)
+          end
+        end
         child_component = Utils::CollectionViewComponents.insert_data(new_block_id, col_map[col_name.to_s], data[col_name], schema[col_map[col_name.to_s]]["type"])
         operations.push(child_component)
       end

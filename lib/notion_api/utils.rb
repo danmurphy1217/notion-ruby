@@ -200,14 +200,14 @@ module Utils
 
       args = if command == "listAfter"
           {
-                 after: target || block_id,
-                 id: new_block_id || block_id,
-               }
+            after: target || block_id,
+            id: new_block_id || block_id,
+          }
         else
           {
-                 before: target || block_id,
-                 id: new_block_id || block_id,
-               }
+            before: target || block_id,
+            id: new_block_id || block_id,
+          }
         end
 
       {
@@ -217,6 +217,21 @@ module Utils
         command: command,
         args: args,
       }
+    end
+
+    def self.row_location_add(last_row_id, block_id, view_id)
+      {
+        "table": "collection_view",
+        "id": view_id,
+        "path": [
+            "page_sort"
+        ],
+        "command": "listAfter",
+        "args": {
+            "after": last_row_id,
+            "id": block_id
+        }
+    }
     end
 
     def self.block_location_remove(block_parent_id, block_id)
@@ -276,9 +291,9 @@ module Utils
     def self.add_emoji_icon(block_id, icon)
       {
         id: block_id,
-        table:"block",
-        path:["format","page_icon"],
-        command:"set","args": icon
+        table: "block",
+        path: ["format", "page_icon"],
+        command: "set", "args": icon,
       }
     end
   end
@@ -383,14 +398,14 @@ module Utils
       # ! new_block_id -> id of the new block
       # ! data -> json data to insert into table.
       col_names = data[0].keys
-      data_mappings = {Integer => "number", String => "text", Array => "text", Float => "number", Date => "date"}
+      data_mappings = { Integer => "number", String => "text", Array => "text", Float => "number", Date => "date" }
       exceptions = [ArgumentError, TypeError]
       data_types = col_names.map do |name|
         # TODO: this is a little hacky... should probably think about a better way or add a requirement for user input to match a certain criteria.
-        begin 
+        begin
           DateTime.parse(data[0][name]) ? data_mappings[Date] : nil
         rescue *exceptions
-          data_mappings[data[0][name].class] 
+          data_mappings[data[0][name].class]
         end
       end
 
@@ -403,18 +418,18 @@ module Utils
         end
       end
       return {
-        id: collection_id,
-        table: "collection",
-        path: [],
-        command: "update",
-        args: {
-          id: collection_id,
-          schema: schema_conf,
-          parent_id: new_block_id,
-          parent_table: "block",
-          alive: true,
-        },
-      }, data_types
+               id: collection_id,
+               table: "collection",
+               path: [],
+               command: "update",
+               args: {
+                 id: collection_id,
+                 schema: schema_conf,
+                 parent_id: new_block_id,
+                 parent_table: "block",
+                 alive: true,
+               },
+             }, data_types
     end
 
     def self.set_collection_title(collection_title, collection_id)
@@ -440,6 +455,11 @@ module Utils
       # ! column -> the name of the column to insert data into.
       # ! value -> the value to insert into the column.
       # ! mapping -> the column data type.
+      simple_mappings = ["title", "text", "phone_number", "email", "url", "number", "checkbox", "select", "multi_select"]
+      datetime_mappings = ["date"]
+      media_mappings = ["file"]
+      person_mappings = ["person"]
+
       table = "block"
       path = [
         "properties",
@@ -447,12 +467,47 @@ module Utils
       ]
       command = "set"
 
+      if simple_mappings.include?(mapping)
+        args = [[value]]
+      elsif media_mappings.include?(mapping)
+        args = [[value, [["a", value]]]]
+      elsif datetime_mappings.include?(mapping)
+        args = [["‣", [["d", { "type": "date", "start_date": value }]]]]
+      elsif person_mappings.include?(mapping)
+        args = [["‣",
+          [["u", value]]
+        ]]
+        else 
+          raise SchemaTypeError, "Invalid property type: #{mapping}"
+      end
+
       {
-        id: block_id,
         table: table,
-        path: path,
+        id: block_id,
         command: command,
-        args: mapping == "date" ? [["‣",[["d",{"type": "date","start_date": value}]]]] : [[value]],
+        path: path,
+        args: args,
+      }
+    end
+
+    def self.add_new_option(column, value, collection_id)
+      table = "collection"
+      path = ["schema", column, "options"]
+      command = "keyedObjectListAfter"
+      args = {
+        "value": {
+            "id": SecureRandom.hex(16),
+            "value": value,
+            "color": "green"
+        }
+      }
+
+      {
+        table: table,
+        id: collection_id,
+        command: command,
+        path: path,
+        args: args,
       }
     end
 
@@ -505,45 +560,45 @@ module Utils
       args["format"] = {
         "table_properties" => [
           {
-                  "property" => "title",
-                  "visible" => true,
-                  "width" => 280,
-                },
+            "property" => "title",
+            "visible" => true,
+            "width" => 280,
+          },
           {
-                  "property" => "aliases",
-                  "visible" => true,
-                  "width" => 200,
-                },
+            "property" => "aliases",
+            "visible" => true,
+            "width" => 200,
+          },
           {
-                  "property" => "category",
-                  "visible" => true,
-                  "width" => 200,
-                },
+            "property" => "category",
+            "visible" => true,
+            "width" => 200,
+          },
           {
-                  "property" => "description",
-                  "visible" => true,
-                  "width" => 200,
-                },
+            "property" => "description",
+            "visible" => true,
+            "width" => 200,
+          },
           {
-                  "property" => "ios_version",
-                  "visible" => true,
-                  "width" => 200,
-                },
+            "property" => "ios_version",
+            "visible" => true,
+            "width" => 200,
+          },
           {
-                  "property" => "tags",
-                  "visible" => true,
-                  "width" => 200,
-                },
-                {
+            "property" => "tags",
+            "visible" => true,
+            "width" => 200,
+          },
+          {
                   "property" => "phone",
                   "visible" => true,
                   "width" => 200,
                 },
           {
-                  "property" => "unicode_version",
-                  "visible" => true,
-                  "width" => 200,
-                }
+            "property" => "unicode_version",
+            "visible" => true,
+            "width" => 200,
+          },
         ],
       }
       {
@@ -563,11 +618,11 @@ module Utils
       table = "block"
       path = [
         "properties",
-        column_name
+        column_name,
       ]
       command = "set"
       args = [[
-        new_value
+        new_value,
       ]]
 
       {
@@ -575,8 +630,15 @@ module Utils
         table: table,
         path: path,
         command: command,
-        args: args
+        args: args,
       }
+    end
+  end
+
+  class SchemaTypeError < StandardError
+    def initialize(msg="Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type="schema_type")
+      @exception_type = exception_type
+      super(msg)
     end
   end
 
