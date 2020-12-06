@@ -61,7 +61,7 @@ module NotionAPI
       data.keys.each_with_index do |col_name, j|
         unless col_map.keys.include?(col_name.to_s); raise ArgumentError, "Column '#{col_name.to_s}' does not exist." end
         if %q[select multi_select].include?(schema[col_map[col_name.to_s]]["type"])
-          options = schema[col_map[col_name.to_s]]["options"].map {|option| option["value"]}
+          options = schema[col_map[col_name.to_s]]["options"].nil? ? [] : schema[col_map[col_name.to_s]]["options"].map {|option| option["value"]}
           if !options.include?(data[col_name])
             create_new_option = Utils::CollectionViewComponents.add_new_option(col_map[col_name.to_s], data[col_name], @collection_id)
             operations.push(create_new_option)
