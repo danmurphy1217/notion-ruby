@@ -35,7 +35,7 @@ module NotionAPI
       new_block_id = extract_id(SecureRandom.hex(16))
       collection_data = extract_collection_data(collection_id, view_id)
       last_row_id = collection_data["collection_view"][@view_id]["value"]["page_sort"][-1]
-      schema = collection_data['collection'][collection_id]['value']['schema']
+      schema = collection_data["collection"][collection_id]["value"]["schema"]
       keys = schema.keys
       col_map = {}
       keys.map { |key| col_map[schema[key]["name"]] = key }
@@ -55,16 +55,19 @@ module NotionAPI
         instantiate_row,
         set_block_alive,
         new_block_edited_time,
-        page_sort
+        page_sort,
       ]
 
       data.keys.each_with_index do |col_name, j|
         unless col_map.keys.include?(col_name.to_s); raise ArgumentError, "Column '#{col_name.to_s}' does not exist." end
         if %q[select multi_select].include?(schema[col_map[col_name.to_s]]["type"])
-          options = schema[col_map[col_name.to_s]]["options"].nil? ? [] : schema[col_map[col_name.to_s]]["options"].map {|option| option["value"]}
-          if !options.include?(data[col_name])
-            create_new_option = Utils::CollectionViewComponents.add_new_option(col_map[col_name.to_s], data[col_name], @collection_id)
-            operations.push(create_new_option)
+          options = schema[col_map[col_name.to_s]]["options"].nil? ? [] : schema[col_map[col_name.to_s]]["options"].map { |option| option["value"] }
+          multi_select_multi_options = data[col_name].split(",")
+          multi_select_multi_options.each do |option|
+            if !options.include?(option.strip)
+              create_new_option = Utils::CollectionViewComponents.add_new_option(col_map[col_name.to_s], option.strip, @collection_id)
+              operations.push(create_new_option)
+            end
           end
         end
         child_component = Utils::CollectionViewComponents.insert_data(new_block_id, col_map[col_name.to_s], data[col_name], schema[col_map[col_name.to_s]]["type"])
@@ -83,7 +86,18 @@ module NotionAPI
       unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
            Please try again, and if issues persist open an issue in GitHub.";       end
 
-      NotionAPI::CollectionViewRow.new(new_block_id, @parent_id, @collection_id, @view_id)
+      collection_row = NotionAPI::CollectionViewRow.new(new_block_id, @parent_id, @collection_id, @view_id)
+
+      properties = {}
+      data.keys.each do |col|
+        properties[col_map[col.to_s]] = [[data[col]]]
+      end
+
+      collection_data["block"][collection_row.id] = {"role"=>"editor", "value"=>{"id"=> collection_row.id, "version"=>12, "type"=>"page", "properties"=> properties, "created_time"=>1607253360000, "last_edited_time"=>1607253360000, "parent_id"=>"dde513c6-2428-4a5d-a830-7a67fdbf6b48", "parent_table"=>"collection", "alive"=>true, "created_by_table"=>"notion_user", "created_by_id"=>"0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "last_edited_by_table"=>"notion_user", "last_edited_by_id"=>"0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "shard_id"=>955090, "space_id"=>"f687f7de-7f4c-4a86-b109-941a8dae92d2"}}
+      row_data = collection_data["block"][collection_row.id]
+      create_singleton_methods_and_instance_variables(collection_row, row_data)
+
+      collection_row
     end
 
     def add_property(name, type)
@@ -214,6 +228,7 @@ module NotionAPI
       end
       clean_row_instances
     end
+
     def create_singleton_methods_and_instance_variables(row, row_data)
       # ! creates singleton methods for each property in a CollectionView.
       # ! row -> the block ID of the 'row' to retrieve: ``str``
@@ -223,7 +238,7 @@ module NotionAPI
       column_mappings = schema.keys
       column_hash = {}
       column_names = column_mappings.map { |mapping| column_hash[mapping] = schema[mapping]["name"].downcase }
-      
+
       column_hash.keys.each_with_index do |column, i|
         # loop over the column names...
         # set instance variables for each column, allowing the dev to 'read' the column value
@@ -233,12 +248,15 @@ module NotionAPI
         if row_data["value"]["properties"].nil? or row_data["value"]["properties"][column].nil?
           value = ""
         else
-          value = row_data["value"]["properties"][column][0][0]  
+          value = row_data["value"]["properties"][column][0][0]
+          if ["‣"].include?(value.to_s)
+            value = row_data["value"]["properties"][column][0][1].flatten[-1]
+          end
         end
 
         row.instance_variable_set("@#{cleaned_column}", value)
         CollectionViewRow.class_eval { attr_reader cleaned_column }
-        # then, define singleton methods for each column that are used to update the table cell 
+        # then, define singleton methods for each column that are used to update the table cell
         row.define_singleton_method("#{cleaned_column}=") do |new_value|
           # neat way to get the name of the currently invoked method...
           parsed_method = __method__.to_s[0...-1].split("_").join(" ")
@@ -270,8 +288,8 @@ module NotionAPI
             headers: headers,
           )
           unless response.code == 200; raise "There was an issue completing your request. Here is the response from Notion: #{response.body}, and here is the payload that was sent: #{operations}.
-               Please try again, and if issues persist open an issue in GitHub.";end
-          
+               Please try again, and if issues persist open an issue in GitHub.";           end
+
           # set the instance variable to the updated value!
           _ = row.instance_variable_set("@#{__method__.to_s[0...-1]}", new_value)
           row
