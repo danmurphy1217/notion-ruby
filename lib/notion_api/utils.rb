@@ -491,8 +491,6 @@ module Utils
     end
 
     def self.add_new_option(column, value, collection_id)
-      colors = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"]
-      random_color = colors[rand(0...colors.length)]
       table = "collection"
       path = ["schema", column, "options"]
       command = "keyedObjectListAfter"
@@ -500,7 +498,7 @@ module Utils
         "value": {
             "id": SecureRandom.hex(16),
             "value": value,
-            "color": random_color
+            "color": "green"
         }
       }
 
