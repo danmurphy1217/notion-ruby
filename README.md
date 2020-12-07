@@ -310,8 +310,12 @@ From here, you can instantiate the Notion Client with the following code:
 )
 ```
 ### Retrieve a full-page Collection View
-Currently, either a "normal" Page URL or the Page Block ID is accepted to the `get_page` method. Therefore, if you pass the full URL to the CV Table, it will raise an error:
-```text
-the URL or ID passed to the get_page method must be that of a Page Block.
+A full-page collection view must have a URL that follows the below pattern:
+https://www.notion.so/danmurphy/[page-id]?v=[view-id]
+Then, it can be retrieved with the following code:
+```ruby
+>>> @client = NotionAPI::Client.new(
+  "<insert_v2_token_here>"
+)
+>>> @client.get_page(https://www.notion.so/danmurphy/[page-id]?v=[view-id])
 ```
-To avoid this, you must pass only the ID of the full-page collection-view to the `get_page` method. This is next up on the features list, so passing the full URL will be supported soon:smile:
