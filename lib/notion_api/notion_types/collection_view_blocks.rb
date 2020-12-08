@@ -262,7 +262,9 @@ module NotionAPI
           parsed_method = __method__.to_s[0...-1].split("_").join(" ")
           cookies = Core.options["cookies"]
           headers = Core.options["headers"]
-
+          
+          p new_value, column_hash.key(parsed_method), column_names, schema
+          
           request_id = extract_id(SecureRandom.hex(16))
           transaction_id = extract_id(SecureRandom.hex(16))
           space_id = extract_id(SecureRandom.hex(16))
@@ -273,11 +275,23 @@ module NotionAPI
             space_id: space_id,
           }
 
-          update_property_value = Utils::CollectionViewComponents.update_property_value(@id, column_hash.key(parsed_method), new_value)
+          update_property_value_hash = Utils::CollectionViewComponents.update_property_value(@id, column_hash.key(parsed_method), new_value)
 
           operations = [
-            update_property_value,
+            update_property_value_hash,
           ]
+
+          if %q[select multi_select].include?(schema[column_hash.key(parsed_method)]["type"])
+            p "ENTERED THE ABYSS"
+            options = schema[column_hash.key(parsed_method)]["options"].nil? ? [] : schema[column_hash.key(parsed_method)]["options"].map { |option| option["value"] }
+            multi_select_multi_options = new_value.split(",")
+            multi_select_multi_options.each do |option|
+              if !options.include?(option.strip)
+                create_new_option = Utils::CollectionViewComponents.add_new_option(column_hash.key(parsed_method), option.strip, @collection_id)
+                operations.push(create_new_option)
+              end
+            end
+          end
 
           request_url = URLS[:UPDATE_BLOCK]
           request_body = build_payload(operations, request_ids)

@@ -494,11 +494,14 @@ module Utils
       table = "collection"
       path = ["schema", column, "options"]
       command = "keyedObjectListAfter"
+      colors = ["default", "gray", "brown", "orange", "yellow", "green", "blue", "purple", "pink", "red"]
+      random_color = colors[rand(0...colors.length)]
+
       args = {
         "value": {
             "id": SecureRandom.hex(16),
             "value": value,
-            "color": "green"
+            "color": random_color
         }
       }
 
