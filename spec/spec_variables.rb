@@ -54,5 +54,7 @@ module Helpers
     $Block_spec_get_collection_id = "3224c94f-e660-4092-9dba-d26b69b68d40"
     $Block_spec_add_row_id = "eaa144ab-d91b-4640-b13a-a0ba1c8dd450"
     $Vehicle_data_csv = File.read("./spec/fixtures/vauto_inventory.csv")
+    $Full_page_cv_url = "https://www.notion.so/danmurphy/3a8c0397841748b08da76f188b7fb381?v=a68811a8c18b433b9787b17dcd83527e"
+    $Full_page_cv = $Client.get_page($Full_page_cv_url)
     $Json = JSON.parse(File.read("./spec/fixtures/emoji_data.json"))
 end

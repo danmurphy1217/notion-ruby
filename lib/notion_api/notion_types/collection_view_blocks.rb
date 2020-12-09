@@ -93,7 +93,7 @@ module NotionAPI
         properties[col_map[col.to_s]] = [[data[col]]]
       end
 
-      collection_data["block"][collection_row.id] = {"role"=>"editor", "value"=>{"id"=> collection_row.id, "version"=>12, "type"=>"page", "properties"=> properties, "created_time"=>1607253360000, "last_edited_time"=>1607253360000, "parent_id"=>"dde513c6-2428-4a5d-a830-7a67fdbf6b48", "parent_table"=>"collection", "alive"=>true, "created_by_table"=>"notion_user", "created_by_id"=>"0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "last_edited_by_table"=>"notion_user", "last_edited_by_id"=>"0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "shard_id"=>955090, "space_id"=>"f687f7de-7f4c-4a86-b109-941a8dae92d2"}}
+      collection_data["block"][collection_row.id] = { "role" => "editor", "value" => { "id" => collection_row.id, "version" => 12, "type" => "page", "properties" => properties, "created_time" => 1607253360000, "last_edited_time" => 1607253360000, "parent_id" => "dde513c6-2428-4a5d-a830-7a67fdbf6b48", "parent_table" => "collection", "alive" => true, "created_by_table" => "notion_user", "created_by_id" => "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "last_edited_by_table" => "notion_user", "last_edited_by_id" => "0c5f02f3-495d-4b73-b1c5-9f6fe03a8c26", "shard_id" => 955090, "space_id" => "f687f7de-7f4c-4a86-b109-941a8dae92d2" } }
       row_data = collection_data["block"][collection_row.id]
       create_singleton_methods_and_instance_variables(collection_row, row_data)
 
@@ -242,7 +242,7 @@ module NotionAPI
       column_hash.keys.each_with_index do |column, i|
         # loop over the column names...
         # set instance variables for each column, allowing the dev to 'read' the column value
-        cleaned_column = column_hash[column].split(" ").join("_").downcase.to_sym
+        cleaned_column = clean_property_names(column_hash, column)
 
         # p row_data["value"]["properties"][column_mappings[i]], !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]])
         if row_data["value"]["properties"].nil? or row_data["value"]["properties"][column].nil?
@@ -262,9 +262,7 @@ module NotionAPI
           parsed_method = __method__.to_s[0...-1].split("_").join(" ")
           cookies = Core.options["cookies"]
           headers = Core.options["headers"]
-          
-          p new_value, column_hash.key(parsed_method), column_names, schema
-          
+
           request_id = extract_id(SecureRandom.hex(16))
           transaction_id = extract_id(SecureRandom.hex(16))
           space_id = extract_id(SecureRandom.hex(16))
@@ -282,7 +280,6 @@ module NotionAPI
           ]
 
           if %q[select multi_select].include?(schema[column_hash.key(parsed_method)]["type"])
-            p "ENTERED THE ABYSS"
             options = schema[column_hash.key(parsed_method)]["options"].nil? ? [] : schema[column_hash.key(parsed_method)]["options"].map { |option| option["value"] }
             multi_select_multi_options = new_value.split(",")
             multi_select_multi_options.each do |option|
@@ -309,6 +306,15 @@ module NotionAPI
           row
         end
       end
+    end
+
+    def clean_property_names(prop_hash, prop_notion_name)
+      # ! standardize property names by splitting the words in the property name into an array, removing non-alphanumeric
+      # ! characters, downcasing, and then re-joining the array with underscores.
+      # ! prop_hash -> hash of property notion names  and property textual names: ``str``
+      # ! prop_notion_name -> the four-character long name of the notion property: ``str``
+
+      prop_hash[prop_notion_name].split(" ").map { |word| word.gsub(/[^a-z0-9]/i, "").downcase }.join("_").to_sym
     end
   end
 
