@@ -146,5 +146,16 @@ describe NotionAPI::BlockTemplate do
       end
     end
   end
+  context "cleaning the property names of a Notion Collection View." do
+    it "FULL_PAGE: should parse the column name, replace non-alphanumeric characters, and then return the cleaned column name" do
+      test_prop_hash = {"1234"=> "Col Name (one) (two) 1234?!>"}
+      expect($Full_page_cv.clean_property_names(test_prop_hash, "1234")).to eq(:col_name_one_two_1234)
+    end
+    it "INLINE: should parse the column name, replace non-alphanumeric characters, and thenr eturn the cleaned column name" do 
+      inline_cv = $Block_spec_page.get_collection("3224c94f-e660-4092-9dba-d26b69b68d40")
+      test_prop_hash = {"1234"=> "Col Name (#$^&^^*one) (@!#$!two) 1!@#2$%@3!@#@?4!>"}
+      expect(inline_cv.clean_property_names(test_prop_hash, "1234")).to eq(:col_name_one_two_1234)
+    end
+  end
 end
 
