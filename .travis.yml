@@ -10,7 +10,7 @@ branches:
   - master
   - "/^deploy-.*$/"
 before_install:
-- gem install bundler
+- gem install bundle
 - rvm list known
 install: bundle install
 script: rspec spec
