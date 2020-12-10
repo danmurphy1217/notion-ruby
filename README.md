@@ -317,5 +317,5 @@ Then, it can be retrieved with the following code:
 >>> @client = NotionAPI::Client.new(
   "<insert_v2_token_here>"
 )
->>> @client.get_page(https://www.notion.so/danmurphy/[page-id]?v=[view-id])
+>>> @client.get_page("https://www.notion.so/danmurphy/[page-id]?v=[view-id]")
 ```
