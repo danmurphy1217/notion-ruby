@@ -273,7 +273,7 @@ module NotionAPI
             space_id: space_id,
           }
 
-          update_property_value_hash = Utils::CollectionViewComponents.update_property_value(@id, column_hash.key(parsed_method), new_value)
+          update_property_value_hash = Utils::CollectionViewComponents.update_property_value(@id, column_hash.key(parsed_method), new_value, schema[column_hash.key(parsed_method)]["type"])
 
           operations = [
             update_property_value_hash,
