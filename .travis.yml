@@ -1,5 +1,4 @@
 language: ruby
-cache: bundler
 dist: bionic
 rvm:
 # using .filter, so must be >= 2.6... will update to be .select later...

@@ -224,14 +224,14 @@ module Utils
         "table": "collection_view",
         "id": view_id,
         "path": [
-            "page_sort"
+          "page_sort",
         ],
         "command": "listAfter",
         "args": {
-            "after": last_row_id,
-            "id": block_id
-        }
-    }
+          "after": last_row_id,
+          "id": block_id,
+        },
+      }
     end
 
     def self.block_location_remove(block_parent_id, block_id)
@@ -459,6 +459,7 @@ module Utils
       datetime_mappings = ["date"]
       media_mappings = ["file"]
       person_mappings = ["person"]
+      page_mappings = ["relation"]
 
       table = "block"
       path = [
@@ -475,10 +476,12 @@ module Utils
         args = [["‣", [["d", { "type": "date", "start_date": value }]]]]
       elsif person_mappings.include?(mapping)
         args = [["‣",
-          [["u", value]]
-        ]]
-        else 
-          raise SchemaTypeError, "Invalid property type: #{mapping}"
+                 [["u", value]]]]
+      elsif page_mappings.include?(mapping)
+        args = [["‣",
+                 [["p", value]]]]
+      else
+        raise SchemaTypeError, "Invalid property type: #{mapping}"
       end
 
       {
@@ -499,10 +502,10 @@ module Utils
 
       args = {
         "value": {
-            "id": SecureRandom.hex(16),
-            "value": value,
-            "color": random_color
-        }
+          "id": SecureRandom.hex(16),
+          "value": value,
+          "color": random_color,
+        },
       }
 
       {
@@ -593,10 +596,10 @@ module Utils
             "width" => 200,
           },
           {
-                  "property" => "phone",
-                  "visible" => true,
-                  "width" => 200,
-                },
+            "property" => "phone",
+            "visible" => true,
+            "width" => 200,
+          },
           {
             "property" => "unicode_version",
             "visible" => true,
@@ -613,20 +616,28 @@ module Utils
       }
     end
 
-    def self.update_property_value(page_id, column_name, new_value)
+    def self.update_property_value(page_id, column_name, new_value, column_type)
       # ! update the specified column_name to new_value
       # ! page_id -> the ID of the page: ``str``
       # ! column_name -> the name of the column ["property"] to update: ``str``
       # ! new_value -> the new value to assign to that column ["property"]: ``str``
+      # ! column_type -> the type of the property: ``str``
       table = "block"
       path = [
         "properties",
         column_name,
       ]
       command = "set"
-      args = [[
-        new_value,
-      ]]
+
+      if column_type == "relation"
+        args = [["‣", [[
+          "p", new_value,
+        ]]]]
+      else
+        args = [[
+          new_value,
+        ]]
+      end
 
       {
         id: page_id,
@@ -639,7 +650,7 @@ module Utils
   end
 
   class SchemaTypeError < StandardError
-    def initialize(msg="Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type="schema_type")
+    def initialize(msg = "Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type = "schema_type")
       @exception_type = exception_type
       super(msg)
     end
