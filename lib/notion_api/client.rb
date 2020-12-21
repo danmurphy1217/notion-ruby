@@ -15,3 +15,9 @@ module NotionAPI
     end
   end
 end
+
+
+@client = NotionAPI::Client.new(ENV['token_v2'])
+
+@page = @client.get_page("https://www.notion.so/danmurphy/tutorials-69d5c69d287f402c9ea28934f890adc1")
+@page.create(NotionAPI::ImageBlock, "Title", options: {"url" => "HI"})

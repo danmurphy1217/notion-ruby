@@ -11,6 +11,27 @@ module Utils
   class BlockComponents
     # ! Each function defined here builds one component that is included in each request sent to Notions backend.
     # ! Each request sent will contain multiple components.
+    # TODO figure this out
+    def self.build_payload(operations, request_ids)
+      # ! properly formats the payload for Notions backend.
+      # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
+      # ! request_ids -> the unique IDs for the request : ``str``
+      request_id = request_ids[:request_id]
+      transaction_id = request_ids[:transaction_id]
+      space_id = request_ids[:space_id]
+      payload = {
+        requestId: request_id,
+        transactions: [
+          {
+            id: transaction_id,
+            shardId: 955_090,
+            spaceId: space_id,
+            operations: operations,
+          },
+        ],
+      }
+      payload
+    end
     def self.create(block_id, block_type)
       # ! payload for creating a block.
       # ! block_id -> id of the new block : ``str``
@@ -656,7 +677,7 @@ module Utils
     end
   end
 
-  def build_payload(operations, request_ids)
+  def self.build_payload(operations, request_ids)
     # ! properly formats the payload for Notions backend.
     # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
     # ! request_ids -> the unique IDs for the request : ``str``
