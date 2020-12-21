@@ -232,7 +232,6 @@ module NotionAPI
       # TODO: try chopping off the self.create here.... so anything below this is done in the class method as opposed to the instance.
       # then, the operations can be handled differently for different methods!
 
-      p options
       block_type.create(@id, new_block_id, block_title, target, position_command, request_ids, options)
     end
 
