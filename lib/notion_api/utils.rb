@@ -317,6 +317,38 @@ module Utils
         command: "set", "args": icon,
       }
     end
+    def self.source(new_block_id, url)
+      table = "block"
+      path = ["properties"]
+      command = "update"
+
+      {
+        id: new_block_id,
+        table: table,
+        path: path,
+        command: command,
+        args: {
+          source: [[
+            url,
+          ]],
+        },
+      }
+    end
+
+    def self.display_source(new_block_id, block_url)
+
+      {
+        "id": new_block_id,
+        "table": "block",
+        "path": [
+            "format"
+        ],
+        "command": "update",
+        "args": {
+            "display_source": block_url
+        }
+    }
+    end
   end
 
   class CollectionViewComponents

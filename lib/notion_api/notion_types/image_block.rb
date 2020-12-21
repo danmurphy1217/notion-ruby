@@ -14,7 +14,7 @@ module NotionAPI
     end
 
     def self.create(block_id, new_block_id, block_title, target, position_command, request_ids, options)
-      if !(options["url"] || options[:url])
+      if !(options["url"] || options[:url]) || (block_title.match(/^http:\/\/|^https:\/\//))
         raise ArgumentError, "Must specify URL Key as an option."
       end
       cookies = Core.options["cookies"]
@@ -26,6 +26,8 @@ module NotionAPI
       last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(block_id)
       last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(block_id)
       title_hash = Utils::BlockComponents.title(new_block_id, block_title)
+      source_url_hash = Utils::BlockComponents.source(new_block_id, options[:url])
+      display_source_url_hash = Utils::BlockComponents.display_source(new_block_id, options[:url])
 
       operations = [
         create_hash,
@@ -34,6 +36,8 @@ module NotionAPI
         last_edited_time_parent_hash,
         last_edited_time_child_hash,
         title_hash,
+        source_url_hash,
+        display_source_url_hash
       ]
 
       request_url = URLS[:UPDATE_BLOCK]
