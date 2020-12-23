@@ -316,6 +316,14 @@ module NotionAPI
 
       prop_hash[prop_notion_name].split(" ").map { |word| word.gsub(/[^a-z0-9]/i, "").downcase }.join("_").to_sym
     end
+
+    def self.extract_collection_view_column_names(schema)
+      # ! extract the column names of a Collection View
+      # ! schema: the schema of the collection view
+      column_mappings = column_mappings = schema.keys
+      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
+      column_names
+    end
   end
 
   # class that represents each row in a CollectionView

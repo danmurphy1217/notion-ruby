@@ -301,7 +301,10 @@ module NotionAPI
       response["recordMap"]
     end
 
-    def retrieve_page_information(page_meta = {})
+    def extract_page_information(page_meta = {})
+      # ! helper method for extracting information about a page block
+      # ! page_meta -> hash containing data points useful for the extraction of a page blocks information.
+      # !           This should include clean_id, jsonified_record_response, and parent_id
       clean_id = page_meta.fetch(:clean_id)
       jsonified_record_response = page_meta.fetch(:jsonified_record_response)
       block_parent_id = page_meta.fetch(:parent_id)
@@ -310,7 +313,10 @@ module NotionAPI
       PageBlock.new(clean_id, block_title, block_parent_id)
     end
 
-    def retrieve_collection_view_page_information(page_meta = {})
+    def extract_collection_view_page_information(page_meta = {})
+      # ! helper method for extracting information about a Collection View page block
+      # ! page_meta -> hash containing data points useful for the extraction of a page blocks information.
+      # !           This should include clean_id, jsonified_record_response, and parent_id
       clean_id = page_meta.fetch(:clean_id)
       jsonified_record_response = page_meta.fetch(:jsonified_record_response)
       block_parent_id = page_meta.fetch(:parent_id)
@@ -319,8 +325,7 @@ module NotionAPI
       block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
       view_id = extract_view_ids(clean_id, jsonified_record_response)[0]
       schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
-      column_mappings = schema.keys
-      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
+      column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
 
       collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id)
       collection_view_page.instance_variable_set(:@column_names, column_names)
@@ -330,8 +335,8 @@ module NotionAPI
 
     def instantiated_instance(block_type, clean_id, parent_id, jsonified_record_response)
       case block_type
-      when "page" then retrieve_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
-      when "collection_view_page" then retrieve_collection_view_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
+      when "page" then extract_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
+      when "collection_view_page" then extract_collection_view_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
       end
     end
   end
