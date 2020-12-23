@@ -46,24 +46,7 @@ module NotionAPI
 
       raise ArgumentError, "the URL or ID passed to the get_page method must be that of a Page Block." if !["collection_view_page", "page"].include?(block_type)
 
-      instantiated_instance(block_type, clean_id, block_parent_id, jsonified_record_response)
-
-      # if block_type == "page"
-      #   block_title = extract_title(clean_id, jsonified_record_response)
-      #   PageBlock.new(clean_id, block_title, block_parent_id)
-      # elsif block_type == "collection_view_page"
-      #   collection_id = extract_collection_id(clean_id, jsonified_record_response)
-      #   block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
-      #   view_id = extract_view_ids(clean_id, jsonified_record_response)[0]
-      #   schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
-      #   column_mappings = schema.keys
-      #   column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
-
-      #   collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id)
-      #   collection_view_page.instance_variable_set(:@column_names, column_names)
-      #   CollectionView.class_eval { attr_reader :column_names }
-      #   collection_view_page
-      # end
+      get_instantiated_instance_for(block_type, clean_id, block_parent_id, jsonified_record_response)
     end
 
     def children(url_or_id = @id)
@@ -333,7 +316,7 @@ module NotionAPI
       collection_view_page
     end
 
-    def instantiated_instance(block_type, clean_id, parent_id, jsonified_record_response)
+    def get_instantiated_instance_for(block_type, clean_id, parent_id, jsonified_record_response)
       case block_type
       when "page" then extract_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
       when "collection_view_page" then extract_collection_view_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
