@@ -310,7 +310,11 @@ module NotionAPI
       PageBlock.new(clean_id, block_title, block_parent_id)
     end
 
-    def retrieve_collection_view_page_information(**kwargs)
+    def retrieve_collection_view_page_information(page_meta = {})
+      clean_id = page_meta.fetch(:clean_id)
+      jsonified_record_response = page_meta.fetch(:jsonified_record_response)
+      block_parent_id = page_meta.fetch(:parent_id)
+
       collection_id = extract_collection_id(clean_id, jsonified_record_response)
       block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
       view_id = extract_view_ids(clean_id, jsonified_record_response)[0]
