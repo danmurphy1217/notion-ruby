@@ -709,7 +709,7 @@ module Utils
     end
   end
 
-  def self.build_payload(operations, request_ids)
+  def build_payload(operations, request_ids)
     # ! properly formats the payload for Notions backend.
     # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
     # ! request_ids -> the unique IDs for the request : ``str``

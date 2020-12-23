@@ -46,7 +46,7 @@ module NotionAPI
           space_id: space_id,
         }
 
-        # build hash's that contain the operations to send to Notions backend
+        # build hash's that contain the operations to send to Notion
         convert_type_hash = Utils::BlockComponents.convert_type(@id, block_class_to_convert_to)
         last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
         last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
@@ -229,8 +229,6 @@ module NotionAPI
         transaction_id: transaction_id,
         space_id: space_id,
       }
-      # TODO: try chopping off the self.create here.... so anything below this is done in the class method as opposed to the instance.
-      # then, the operations can be handled differently for different methods!
 
       block_type.create(@id, new_block_id, block_title, target, position_command, request_ids, options)
     end
@@ -238,7 +236,6 @@ module NotionAPI
     private
 
     def self.create(block_id, new_block_id, block_title, target, position_command, request_ids, options)
-      # TODO -> modularize this into create methods that override based on the class thats called
       blocks_with_emojis = [NotionAPI::PageBlock, NotionAPI::CalloutBlock]
       cookies = Core.options["cookies"]
       headers = Core.options["headers"]
@@ -291,12 +288,12 @@ module NotionAPI
         limit: 100,
         verticalColumns: false,
       }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
+      jsonified_record_response = get_all_block_info(request_body)
       i = 0
       while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
         return {} if i >= 10
 
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
+        jsonified_record_response = get_all_block_info(request_body)
         i += 1
       end
       block_type = extract_type(clean_id, jsonified_record_response)

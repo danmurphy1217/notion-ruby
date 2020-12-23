@@ -13,9 +13,11 @@ module NotionAPI
       attr_reader :notion_type, :type
     end
 
+    private
+
     def self.create(block_id, new_block_id, block_title, target, position_command, request_ids, options)
       if !(options[:image])
-        raise ArgumentError, "Must specify image Key as an option."
+        raise ArgumentError, "Must specify image as an option. For example: {image: \"https://image-domain.com\"}"
       else
         cookies = Core.options["cookies"]
         headers = Core.options["headers"]
@@ -54,7 +56,7 @@ module NotionAPI
 
           self.new(new_block_id, block_title, block_id)
           else
-            raise ArgumentError, "Currently, images can only be created through a public URL."
+            raise ArgumentError, "Currently, images can only be created through a public image URL."
         end
       end
     end

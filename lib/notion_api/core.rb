@@ -17,8 +17,8 @@ module NotionAPI
     attr_reader :clean_id, :cookies, :headers
 
     def initialize(token_v2, active_user_header)
-      @token_v2 = token_v2
-      @active_user_header = active_user_header
+      @@token_v2 = token_v2
+      @@active_user_header = active_user_header
     end
 
     def get_page(url_or_id)
@@ -32,14 +32,7 @@ module NotionAPI
         limit: 100,
         verticalColumns: false,
       }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
-        i += 1
-      end
+      jsonified_record_response = get_all_block_info(request_body)
 
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
@@ -73,14 +66,7 @@ module NotionAPI
         limit: 100,
         verticalColumns: false,
       }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
-        i += 1
-      end
+      jsonified_record_response = get_all_block_info(request_body)
 
       jsonified_record_response["block"][clean_id]["value"]["content"] || []
     end
@@ -90,8 +76,8 @@ module NotionAPI
     def get_notion_id(body)
       # ! retrieves a users ID from the headers of a Notion response object.
       # ! body -> the body to send in the request : ``Hash``
-      Core.options["cookies"][:token_v2] = @token_v2
-      Core.options["headers"]["x-notion-active-user-header"] = @active_user_header
+      Core.options["cookies"][:token_v2] = @@token_v2
+      Core.options["headers"]["x-notion-active-user-header"] = @@active_user_header
       cookies = Core.options["cookies"]
       headers = Core.options["headers"]
       request_url = URLS[:GET_BLOCK]
@@ -118,14 +104,8 @@ module NotionAPI
         limit: 100,
         verticalColumns: false,
       }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty?
-        return { :properties => { title: [[block_title]] }, :format => {} } if i >= 10
-
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
-        i += 1
-      end
+      jsonified_record_response = get_all_block_info(request_body)
+      
       properties = jsonified_record_response["block"][clean_id]["value"]["properties"]
       formats = jsonified_record_response["block"][clean_id]["value"]["format"]
       return {
@@ -134,14 +114,13 @@ module NotionAPI
              }
     end
 
-    def get_all_block_info(_clean_id, body)
+    def get_all_block_info(body, i=0)
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
-      Core.options["cookies"][:token_v2] = @token_v2
-      Core.options["headers"]["x-notion-active-user-header"] = @active_user_header
+      Core.options["cookies"][:token_v2] = @@token_v2
+      Core.options["headers"]["x-notion-active-user-header"] = @@active_user_header
       cookies = Core.options["cookies"]
       headers = Core.options["headers"]
-
       request_url = URLS[:GET_BLOCK]
 
       response = HTTParty.post(
@@ -151,7 +130,21 @@ module NotionAPI
         headers: headers,
       )
 
-      JSON.parse(response.body)["recordMap"]
+      jsonified_record_response = JSON.parse(response.body)["recordMap"]
+      response_invalid = (!jsonified_record_response || jsonified_record_response.empty? || jsonified_record_response["block"].empty?)
+      
+      if i <10 && response_invalid
+        i = i + 1
+        return get_all_block_info(body, i)
+      else
+        if i == 10 && response_invalid
+          raise InvalidClientInstantiationError, "Attempted to retrieve block 10 times and received an empty response each time. \
+          Please make sure you have a valid token_v2 value set. If you do, then try setting the 'active_user_header' variable as well."
+        else
+          return jsonified_record_response
+        end
+
+      end
     end
 
     def filter_nil_blocks(jsonified_record_response)
@@ -320,6 +313,13 @@ module NotionAPI
       case block_type
       when "page" then extract_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
       when "collection_view_page" then extract_collection_view_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
+      end
+    end
+
+    class InvalidClientInstantiationError < StandardError
+      def initialize(msg = "Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type = "schema_type")
+        @exception_type = exception_type
+        super(msg)
       end
     end
   end
