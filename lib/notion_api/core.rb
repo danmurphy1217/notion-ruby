@@ -139,8 +139,7 @@ module NotionAPI
         return get_all_block_info(body, i)
       else
         if i == 10 && response_invalid
-          raise InvalidClientInstantiationError, "Attempted to retrieve block 10 times and received an empty response each time. \
-          Please make sure you have a valid token_v2 value set. If you do, then try setting the 'active_user_header' variable as well."
+          raise InvalidClientInstantiationError, "Attempted to retrieve block 10 times and received an empty response each time. Please make sure you have a valid token_v2 value set. If you do, then try setting the 'active_user_header' variable as well."
         else
           return jsonified_record_response
         end
@@ -317,7 +316,7 @@ module NotionAPI
     end
 
     class InvalidClientInstantiationError < StandardError
-      def initialize(msg = "Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type = "schema_type")
+      def initialize(msg = "Custom exception that is raised when an invalid property type is passed as a mapping.", exception_type = "instantiation_type")
         @exception_type = exception_type
         super(msg)
       end
