@@ -68,6 +68,7 @@ module NotionAPI
       }
       jsonified_record_response = get_all_block_info(request_body)
 
+      # if no content, returns empty list
       jsonified_record_response["block"][clean_id]["value"]["content"] || []
     end
 
@@ -105,7 +106,7 @@ module NotionAPI
         verticalColumns: false,
       }
       jsonified_record_response = get_all_block_info(request_body)
-      
+
       properties = jsonified_record_response["block"][clean_id]["value"]["properties"]
       formats = jsonified_record_response["block"][clean_id]["value"]["format"]
       return {
@@ -114,7 +115,7 @@ module NotionAPI
              }
     end
 
-    def get_all_block_info(body, i=0)
+    def get_all_block_info(body, i = 0)
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
       Core.options["cookies"][:token_v2] = @@token_v2
@@ -132,8 +133,8 @@ module NotionAPI
 
       jsonified_record_response = JSON.parse(response.body)["recordMap"]
       response_invalid = (!jsonified_record_response || jsonified_record_response.empty? || jsonified_record_response["block"].empty?)
-      
-      if i <10 && response_invalid
+
+      if i < 10 && response_invalid
         i = i + 1
         return get_all_block_info(body, i)
       else
@@ -143,7 +144,6 @@ module NotionAPI
         else
           return jsonified_record_response
         end
-
       end
     end
 

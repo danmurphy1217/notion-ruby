@@ -160,14 +160,6 @@ module NotionAPI
       }
       jsonified_record_response = get_all_block_info(request_body)
 
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(request_body)
-        i += 1
-      end
-
       collection_data = extract_collection_data(@collection_id, @view_id)
       schema = collection_data["collection"][collection_id]["value"]["schema"]
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
@@ -194,13 +186,6 @@ module NotionAPI
       }
 
       jsonified_record_response = get_all_block_info(request_body)
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(request_body)
-        i += 1
-      end
 
       jsonified_record_response["collection_view"][@view_id]["value"]["page_sort"]
     end

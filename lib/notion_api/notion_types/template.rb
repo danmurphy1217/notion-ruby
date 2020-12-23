@@ -289,13 +289,7 @@ module NotionAPI
         verticalColumns: false,
       }
       jsonified_record_response = get_all_block_info(request_body)
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
 
-        jsonified_record_response = get_all_block_info(request_body)
-        i += 1
-      end
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
