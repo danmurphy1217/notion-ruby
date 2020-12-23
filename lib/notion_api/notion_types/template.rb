@@ -297,7 +297,7 @@ module NotionAPI
         {}
       else
         block_class = NotionAPI.const_get(BLOCK_TYPES[block_type].to_s)
-        if block_class == NotionAPI::CollectionView
+        if [NotionAPI::CollectionView,  NotionAPI::CollectionViewPage].include?(block_class)
           block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
           block_view_id = extract_view_ids(clean_id, jsonified_record_response)
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)
