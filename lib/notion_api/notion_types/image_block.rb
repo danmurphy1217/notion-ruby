@@ -14,12 +14,12 @@ module NotionAPI
     end
 
     def self.create(block_id, new_block_id, block_title, target, position_command, request_ids, options)
-      if !(options[:url])
-        raise ArgumentError, "Must specify URL Key as an option."
+      if !(options[:image])
+        raise ArgumentError, "Must specify image Key as an option."
       else
         cookies = Core.options["cookies"]
         headers = Core.options["headers"]
-        if options[:url].match(/^http:\/\/|^https:\/\//)
+        if options[:image].match(/^http:\/\/|^https:\/\//)
 
           create_hash = Utils::BlockComponents.create(new_block_id, self.notion_type)
           set_parent_alive_hash = Utils::BlockComponents.set_parent_to_alive(block_id, new_block_id)
@@ -27,8 +27,8 @@ module NotionAPI
           last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(block_id)
           last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(block_id)
           title_hash = Utils::BlockComponents.title(new_block_id, block_title)
-          source_url_hash = Utils::BlockComponents.source(new_block_id, options[:url])
-          display_source_url_hash = Utils::BlockComponents.display_source(new_block_id, options[:url])
+          source_url_hash = Utils::BlockComponents.source(new_block_id, options[:image])
+          display_source_url_hash = Utils::BlockComponents.display_source(new_block_id, options[:image])
 
           operations = [
             create_hash,
@@ -53,18 +53,8 @@ module NotionAPI
               Please try again, and if issues persist open an issue in GitHub.";           end
 
           self.new(new_block_id, block_title, block_id)
-        elsif File.exist?(options[:url])
-          file_name = options[:url].split("/")[-1]
-          unformatted_content_type = file_name.split(".")[-1]
-          formatted_content_type = "image/#{unformatted_content_type}"
-          bucket = "secure"
-
-          p HTTParty.post(
-            "https://www.notion.so/api/v3/getUploadFileUrl",
-            body: {bucket: bucket, name: file_name, contentType: formatted_content_type}.to_json,
-            cookies: cookies,
-            headers: headers,
-          ).parsed_response["url"]
+          else
+            raise ArgumentError, "Currently, images can only be created through a public URL."
         end
       end
     end
