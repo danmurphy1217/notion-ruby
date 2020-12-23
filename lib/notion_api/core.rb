@@ -17,8 +17,8 @@ module NotionAPI
     attr_reader :clean_id, :cookies, :headers
 
     def initialize(token_v2, active_user_header)
-      @@token_v2 = token_v2
-      @@active_user_header = active_user_header
+      @token_v2 = token_v2
+      @active_user_header = active_user_header
     end
 
     def get_page(url_or_id)
@@ -41,7 +41,6 @@ module NotionAPI
         i += 1
       end
 
-      block_id = clean_id
       block_type = extract_type(clean_id, jsonified_record_response)
       block_parent_id = extract_parent_id(clean_id, jsonified_record_response)
 
@@ -49,16 +48,16 @@ module NotionAPI
 
       if block_type == "page"
         block_title = extract_title(clean_id, jsonified_record_response)
-        PageBlock.new(block_id, block_title, block_parent_id)
+        PageBlock.new(clean_id, block_title, block_parent_id)
       elsif block_type == "collection_view_page"
-        collection_id = extract_collection_id(block_id, jsonified_record_response)
+        collection_id = extract_collection_id(clean_id, jsonified_record_response)
         block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
-        view_id = extract_view_ids(block_id, jsonified_record_response)[0]
+        view_id = extract_view_ids(clean_id, jsonified_record_response)[0]
         schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
         column_mappings = schema.keys
         column_names = column_mappings.map { |mapping| schema[mapping]['name']}
 
-        collection_view_page = CollectionViewPage.new(block_id, block_title, block_parent_id, collection_id, view_id)
+        collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id)
         collection_view_page.instance_variable_set(:@column_names, column_names)
         CollectionView.class_eval{attr_reader :column_names}
         collection_view_page
@@ -106,8 +105,8 @@ module NotionAPI
     def get_notion_id(body)
       # ! retrieves a users ID from the headers of a Notion response object.
       # ! body -> the body to send in the request : ``Hash``
-      Core.options['cookies'][:token_v2] = @@token_v2
-      Core.options['headers']['x-notion-active-user-header'] = @@active_user_header
+      Core.options['cookies'][:token_v2] = @token_v2
+      Core.options['headers']['x-notion-active-user-header'] = @active_user_header
       cookies = Core.options['cookies']
       headers = Core.options['headers']
       request_url = URLS[:GET_BLOCK]
@@ -153,8 +152,8 @@ module NotionAPI
     def get_all_block_info(_clean_id, body)
       # ! retrieves all info pertaining to a block Id.
       # ! clean_id -> the block ID or URL cleaned : ``str``
-      Core.options['cookies'][:token_v2] = @@token_v2
-      Core.options['headers']['x-notion-active-user-header'] = @@active_user_header
+      Core.options['cookies'][:token_v2] = @token_v2
+      Core.options['headers']['x-notion-active-user-header'] = @active_user_header
       cookies = Core.options['cookies']
       headers = Core.options['headers']
 
