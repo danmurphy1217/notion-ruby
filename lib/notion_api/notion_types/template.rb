@@ -160,14 +160,14 @@ module NotionAPI
         space_id: space_id,
       }
 
-      check_parents = (@parent_id == target_block.parent_id)
+      is_same_parent = (@parent_id == target_block.parent_id)
       set_block_dead_hash = Utils::BlockComponents.set_block_to_dead(@id) # kill the block this method is invoked on...
       block_location_remove_hash = Utils::BlockComponents.block_location_remove(@parent_id, @id) # remove the block this method is invoked on...
-      parent_location_hash = Utils::BlockComponents.parent_location_add(check_parents ? @parent_id : target_block.parent_id, @id) # set parent location to alive
-      block_location_add_hash = Utils::BlockComponents.block_location_add(check_parents ? @parent_id : target_block.parent_id, @id, target_block.id, position_command)
+      parent_location_hash = Utils::BlockComponents.parent_location_add(is_same_parent ? @parent_id : target_block.parent_id, @id) # set parent location to alive
+      block_location_add_hash = Utils::BlockComponents.block_location_add(is_same_parent ? @parent_id : target_block.parent_id, @id, target_block.id, position_command)
       last_edited_time_parent_hash = Utils::BlockComponents.last_edited_time(@parent_id)
 
-      if check_parents
+      if is_same_parent
         last_edited_time_child_hash = Utils::BlockComponents.last_edited_time(@id)
         operations = [
           set_block_dead_hash,
@@ -297,7 +297,7 @@ module NotionAPI
         {}
       else
         block_class = NotionAPI.const_get(BLOCK_TYPES[block_type].to_s)
-        if [NotionAPI::CollectionView,  NotionAPI::CollectionViewPage].include?(block_class)
+        if [NotionAPI::CollectionView, NotionAPI::CollectionViewPage].include?(block_class)
           block_collection_id = extract_collection_id(clean_id, jsonified_record_response)
           block_view_id = extract_view_ids(clean_id, jsonified_record_response)
           collection_title = extract_collection_title(clean_id, block_collection_id, jsonified_record_response)

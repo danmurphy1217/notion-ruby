@@ -226,7 +226,6 @@ module NotionAPI
         # set instance variables for each column, allowing the dev to 'read' the column value
         cleaned_column = clean_property_names(column_hash, column)
 
-        # p row_data["value"]["properties"][column_mappings[i]], !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]])
         if row_data["value"]["properties"].nil? or row_data["value"]["properties"][column].nil?
           value = ""
         else
