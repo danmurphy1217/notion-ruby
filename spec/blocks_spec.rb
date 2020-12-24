@@ -17,7 +17,7 @@ describe NotionAPI::BlockTemplate do
     describe "#convert" do
       it "should convert the block to a different type and return the new block." do
         @block = $Block_spec_page.get_block($Block_spec_convert_id)
-        filtered_classes = Classes.select { |cls| ![:CollectionView, :CollectionViewRow, :CollectionViewPage].include?(cls)}
+        filtered_classes = Classes.select { |cls| ![:CollectionView, :CollectionViewRow, :CollectionViewPage, :ImageBlock].include?(cls)}
 
         number_of_classes = filtered_classes.length
         class_for_conversion = filtered_classes[rand(0...number_of_classes)]
