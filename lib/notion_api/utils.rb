@@ -241,6 +241,10 @@ module Utils
     end
 
     def self.row_location_add(last_row_id, block_id, view_id)
+      # ! add a new row to a Collection View table
+      # ! last_row_id -> ID of the last row in the CV : ``str``
+      # ! block_id -> ID of the blow : ``str``
+      # ! view_id -> ID of the View : ``str``
       {
         "table": "collection_view",
         "id": view_id,
@@ -310,6 +314,9 @@ module Utils
       }
     end
     def self.add_emoji_icon(block_id, icon)
+      # ! add an emoji icon for either a page or callout block
+      # ! block_id -> the ID of the block : ``str``
+      # ! icon -> the icon for the block. This is currently randomly chosen. : ``str``
       {
         id: block_id,
         table: "block",
@@ -319,6 +326,9 @@ module Utils
     end
 
     def self.source(new_block_id, url)
+      # ! set the source for the ImageBlock
+      # ! new_block_id -> the ID of the new ImageBlock: ``str``
+      # ! url -> the URL for the image
       table = "block"
       path = ["properties"]
       command = "update"
@@ -337,6 +347,9 @@ module Utils
     end
 
     def self.display_source(new_block_id, block_url)
+      # ! set the display source for the ImageBlock
+      # ! new_block_id -> the ID of the new ImageBlock: ``str``
+      # ! block_url -> the URL of the ImageBlock: ``str``
       {
         "id": new_block_id,
         "table": "block",
@@ -616,50 +629,7 @@ module Utils
       # ! payload for adding a column to the table.
       # ! collection_id -> the collection ID : ``str``
       # ! args -> the definition of the column : ``str``
-      args["format"] = {
-        "table_properties" => [
-          {
-            "property" => "title",
-            "visible" => true,
-            "width" => 280,
-          },
-          {
-            "property" => "aliases",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "category",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "description",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "ios_version",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "tags",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "phone",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "unicode_version",
-            "visible" => true,
-            "width" => 200,
-          },
-        ],
-      }
+
       {
         id: collection_id,
         table: "collection",
