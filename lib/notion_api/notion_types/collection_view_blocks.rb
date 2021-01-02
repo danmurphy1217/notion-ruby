@@ -158,20 +158,11 @@ module NotionAPI
         limit: 100,
         verticalColumns: false,
       }
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
-        i += 1
-      end
+      jsonified_record_response = get_all_block_info(request_body)
 
       collection_data = extract_collection_data(@collection_id, @view_id)
       schema = collection_data["collection"][collection_id]["value"]["schema"]
-      column_mappings = schema.keys
-      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
+      column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
 
       collection_row = CollectionViewRow.new(row_id, @parent_id, @collection_id, @view_id)
       collection_row.instance_variable_set(:@column_names, column_names)
@@ -194,29 +185,20 @@ module NotionAPI
         verticalColumns: false,
       }
 
-      jsonified_record_response = get_all_block_info(clean_id, request_body)
-      i = 0
-      while jsonified_record_response.empty? || jsonified_record_response["block"].empty?
-        return {} if i >= 10
-
-        jsonified_record_response = get_all_block_info(clean_id, request_body)
-        i += 1
-      end
+      jsonified_record_response = get_all_block_info(request_body)
 
       jsonified_record_response["collection_view"][@view_id]["value"]["page_sort"]
     end
 
     def rows
       # ! returns all rows as instantiated class instances.
-      row_id_array = row_ids
+      row_id_array = row_ids()
       parent_id = @parent_id
       collection_id = @collection_id
       view_id = @view_id
       collection_data = extract_collection_data(@collection_id, @view_id)
       schema = collection_data["collection"][collection_id]["value"]["schema"]
-      column_mappings = schema.keys
-      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
-
+      column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
       row_instances = row_id_array.map { |row_id| NotionAPI::CollectionViewRow.new(row_id, parent_id, collection_id, view_id) }
       clean_row_instances = row_instances.filter { |row| collection_data["block"][row.id] }
       clean_row_instances.each { |row| row.instance_variable_set(:@column_names, column_names) }
@@ -244,7 +226,6 @@ module NotionAPI
         # set instance variables for each column, allowing the dev to 'read' the column value
         cleaned_column = clean_property_names(column_hash, column)
 
-        # p row_data["value"]["properties"][column_mappings[i]], !(row_data["value"]["properties"][column] or row_data["value"]["properties"][column_mappings[i]])
         if row_data["value"]["properties"].nil? or row_data["value"]["properties"][column].nil?
           value = ""
         else
@@ -315,6 +296,14 @@ module NotionAPI
       # ! prop_notion_name -> the four-character long name of the notion property: ``str``
 
       prop_hash[prop_notion_name].split(" ").map { |word| word.gsub(/[^a-z0-9]/i, "").downcase }.join("_").to_sym
+    end
+
+    def self.extract_collection_view_column_names(schema)
+      # ! extract the column names of a Collection View
+      # ! schema: the schema of the collection view
+      column_mappings = column_mappings = schema.keys
+      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
+      column_names
     end
   end
 

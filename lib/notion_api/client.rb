@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'core'
-require_relative 'blocks'
+require_relative "core"
+require_relative "blocks"
 
 module NotionAPI
   # acts as the 'main interface' to the methods of this package.

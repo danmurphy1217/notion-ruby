@@ -11,6 +11,27 @@ module Utils
   class BlockComponents
     # ! Each function defined here builds one component that is included in each request sent to Notions backend.
     # ! Each request sent will contain multiple components.
+    # TODO figure this out
+    def self.build_payload(operations, request_ids)
+      # ! properly formats the payload for Notions backend.
+      # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
+      # ! request_ids -> the unique IDs for the request : ``str``
+      request_id = request_ids[:request_id]
+      transaction_id = request_ids[:transaction_id]
+      space_id = request_ids[:space_id]
+      payload = {
+        requestId: request_id,
+        transactions: [
+          {
+            id: transaction_id,
+            shardId: 955_090,
+            spaceId: space_id,
+            operations: operations,
+          },
+        ],
+      }
+      payload
+    end
     def self.create(block_id, block_type)
       # ! payload for creating a block.
       # ! block_id -> id of the new block : ``str``
@@ -220,6 +241,10 @@ module Utils
     end
 
     def self.row_location_add(last_row_id, block_id, view_id)
+      # ! add a new row to a Collection View table
+      # ! last_row_id -> ID of the last row in the CV : ``str``
+      # ! block_id -> ID of the blow : ``str``
+      # ! view_id -> ID of the View : ``str``
       {
         "table": "collection_view",
         "id": view_id,
@@ -289,11 +314,52 @@ module Utils
       }
     end
     def self.add_emoji_icon(block_id, icon)
+      # ! add an emoji icon for either a page or callout block
+      # ! block_id -> the ID of the block : ``str``
+      # ! icon -> the icon for the block. This is currently randomly chosen. : ``str``
       {
         id: block_id,
         table: "block",
         path: ["format", "page_icon"],
         command: "set", "args": icon,
+      }
+    end
+
+    def self.source(new_block_id, url)
+      # ! set the source for the ImageBlock
+      # ! new_block_id -> the ID of the new ImageBlock: ``str``
+      # ! url -> the URL for the image
+      table = "block"
+      path = ["properties"]
+      command = "update"
+
+      {
+        id: new_block_id,
+        table: table,
+        path: path,
+        command: command,
+        args: {
+          source: [[
+            url,
+          ]],
+        },
+      }
+    end
+
+    def self.display_source(new_block_id, block_url)
+      # ! set the display source for the ImageBlock
+      # ! new_block_id -> the ID of the new ImageBlock: ``str``
+      # ! block_url -> the URL of the ImageBlock: ``str``
+      {
+        "id": new_block_id,
+        "table": "block",
+        "path": [
+          "format",
+        ],
+        "command": "update",
+        "args": {
+          "display_source": block_url,
+        },
       }
     end
   end
@@ -563,50 +629,7 @@ module Utils
       # ! payload for adding a column to the table.
       # ! collection_id -> the collection ID : ``str``
       # ! args -> the definition of the column : ``str``
-      args["format"] = {
-        "table_properties" => [
-          {
-            "property" => "title",
-            "visible" => true,
-            "width" => 280,
-          },
-          {
-            "property" => "aliases",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "category",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "description",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "ios_version",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "tags",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "phone",
-            "visible" => true,
-            "width" => 200,
-          },
-          {
-            "property" => "unicode_version",
-            "visible" => true,
-            "width" => 200,
-          },
-        ],
-      }
+
       {
         id: collection_id,
         table: "collection",
