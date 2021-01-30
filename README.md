@@ -167,8 +167,9 @@ The block types available to the `create` method are:
 12. `CalloutBlock`
 13. `LatexBlock`
 14. `TextBlock`
-15. `ImageBlock` and
-16. `TableOfContentsBlock`.
+15. `ImageBlock`
+16. `TableOfContentsBlock` and
+17. `LinkBlock`
 If you want to create a collection, utilize the `create_collection` method [defined below].
 
 To create a new block, you have a few options:
@@ -319,3 +320,11 @@ Then, it can be retrieved with the following code:
 )
 >>> @client.get_page("https://www.notion.so/danmurphy/[page-id]?v=[view-id]")
 ```
+### Linking to another page
+You can create a block that links to another notion page with the following syntax:
+```ruby
+@client = NotionAPI::Client.new(ENV["token_v2"])
+@page = @client.get_page("https://www.notion.so/danmurphy/Testing-227581d35fc94fa1a5f9fda1e8478d1e")
+@page.create(NotionAPI::LinkBlock, "ea93213d1f21439c870fbe91503e76fe")
+```
+This example will create a `LinkBlock` on the `Testing` page to the page with ID `ea93213d1f21439c870fbe91503e76fe`.
