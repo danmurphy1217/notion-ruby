@@ -11,7 +11,7 @@ module Utils
   class BlockComponents
     # ! Each function defined here builds one component that is included in each request sent to Notions backend.
     # ! Each request sent will contain multiple components.
-    # TODO figure this out
+
     def self.build_payload(operations, request_ids)
       # ! properly formats the payload for Notions backend.
       # ! operations -> an array of hashes that define the operations to perform : ``Array[Hash]``
@@ -351,14 +351,14 @@ module Utils
       # ! new_block_id -> the ID of the new ImageBlock: ``str``
       # ! block_url -> the URL of the ImageBlock: ``str``
       {
-        "id": new_block_id,
-        "table": "block",
-        "path": [
+        id: new_block_id,
+        table: "block",
+        path: [
           "format",
         ],
-        "command": "update",
-        "args": {
-          "display_source": block_url,
+        command: "update",
+        args: {
+          display_source: block_url,
         },
       }
     end

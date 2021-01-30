@@ -72,6 +72,35 @@ module NotionAPI
       jsonified_record_response["block"][clean_id]["value"]["content"] || []
     end
 
+    def extract_id(url_or_id)
+      # ! parse and clean the URL or ID object provided.
+      # ! url_or_id -> the block ID or URL : ``str``
+      http_or_https = url_or_id.match(/^(http|https)/) # true if http or https in url_or_id...
+      collection_view_match = url_or_id.match(/(\?v=)/)
+
+      if (url_or_id.length == 36) && ((url_or_id.split("-").length == 5) && !http_or_https)
+        # passes if url_or_id is perfectly formatted already...
+        url_or_id
+      elsif (http_or_https && (url_or_id.split("-").last.length == 32)) || (!http_or_https && (url_or_id.length == 32)) || (collection_view_match)
+        # passes if either:
+        # 1. a URL is passed as url_or_id and the ID at the end is 32 characters long or
+        # 2. a URL is not passed and the ID length is 32 [aka unformatted]
+        pattern = [8, 13, 18, 23]
+        if collection_view_match
+          id_without_view = url_or_id.split("?")[0]
+          clean_id = id_without_view.split("/").last
+          pattern.each { |index| clean_id.insert(index, "-") }
+          clean_id
+        else
+          id = url_or_id.split("-").last
+          pattern.each { |index| id.insert(index, "-") }
+          id
+        end
+      else
+        raise ArgumentError, "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
+      end
+    end
+
     private
 
     def get_notion_id(body)
@@ -205,34 +234,34 @@ module NotionAPI
       jsonified_record_response["block"][clean_id]["value"]["view_ids"] || []
     end
 
-    def extract_id(url_or_id)
-      # ! parse and clean the URL or ID object provided.
-      # ! url_or_id -> the block ID or URL : ``str``
-      http_or_https = url_or_id.match(/^(http|https)/) # true if http or https in url_or_id...
-      collection_view_match = url_or_id.match(/(\?v=)/)
+    # def extract_id(url_or_id)
+    #   # ! parse and clean the URL or ID object provided.
+    #   # ! url_or_id -> the block ID or URL : ``str``
+    #   http_or_https = url_or_id.match(/^(http|https)/) # true if http or https in url_or_id...
+    #   collection_view_match = url_or_id.match(/(\?v=)/)
 
-      if (url_or_id.length == 36) && ((url_or_id.split("-").length == 5) && !http_or_https)
-        # passes if url_or_id is perfectly formatted already...
-        url_or_id
-      elsif (http_or_https && (url_or_id.split("-").last.length == 32)) || (!http_or_https && (url_or_id.length == 32)) || (collection_view_match)
-        # passes if either:
-        # 1. a URL is passed as url_or_id and the ID at the end is 32 characters long or
-        # 2. a URL is not passed and the ID length is 32 [aka unformatted]
-        pattern = [8, 13, 18, 23]
-        if collection_view_match
-          id_without_view = url_or_id.split("?")[0]
-          clean_id = id_without_view.split("/").last
-          pattern.each { |index| clean_id.insert(index, "-") }
-          clean_id
-        else
-          id = url_or_id.split("-").last
-          pattern.each { |index| id.insert(index, "-") }
-          id
-        end
-      else
-        raise ArgumentError, "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
-      end
-    end
+    #   if (url_or_id.length == 36) && ((url_or_id.split("-").length == 5) && !http_or_https)
+    #     # passes if url_or_id is perfectly formatted already...
+    #     url_or_id
+    #   elsif (http_or_https && (url_or_id.split("-").last.length == 32)) || (!http_or_https && (url_or_id.length == 32)) || (collection_view_match)
+    #     # passes if either:
+    #     # 1. a URL is passed as url_or_id and the ID at the end is 32 characters long or
+    #     # 2. a URL is not passed and the ID length is 32 [aka unformatted]
+    #     pattern = [8, 13, 18, 23]
+    #     if collection_view_match
+    #       id_without_view = url_or_id.split("?")[0]
+    #       clean_id = id_without_view.split("/").last
+    #       pattern.each { |index| clean_id.insert(index, "-") }
+    #       clean_id
+    #     else
+    #       id = url_or_id.split("-").last
+    #       pattern.each { |index| id.insert(index, "-") }
+    #       id
+    #     end
+    #   else
+    #     raise ArgumentError, "Expected a Notion page URL or a page ID. Please consult the documentation for further information."
+    #   end
+    # end
 
     def extract_collection_schema(collection_id, view_id, response = {})
       # ! retrieve the collection scehma. Useful for 'building' the backbone for a table.
