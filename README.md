@@ -25,6 +25,7 @@
   - [Troubleshooting](#troubleshooting)
     - [No results returned when attempting to get a page](#no-results-returned-when-attempting-to-get-a-page)
     - [Retrieve a full-page Collection View](#retrieve-a-full-page-collection-view)
+    - [Linking to another page](#linking-to-another-page)
 
 ## Getting Started
 ### Installation
