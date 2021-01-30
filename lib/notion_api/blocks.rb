@@ -17,6 +17,7 @@ require_relative "notion_types/table_of_contents_block"
 require_relative "notion_types/text_block"
 require_relative "notion_types/todo_block"
 require_relative "notion_types/toggle_block"
+require_relative "notion_types/link_block"
 
 Classes = NotionAPI.constants.select { |c| NotionAPI.const_get(c).is_a? Class and c.to_s != 'BlockTemplate' and c.to_s != 'Core' and c.to_s !='Client' }
 notion_types = []
