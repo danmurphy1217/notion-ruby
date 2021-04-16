@@ -136,7 +136,7 @@ module NotionAPI
       file_urls = build_upload_file_urls(file_name)
       signed_put_url = file_urls['signedPutUrl']
       file_url = file_urls['url']
-      unless signed_put_url && file_url; raise 'Error on getting temporary file url uploaded.'; end
+      if signed_put_url.nil? || file_url.nil?; raise 'Error on getting temporary file url uploaded.'; end
 
       upload_content_on_file(signed_put_url, content)
       move_content_on_page(file_url, page_id, file_name)
@@ -174,7 +174,7 @@ module NotionAPI
             fileURL: file_url,
             fileName: file_name,
             importType: 'ReplaceBlock',
-            pageId: page_id,
+            pageId: page_id
           }
         }
       }
