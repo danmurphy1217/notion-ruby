@@ -6,6 +6,8 @@ module Utils
     GET_BLOCK: "https://www.notion.so/api/v3/loadPageChunk",
     UPDATE_BLOCK: "https://www.notion.so/api/v3/saveTransactions",
     GET_COLLECTION: "https://www.notion.so/api/v3/queryCollection",
+    GET_UPLOAD_FILE_URL: "https://www.notion.so/api/v3/getUploadFileUrl",
+    ENQUEUE_TASK: "https://www.notion.so/api/v3/enqueueTask"
   }.freeze
 
   class BlockComponents
