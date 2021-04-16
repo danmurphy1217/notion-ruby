@@ -120,7 +120,7 @@ module NotionAPI
       CollectionView.new(new_block_id, collection_title, parent_id, collection_id, view_id)
     end
 
-    def create(block_type, block_title, target = nil, position = "after", options: {})
+    def create(block_type, block_title, target = nil, position = 'after', options: {})
       page_block = super
 
       if options[:content]
@@ -132,11 +132,11 @@ module NotionAPI
     end
 
     def import_content_on_page(page_id, block_title, content)
-      file_name      = "#{block_title}.md"
-      file_urls      = build_upload_file_urls(file_name)
-      signed_put_url = file_urls["signedPutUrl"]
-      file_url       = file_urls["url"]
-      unless signed_put_url && file_url; raise "Error on getting temporary file url uploaded."; end
+      file_name = "#{block_title}.md"
+      file_urls = build_upload_file_urls(file_name)
+      signed_put_url = file_urls['signedPutUrl']
+      file_url = file_urls['url']
+      unless signed_put_url && file_url; raise 'Error on getting temporary file url uploaded.'; end
 
       upload_content_on_file(signed_put_url, content)
       move_content_on_page(file_url, page_id, file_name)
@@ -144,25 +144,25 @@ module NotionAPI
 
     def build_upload_file_urls(file_name)
       request_body = {
-        bucket:      'temporary',
-        name:        file_name,
+        bucket: 'temporary',
+        name: file_name,
         contentType: 'text/markdown'
       }
 
       HTTParty.post(
         URLS[:GET_UPLOAD_FILE_URL],
-        body:    request_body.to_json,
-        cookies: Core.options["cookies"],
-        headers: Core.options["headers"]
+        body: request_body.to_json,
+        cookies: Core.options['cookies'],
+        headers: Core.options['headers']
       )
     end
 
     def upload_content_on_file(signed_put_url, content)
       HTTParty.put(
         signed_put_url,
-        body:    content,
-        cookies: Core.options["cookies"],
-        headers: { "Content-Type" => "text/markdown" }
+        body: content,
+        cookies: Core.options['cookies'],
+        headers: { 'Content-Type' => 'text/markdown' }
       )
     end
 
@@ -170,20 +170,20 @@ module NotionAPI
       request_body = {
         task: {
           eventName: 'importFile',
-          request:   {
-            fileURL:    file_url,
-            fileName:   file_name,
+          request: {
+            fileURL: file_url,
+            fileName: file_name,
             importType: 'ReplaceBlock',
-            pageId:     page_id,
+            pageId: page_id,
           }
         }
       }
 
       HTTParty.post(
         URLS[:ENQUEUE_TASK],
-        body:    request_body.to_json,
-        cookies: Core.options["cookies"],
-        headers: Core.options["headers"]
+        body: request_body.to_json,
+        cookies: Core.options['cookies'],
+        headers: Core.options['headers']
       )
     end
   end
