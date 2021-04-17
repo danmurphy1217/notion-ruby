@@ -39,7 +39,7 @@ module NotionAPI
 
       raise ArgumentError, "the URL or ID passed to the get_page method must be that of a Page Block." if !["collection_view_page", "page"].include?(block_type)
 
-      get_instantiated_instance_for(block_type, clean_id, block_parent_id, jsonified_record_response)
+      get_instantiated_instance_for(url_or_id, block_type, clean_id, block_parent_id, jsonified_record_response)
     end
 
     def children(url_or_id = @id)
@@ -234,6 +234,26 @@ module NotionAPI
       jsonified_record_response["block"][clean_id]["value"]["view_ids"] || []
     end
 
+    def extract_view_id(url_or_id, clean_id, jsonified_record_response)
+      # ! extract the view ID
+      # ! clean_id -> the block ID or URL cleaned : ``str``
+      # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
+      collection_view_match = /^https?:\/\/www.notion.so\/(.+\/)?(?<id>.+)\?v=(?<view_id>.+)$/i.match(url_or_id)
+      view_ids = extract_view_ids(clean_id, jsonified_record_response)
+      view_id = view_ids[0]
+
+      if collection_view_match && collection_view_match[:id] && collection_view_match[:view_id]
+        clean_match_id = extract_id(collection_view_match[:id])
+        clean_match_view_id = extract_id(collection_view_match[:view_id])
+
+        if clean_id == clean_match_id && view_ids.include?(clean_match_view_id)
+          view_id = clean_match_view_id
+        end
+      end
+
+      view_id
+    end
+
     # def extract_id(url_or_id)
     #   # ! parse and clean the URL or ID object provided.
     #   # ! url_or_id -> the block ID or URL : ``str``
@@ -321,13 +341,14 @@ module NotionAPI
       # ! helper method for extracting information about a Collection View page block
       # ! page_meta -> hash containing data points useful for the extraction of a page blocks information.
       # !           This should include clean_id, jsonified_record_response, and parent_id
+      url_or_id = page_meta.fetch(:url_or_id)
       clean_id = page_meta.fetch(:clean_id)
       jsonified_record_response = page_meta.fetch(:jsonified_record_response)
       block_parent_id = page_meta.fetch(:parent_id)
 
       collection_id = extract_collection_id(clean_id, jsonified_record_response)
       block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
-      view_id = extract_view_ids(clean_id, jsonified_record_response)[0]
+      view_id = extract_view_id(url_or_id, clean_id, jsonified_record_response)
       schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
 
@@ -337,10 +358,10 @@ module NotionAPI
       collection_view_page
     end
 
-    def get_instantiated_instance_for(block_type, clean_id, parent_id, jsonified_record_response)
+    def get_instantiated_instance_for(url_or_id, block_type, clean_id, parent_id, jsonified_record_response)
       case block_type
       when "page" then extract_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
-      when "collection_view_page" then extract_collection_view_page_information(clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
+      when "collection_view_page" then extract_collection_view_page_information(url_or_id: url_or_id, clean_id: clean_id, parent_id: parent_id, jsonified_record_response: jsonified_record_response)
       end
     end
 
