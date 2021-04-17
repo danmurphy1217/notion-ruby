@@ -194,7 +194,13 @@ If you want to create a new block whose parent ID is the **page**, call the `cre
 >>> @page.create(NotionAPI::TextBlock, "Hiya!", "ee0a6531-44cd-439f-a68c-1bdccbebfc8a", "before")
 #<NotionAPI::TextBlock:0x00007fecd8859880 **omitted**>
 ```
-4. `@page.create(<type_of_block>, "title of block", options: { content: "text or markdown" })` → create a new block with text or markdown content.
+4. `@page.create(<type_of_block>, "title of block", options: { emoji: "chosen emoji" })` → create a new block with a chosen emoji for blocks with emojis (`PageBlock` and `CalloutBlock`).
+```ruby
+>>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
+>>> @page.create(NotionAPI::PageBlock, "Hiya!", options: { emoji: "🚀" })
+#<NotionAPI::PageBlock:0x00007f80ed2abf78 **omitted**>
+```
+5. `@page.create(<type_of_block>, "title of block", options: { content: "text or markdown" })` → create a new block with text or markdown content.
 ```ruby
 >>> @page = @client.get_page("https://www.notion.so/danmurphy/Notion-API-Testing-66447bc817f044bc81ed3cf4802e9b00")
 >>> @page.create(NotionAPI::PageBlock, "Hiya!", options: { content: "# Yippee Ki Yay\n\nJohn McClane" })
