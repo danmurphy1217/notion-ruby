@@ -290,23 +290,32 @@ module NotionAPI
     #   end
     # end
 
-    def extract_collection_schema(collection_id, view_id, response = {})
+    def query_collection(collection_id, view_id, options: {})
       # ! retrieve the collection scehma. Useful for 'building' the backbone for a table.
       # ! collection_id -> the collection ID : ``str``
       # ! view_id -> the view ID : ``str``
+      request_body = Utils::CollectionViewComponents.query_collection_body(
+        collection_id, view_id, options: options
+      )
+
+      request_url = URLS[:GET_COLLECTION]
       cookies = Core.options["cookies"]
       headers = Core.options["headers"]
 
-      if response.empty?
-        query_collection_hash = Utils::CollectionViewComponents.query_collection(collection_id, view_id, "")
-
-        request_url = URLS[:GET_COLLECTION]
-        response = HTTParty.post(
+      HTTParty.post(
         request_url,
-          body: query_collection_hash.to_json,
+        body: request_body.to_json,
         cookies: cookies,
         headers: headers,
       )
+    end
+
+    def extract_collection_schema(collection_id, view_id, response = {})
+      # ! retrieve the collection schema. Useful for 'building' the backbone for a table.
+      # ! collection_id -> the collection ID : ``str``
+      # ! view_id -> the view ID : ``str``
+      if response.empty?
+        response = query_collection(collection_id, view_id)
         response["recordMap"]["collection"][collection_id]["value"]["schema"]
       else
         response["collection"][collection_id]["value"]["schema"]
@@ -314,21 +323,11 @@ module NotionAPI
     end
 
     def extract_collection_data(collection_id, view_id)
-      # ! retrieve the collection scehma. Useful for 'building' the backbone for a table.
+      # ! retrieve the collection schema. Useful for 'building' the backbone for a table.
       # ! collection_id -> the collection ID : ``str``
       # ! view_id -> the view ID : ``str``
-      cookies = Core.options["cookies"]
-      headers = Core.options["headers"]
+      response = query_collection(collection_id, view_id)
 
-      query_collection_hash = Utils::CollectionViewComponents.query_collection(collection_id, view_id, "")
-
-      request_url = URLS[:GET_COLLECTION]
-      response = HTTParty.post(
-        request_url,
-        body: query_collection_hash.to_json,
-        cookies: cookies,
-        headers: headers,
-      )
       response["recordMap"]
     end
 
