@@ -302,7 +302,7 @@ module NotionAPI
 
         request_url = URLS[:GET_COLLECTION]
         response = HTTParty.post(
-        request_url,
+          request_url,
           body: query_collection_hash.to_json,
           cookies: cookies,
           headers: headers,
