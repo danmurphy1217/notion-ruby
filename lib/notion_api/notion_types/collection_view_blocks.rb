@@ -190,29 +190,29 @@ module NotionAPI
       begin
         limit += 100
         response = query_collection(@collection_id, @view_id, options: { limit: limit })
-        row_ids = response["result"]["blockIds"]
-        row_count = row_ids.size
+        collection_row_ids = response['result']['blockIds']
+        row_count = collection_row_ids.size
       end while row_count == limit
 
       @complete_collection = response
     end
 
     def row_ids
-      complete_collection["result"]["blockIds"]
+      complete_collection['result']['blockIds']
     end
 
     def rows
       # ! returns all rows as instantiated class instances.
-      collection_data = complete_collection["recordMap"]
-      schema = collection_data["collection"][collection_id]["value"]["schema"]
+      collection_data = complete_collection['recordMap']
+      schema = collection_data['collection'][collection_id]['value']['schema']
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
       row_instances = row_ids.map { |row_id| NotionAPI::CollectionViewRow.new(row_id, @parent_id, @collection_id, @view_id) }
-      clean_row_instances = row_instances.filter { |row| collection_data["block"][row.id] }
+      clean_row_instances = row_instances.filter { |row| collection_data['block'][row.id] }
       clean_row_instances.each { |row| row.instance_variable_set(:@column_names, column_names) }
       CollectionViewRow.class_eval { attr_reader :column_names }
 
       clean_row_instances.each do |collection_row|
-        row_data = collection_data["block"][collection_row.id]
+        row_data = collection_data['block'][collection_row.id]
         create_singleton_methods_and_instance_variables(collection_row, row_data, schema)
       end
 
@@ -225,7 +225,7 @@ module NotionAPI
       # ! row_data -> the data corresponding to that row, should be key-value pairs where the keys are the columns: ``hash``
       unless schema
         collection_data = extract_collection_data(@collection_id, @view_id)
-        schema = collection_data["collection"][collection_id]["value"]["schema"]
+        schema = collection_data['collection'][collection_id]['value']['schema']
       end
 
       column_mappings = schema.keys
