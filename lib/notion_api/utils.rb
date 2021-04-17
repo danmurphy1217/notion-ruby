@@ -606,15 +606,18 @@ module Utils
       }
     end
 
-    def self.query_collection(collection_id, view_id, search_query = "")
+    def self.query_collection_body(collection_id, view_id, options: {})
       # ! payload for querying the table for data.
       # ! collection_id -> the collection ID : ``str``
       # ! view_id -> the view ID : ``str``
       # ! search_query -> the query for searching the table : ``str``
-      query = {}
+      query = options[:query] || {}
+      limit = options[:limit] || 100
+      search_query = options[:search_query] || ""
+
       loader = {
         type: "table",
-        limit: 100,
+        limit: limit,
         searchQuery: search_query,
         loadContentCover: true,
       }

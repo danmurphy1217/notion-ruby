@@ -175,49 +175,59 @@ module NotionAPI
       collection_row
     end
 
+    def query_collection(collection_id = @collection_id, view_id = @view_id, options: {})
+      options[:query] = options[:query] || @query
+
+      super(collection_id, view_id, options: options)
+    end
+
+    def complete_collection
+      # ! retrieve all Collection View table rows recurcisely.
+      return @complete_collection if defined?(@complete_collection)
+
+      limit = 0
+
+      begin
+        limit += 100
+        response = query_collection(@collection_id, @view_id, options: { limit: limit })
+        collection_row_ids = response['result']['blockIds']
+        row_count = collection_row_ids.size
+      end while row_count == limit
+
+      @complete_collection = response
+    end
+
     def row_ids
-      # ! retrieve all Collection View table rows.
-      clean_id = extract_id(@id)
-
-      request_body = {
-        pageId: clean_id,
-        chunkNumber: 0,
-        limit: 100,
-        verticalColumns: false,
-      }
-
-      jsonified_record_response = get_all_block_info(request_body)
-
-      jsonified_record_response["collection_view"][@view_id]["value"]["page_sort"]
+      complete_collection['result']['blockIds']
     end
 
     def rows
       # ! returns all rows as instantiated class instances.
-      row_id_array = row_ids()
-      parent_id = @parent_id
-      collection_id = @collection_id
-      view_id = @view_id
-      collection_data = extract_collection_data(@collection_id, @view_id)
-      schema = collection_data["collection"][collection_id]["value"]["schema"]
+      collection_data = complete_collection['recordMap']
+      schema = collection_data['collection'][collection_id]['value']['schema']
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
-      row_instances = row_id_array.map { |row_id| NotionAPI::CollectionViewRow.new(row_id, parent_id, collection_id, view_id) }
-      clean_row_instances = row_instances.filter { |row| collection_data["block"][row.id] }
+      row_instances = row_ids.map { |row_id| NotionAPI::CollectionViewRow.new(row_id, @parent_id, @collection_id, @view_id) }
+      clean_row_instances = row_instances.filter { |row| collection_data['block'][row.id] }
       clean_row_instances.each { |row| row.instance_variable_set(:@column_names, column_names) }
       CollectionViewRow.class_eval { attr_reader :column_names }
 
       clean_row_instances.each do |collection_row|
-        row_data = collection_data["block"][collection_row.id]
-        create_singleton_methods_and_instance_variables(collection_row, row_data)
+        row_data = collection_data['block'][collection_row.id]
+        create_singleton_methods_and_instance_variables(collection_row, row_data, schema)
       end
+
       clean_row_instances
     end
 
-    def create_singleton_methods_and_instance_variables(row, row_data)
+    def create_singleton_methods_and_instance_variables(row, row_data, schema = nil)
       # ! creates singleton methods for each property in a CollectionView.
       # ! row -> the block ID of the 'row' to retrieve: ``str``
       # ! row_data -> the data corresponding to that row, should be key-value pairs where the keys are the columns: ``hash``
-      collection_data = extract_collection_data(@collection_id, @view_id)
-      schema = collection_data["collection"][collection_id]["value"]["schema"]
+      unless schema
+        collection_data = extract_collection_data(@collection_id, @view_id)
+        schema = collection_data['collection'][collection_id]['value']['schema']
+      end
+
       column_mappings = schema.keys
       column_hash = {}
       column_names = column_mappings.map { |mapping| column_hash[mapping] = schema[mapping]["name"].downcase }
@@ -302,9 +312,9 @@ module NotionAPI
     def self.extract_collection_view_column_names(schema)
       # ! extract the column names of a Collection View
       # ! schema: the schema of the collection view
-      column_mappings = column_mappings = schema.keys
-      column_names = column_mappings.map { |mapping| schema[mapping]["name"] }
-      column_names
+      column_mappings = schema.keys
+
+      column_mappings.map { |mapping| schema[mapping]["name"] }
     end
   end
 
