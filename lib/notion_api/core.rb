@@ -304,9 +304,9 @@ module NotionAPI
         response = HTTParty.post(
         request_url,
           body: query_collection_hash.to_json,
-        cookies: cookies,
-        headers: headers,
-      )
+          cookies: cookies,
+          headers: headers,
+        )
         response["recordMap"]["collection"][collection_id]["value"]["schema"]
       else
         response["collection"][collection_id]["value"]["schema"]
