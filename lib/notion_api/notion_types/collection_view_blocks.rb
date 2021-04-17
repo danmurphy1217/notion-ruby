@@ -1,7 +1,7 @@
 module NotionAPI
   # collection views such as tables and timelines.
   class CollectionView < Core
-    attr_reader :id, :title, :parent_id, :collection_id, :view_id
+    attr_reader :id, :title, :parent_id, :collection_id, :view_id, :query
 
     @notion_type = "collection_view"
     @type = "collection_view"
@@ -14,12 +14,13 @@ module NotionAPI
       attr_reader :notion_type, :type
     end
 
-    def initialize(id, title, parent_id, collection_id, view_id)
+    def initialize(id, title, parent_id, collection_id, view_id, query = {})
       @id = id
       @title = title
       @parent_id = parent_id
       @collection_id = collection_id
       @view_id = view_id
+      @query = query
     end
 
     def add_row(data)

@@ -254,6 +254,13 @@ module NotionAPI
       view_id
     end
 
+    def extract_query(view_id, jsonified_record_response)
+      # ! extract the query
+      # ! view_id -> the view ID : ``str``
+      # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
+      jsonified_record_response["collection_view"][view_id]["value"]["query2"] || {}
+    end
+
     # def extract_id(url_or_id)
     #   # ! parse and clean the URL or ID object provided.
     #   # ! url_or_id -> the block ID or URL : ``str``
@@ -349,10 +356,11 @@ module NotionAPI
       collection_id = extract_collection_id(clean_id, jsonified_record_response)
       block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
       view_id = extract_view_id(url_or_id, clean_id, jsonified_record_response)
+      query = extract_query(view_id, jsonified_record_response)
       schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
 
-      collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id)
+      collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id, query)
       collection_view_page.instance_variable_set(:@column_names, column_names)
       CollectionView.class_eval { attr_reader :column_names }
       collection_view_page
