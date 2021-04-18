@@ -123,23 +123,20 @@ module NotionAPI
     def create(block_type, block_title, target = nil, position = 'after', options: {})
       page_block = super
 
-      if options[:content]
-        page_id = page_block.id
-        import_content_on_page(page_id, block_title, options[:content])
-      end
+      page_block.import_content(options[:content]) if options[:content]
 
       page_block
     end
 
-    def import_content_on_page(page_id, block_title, content)
-      file_name = "#{block_title}.md"
+    def import_content(content)
+      file_name = "#{@title}.md"
       file_urls = build_upload_file_urls(file_name)
       signed_put_url = file_urls['signedPutUrl']
       file_url = file_urls['url']
       raise 'Error on getting temporary file url uploaded.' unless signed_put_url && file_url
 
       upload_content_on_file(signed_put_url, content)
-      move_content_on_page(file_url, page_id, file_name)
+      move_content_on_page(file_url, file_name)
     end
 
     def build_upload_file_urls(file_name)
@@ -166,7 +163,7 @@ module NotionAPI
       )
     end
 
-    def move_content_on_page(file_url, page_id, file_name)
+    def move_content_on_page(file_url, file_name)
       request_body = {
         task: {
           eventName: 'importFile',
@@ -174,7 +171,7 @@ module NotionAPI
             fileURL: file_url,
             fileName: file_name,
             importType: 'ReplaceBlock',
-            pageId: page_id
+            pageId: @id
           }
         }
       }
