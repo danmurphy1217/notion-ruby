@@ -254,11 +254,19 @@ module NotionAPI
       view_id
     end
 
-    def extract_query(view_id, jsonified_record_response)
+    def extract_query(view_id, schema, jsonified_record_response)
       # ! extract the query
       # ! view_id -> the view ID : ``str``
       # ! jsonified_record_response -> parsed JSON representation of a notion response object : ``Json``
-      jsonified_record_response["collection_view"][view_id]["value"]["query2"] || {}
+      query = jsonified_record_response["collection_view"][view_id]["value"]["query2"] || {}
+      return query unless query.dig("filter", "filters")
+
+      properties = schema.keys
+      query["filter"]["filters"] = query.dig("filter", "filters").filter do |filter|
+        properties.include?(filter["property"])
+      end
+
+      query
     end
 
     # def extract_id(url_or_id)
@@ -355,8 +363,8 @@ module NotionAPI
       collection_id = extract_collection_id(clean_id, jsonified_record_response)
       block_title = extract_collection_title(clean_id, collection_id, jsonified_record_response)
       view_id = extract_view_id(url_or_id, clean_id, jsonified_record_response)
-      query = extract_query(view_id, jsonified_record_response)
       schema = extract_collection_schema(collection_id, view_id, jsonified_record_response)
+      query = extract_query(view_id, schema, jsonified_record_response)
       column_names = NotionAPI::CollectionView.extract_collection_view_column_names(schema)
 
       collection_view_page = CollectionViewPage.new(clean_id, block_title, block_parent_id, collection_id, view_id, query)
