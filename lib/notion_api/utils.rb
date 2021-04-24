@@ -612,7 +612,7 @@ module Utils
       # ! view_id -> the view ID : ``str``
       # ! search_query -> the query for searching the table : ``str``
       query = options[:query] || {}
-      limit = options[:limit] || 100
+      limit = options[:limit] || 100_000
       search_query = options[:search_query] || ""
 
       loader = {
