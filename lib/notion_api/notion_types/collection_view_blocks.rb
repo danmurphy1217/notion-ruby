@@ -183,18 +183,7 @@ module NotionAPI
 
     def complete_collection
       # ! retrieve all Collection View table rows recurcisely.
-      return @complete_collection if defined?(@complete_collection)
-
-      limit = 0
-
-      begin
-        limit += 100
-        response = query_collection(@collection_id, @view_id, options: { limit: limit })
-        collection_row_ids = response['result']['blockIds']
-        row_count = collection_row_ids.size
-      end while row_count == limit
-
-      @complete_collection = response
+      @complete_collection ||= query_collection(@collection_id, @view_id)
     end
 
     def row_ids
