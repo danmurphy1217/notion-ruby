@@ -258,7 +258,7 @@ module NotionAPI
 
       if blocks_with_emojis.include?(self)
         emoji_choices = ["😀", "😃", "😄", "😁", "😆", "😅", "🤣", "😂", "🙂", "🙃", "😉", "😊", "😇", "🥰", "😍", "😀", "😃"]
-        emoji = emoji_choices[rand(0...emoji_choices.length)]
+        emoji = options[:emoji] || emoji_choices[rand(0...emoji_choices.length)]
         emoji_icon_hash = Utils::BlockComponents.add_emoji_icon(new_block_id, emoji)
         operations.push(emoji_icon_hash)
       end
