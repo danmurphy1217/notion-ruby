@@ -191,8 +191,8 @@ module NotionAPI
       else
         # titles for images are called source, while titles for text-based blocks are called title, so lets dynamically grab it
         # https://stackoverflow.com/questions/23765996/get-all-keys-from-ruby-hash/23766007
-        title_value = filter_nil_blocks[clean_id]["value"]["properties"].keys[0]
-        Core.type_whitelist.include?(filter_nil_blocks[clean_id]["value"]["type"]) ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"][title_value].flatten[0]
+        title_key = 'title'
+        Core.type_whitelist.include?(filter_nil_blocks[clean_id]["value"]["type"]) ? nil : jsonified_record_response["block"][clean_id]["value"]["properties"][title_key].flatten[0]
       end
     end
 
