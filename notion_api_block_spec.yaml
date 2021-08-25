@@ -1,0 +1,154 @@
+# Notion API Objects
+
+name: BlockBase
+  Extends: false
+  Parameters:
+    - object: "block"
+    - id: string
+    - type: string
+    - created_time: string
+    - last_edited_time: string
+    - has_children: boolean
+
+name: ParagraphBlock
+  Extends: true
+    - name: BlockBase
+  Parameters:
+    - type: "paragraph"
+    - Definition:
+        - text: RichText[]
+        - children?: Block[]
+
+name: HeadingOneBlock
+  Extends: true
+    - name: BlockBase
+  Parameters:
+    - type: "heading_1"
+    - Definition:
+        - text: RichText[]
+        - has_children: false
+
+name: HeadingTwoBlock
+  Extends: true
+    - name: BlockBase
+  Parameters:
+    - type: "heading_2"
+    - Definition:
+        - text: RichText[]
+        - has_children: false
+
+name: HeadingThreeBlock
+  Extends: true
+    - name: BlockBase
+  Parameters:
+    - type: "heading_3"
+    - Definition:
+        - text: RichText[]
+        - has_children: false
+
+name: BulletedListItemBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "bulleted_list_item"
+    - Definition:
+        - text: RichText[]
+        - children?: Block[]
+
+name: NumberedListItemBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "numbered_list_item"
+    - Definition:
+        - text: RichText[]
+        - children?: Block[]
+
+name: ToDoBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "to_do"
+    - Definition:
+        - text: RichText[]
+        - checked: boolean
+        - children?: Block[]
+
+name: ToggleBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "toggle"
+    - Definition:
+        - text: RichText[]
+        - children?: Block[]
+
+name: ChildPageBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "child_page"
+    - Definition:
+        - title: "string"
+
+name: EmbedBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "embed"
+    - Definition:
+        - url: "string"
+        - caption? : RichText[]
+
+name: ExternalFileWithCaption
+  Extends: true
+    - name: ExternalFile
+  Parameters:
+    - caption?: RichText[]
+
+name: FileWithCaption
+  Extends: true
+    - name: File
+  Parameters:
+    - caption?: RichText[]
+
+name: ImageBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "image"
+    - image: ExternalFileWithCaption | FileWithCaption
+
+name: VideoBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "video"
+    - image: ExternalFileWithCaption | FileWithCaption
+
+name: FileBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "file"
+    - image: ExternalFileWithCaption | FileWithCaption
+
+name: PDFBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "pdf"
+    - image: ExternalFileWithCaption | FileWithCaption
+
+name: AudioBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "audio"
+    - image: ExternalFileWithCaption | FileWithCaption
+
+name: UnsupportedBlock
+  Extends: true
+    - name: BaseBlock
+  Parameters:
+    - type: "unsupported"
