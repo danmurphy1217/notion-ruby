@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
       "README.md",
     ]
 
-    spec.required_ruby_version = ">= 2.5"
+    spec.required_ruby_version = ">= 2.6.3"
 
     spec.add_runtime_dependency('httparty', '~> 0.17')
     spec.add_runtime_dependency('json', '~> 2.2')
